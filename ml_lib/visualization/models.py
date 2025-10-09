@@ -1,6 +1,7 @@
 """
 Modelos para componentes de visualización en ml_lib
 """
+
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
@@ -9,7 +10,7 @@ import numpy as np
 @dataclass
 class PlotConfig:
     """Configuración para componentes de visualización."""
-    
+
     title: str = ""
     xlabel: str = ""
     ylabel: str = ""
@@ -31,7 +32,7 @@ class PlotConfig:
 @dataclass
 class VisualizationMetadata:
     """Metadatos para componentes de visualización."""
-    
+
     plot_type: str
     created_at: str = ""
     data_shape: Tuple[int, ...] = ()
@@ -42,13 +43,14 @@ class VisualizationMetadata:
 
     def __post_init__(self):
         from datetime import datetime
+
         self.created_at = datetime.now().isoformat()
 
 
 @dataclass
 class ScatterPlotData:
     """Datos específicos para gráficos de dispersión."""
-    
+
     x: np.ndarray
     y: np.ndarray
     labels: Optional[List[str]] = None
@@ -65,7 +67,7 @@ class ScatterPlotData:
 @dataclass
 class LinePlotData:
     """Datos específicos para gráficos de líneas."""
-    
+
     x: np.ndarray
     y: np.ndarray
     title: str = "Line Plot"
@@ -80,7 +82,7 @@ class LinePlotData:
 @dataclass
 class BarPlotData:
     """Datos específicos para gráficos de barras."""
-    
+
     x: np.ndarray  # Puede ser índices o categorías
     heights: np.ndarray
     labels: Optional[List[str]] = None
@@ -96,7 +98,7 @@ class BarPlotData:
 @dataclass
 class HeatmapData:
     """Datos específicos para heatmaps."""
-    
+
     data: np.ndarray
     x_labels: Optional[List[str]] = None
     y_labels: Optional[List[str]] = None

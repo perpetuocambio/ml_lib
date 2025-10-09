@@ -125,6 +125,13 @@ class DataTransformer(TransformerInterface[np.ndarray]):
     def fit_transform(self, X: np.ndarray, y: np.ndarray = None) -> np.ndarray:
         """Ajusta y transforma los datos en un solo paso."""
         return self.fit(X, y).transform(X)
+    
+    def inverse_transform(self, X: np.ndarray) -> np.ndarray:
+        """Transforma los datos a la escala original."""
+        if not self.is_fitted:
+            raise ValueError("El transformador debe ser ajustado antes de realizar la transformación inversa")
+        
+        return X * self.std + self.mean
 
 
 class ModelEvaluator:

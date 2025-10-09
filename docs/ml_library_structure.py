@@ -417,129 +417,127 @@ ml_library/
 
 # core/interfaces/estimator_interface.py
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar, Protocol
+from typing import Any, Generic, TypeVar
 import numpy as np
 
-X = TypeVar('X', bound=np.ndarray)
-Y = TypeVar('Y', bound=np.ndarray)
+X = TypeVar("X", bound=np.ndarray)
+Y = TypeVar("Y", bound=np.ndarray)
+
 
 class EstimatorInterface(ABC, Generic[X, Y]):
     """Interface base para todos los estimadores."""
-    
+
     @abstractmethod
-    def fit(self, X: X, y: Y, **kwargs) -> 'EstimatorInterface':
+    def fit(self, X: X, y: Y, **kwargs) -> "EstimatorInterface":
         """Entrena el modelo con los datos proporcionados."""
         pass
-    
+
     @abstractmethod
     def predict(self, X: X) -> Y:
         """Realiza predicciones sobre nuevos datos."""
         pass
-    
+
     @abstractmethod
     def get_params(self) -> dict[str, Any]:
         """Obtiene los hiperparámetros del modelo."""
         pass
-    
+
     @abstractmethod
-    def set_params(self, **params) -> 'EstimatorInterface':
+    def set_params(self, **params) -> "EstimatorInterface":
         """Establece los hiperparámetros del modelo."""
         pass
+
 
 # core/interfaces/transformer_interface.py
 class TransformerInterface(ABC, Generic[X]):
     """Interface para transformadores de datos."""
-    
+
     @abstractmethod
-    def fit(self, X: X, y: Y | None = None) -> 'TransformerInterface':
+    def fit(self, X: X, y: Y | None = None) -> "TransformerInterface":
         """Aprende los parámetros de transformación."""
         pass
-    
+
     @abstractmethod
     def transform(self, X: X) -> X:
         """Aplica la transformación a los datos."""
         pass
-    
+
     def fit_transform(self, X: X, y: Y | None = None) -> X:
         """Ajusta y transforma en un solo paso."""
         return self.fit(X, y).transform(X)
+
 
 # core/models/base_model.py
 from dataclasses import dataclass, field
 from typing import Any
 
+
 @dataclass
 class BaseModel:
     """Modelo base con metadatos comunes."""
-    
+
     name: str
     version: str
     metadata: dict[str, Any] = field(default_factory=dict)
     is_fitted: bool = False
-    
+
     def mark_fitted(self) -> None:
         self.is_fitted = True
-    
+
     def check_is_fitted(self) -> None:
         if not self.is_fitted:
             raise ValueError(f"Model {self.name} is not fitted yet")
 
+
 # core/services/validation_service.py
 class ValidationService:
     """Servicio para validación de datos y modelos."""
-    
+
     @staticmethod
     def validate_input_shape(X: np.ndarray, expected_dims: int) -> None:
         if X.ndim != expected_dims:
-            raise ValueError(
-                f"Expected {expected_dims}D array, got {X.ndim}D"
-            )
-    
+            raise ValueError(f"Expected {expected_dims}D array, got {X.ndim}D")
+
     @staticmethod
     def validate_same_length(X: np.ndarray, y: np.ndarray) -> None:
         if len(X) != len(y):
-            raise ValueError(
-                f"X and y must have same length: {len(X)} != {len(y)}"
-            )
-    
+            raise ValueError(f"X and y must have same length: {len(X)} != {len(y)}")
+
     @staticmethod
     def validate_params(params: dict, allowed_params: set) -> None:
         invalid = set(params.keys()) - allowed_params
         if invalid:
             raise ValueError(f"Invalid parameters: {invalid}")
 
+
 # core/handlers/error_handler.py
 from typing import Callable, TypeVar, ParamSpec
 from functools import wraps
 import logging
 
-P = ParamSpec('P')
-R = TypeVar('R')
+P = ParamSpec("P")
+R = TypeVar("R")
+
 
 class ErrorHandler:
     """Handler para manejo centralizado de errores."""
-    
+
     def __init__(self, logger: logging.Logger):
         self.logger = logger
-    
-    def handle_execution_error(
-        self, 
-        func: Callable[P, R]
-    ) -> Callable[P, R]:
+
+    def handle_execution_error(self, func: Callable[P, R]) -> Callable[P, R]:
         """Decorador para manejo de errores en ejecución."""
-        
+
         @wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             try:
                 return func(*args, **kwargs)
             except Exception as e:
-                self.logger.error(
-                    f"Error in {func.__name__}: {str(e)}",
-                    exc_info=True
-                )
+                self.logger.error(f"Error in {func.__name__}: {str(e)}", exc_info=True)
                 raise
-        
+
         return wrapper
+
 
 # ============================================================================
 # PATRÓN DE USO DE MÓDULOS
@@ -562,16 +560,16 @@ class CustomEstimator(EstimatorInterface):
         self.validation = validation_service
         self.error_handler = error_handler
         self.model = BaseModel(name="CustomEstimator", version="1.0")
-    
+
     @property
     def _fit(self):
         return self.error_handler.handle_execution_error(self._fit_impl)
-    
+
     def fit(self, X, y, **kwargs):
         self.validation.validate_input_shape(X, 2)
         self.validation.validate_same_length(X, y)
         return self._fit(X, y, **kwargs)
-    
+
     def _fit_impl(self, X, y, **kwargs):
         # Implementación real del entrenamiento
         self.model.mark_fitted()

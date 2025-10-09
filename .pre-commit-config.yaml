@@ -1,0 +1,46 @@
+
+# Configuración de pre-commit: https://pre-commit.com/
+# Para instalar: pip install pre-commit
+# Para configurar en el repo: pre-commit install
+# Para ejecutar manualmente en todos los ficheros: pre-commit run --all-files
+
+repos:
+  # Hooks estándar para limpieza básica
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+
+  # Ruff: Linter y formateador ultra-rápido de Python
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
+    hooks:
+      # 1. Formateador (reemplaza a Black)
+      - id: ruff-format
+        types_or: [python, pyi]
+      # 2. Linter (con auto-corrección)
+      - id: ruff
+        types_or: [python, pyi]
+        args: [--fix, --exit-non-zero-on-fix]
+
+  # MyPy: Comprobador de tipos estáticos
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.10.0
+    hooks:
+      - id: mypy
+        # Puedes añadir args aquí si es necesario, ej: --ignore-missing-imports
+        # Es recomendable configurar mypy en pyproject.toml
+        additional_dependencies: []
+
+  # Hook local para validar la estructura de nuestros módulos
+  - repo: local
+    hooks:
+      - id: check-module-structure
+        name: Validar estructura de módulos de ml_lib
+        entry: python scripts/check_module_structure.py
+        language: python
+        types: [python]
+        pass_filenames: false # El script analiza la estructura completa, no ficheros individuales

@@ -93,15 +93,15 @@ class MyEstimator(EstimatorInterface):
     def fit(self, X, y, **kwargs):
         # Implementación del ajuste
         pass
-    
+
     def predict(self, X):
         # Implementación de la predicción
         pass
-    
+
     def get_params(self):
         # Obtener hiperparámetros
         pass
-    
+
     def set_params(self, **params):
         # Establecer hiperparámetros
         pass
