@@ -32,7 +32,6 @@ ml_lib/
 ├── automl/            # Automatización de ML
 ├── fairness/          # Equidad y sesgo
 ├── deployment/        # Despliegue de modelos
-├── testing/           # Pruebas y validación
 ├── plugin_system/     # Sistema de plugins
 ├── performance/       # Rendimiento y optimización
 ├── ecoml_analyzer/    # Aplicación de demostración ecológica
