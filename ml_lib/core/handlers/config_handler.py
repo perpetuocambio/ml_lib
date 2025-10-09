@@ -1,5 +1,36 @@
 """
-Handler para manejo de configuración con tipado estricto.
+Handler para manejo de configuración genérica desde archivos.
+
+Este handler trabaja con Dict[str, Any] porque maneja configuraciones
+arbitrarias cargadas desde JSON/YAML. Para configuraciones fuertemente
+tipadas de modelos, usar ModelConfig y sus subclases en su lugar.
+
+Usage:
+    Para cargar configuración genérica desde archivos::
+
+        handler = ConfigHandler()
+        handler.load_from_file("config.yaml")
+        learning_rate = handler.get("model.learning_rate", default=0.01)
+
+    Para configuración tipada de modelos (RECOMENDADO)::
+
+        @dataclass
+        class MyModelConfig(ModelConfig):
+            learning_rate: float = 0.01
+            num_layers: int = 3
+
+        config = MyModelConfig(learning_rate=0.001)
+        # IDE autocompletion, type checking, validation
+
+Note:
+    ConfigHandler es apropiado para:
+    - Cargar configuración desde archivos externos
+    - Configuración de aplicación/infraestructura
+    - Serialización/deserialización genérica
+
+    NO usar para:
+    - Configuración de modelos (usar ModelConfig)
+    - APIs públicas (usar dataclasses tipadas)
 """
 
 from typing import Any, Dict, Optional, Union
@@ -78,6 +109,13 @@ class ConfigHandler:
         """Actualiza la configuración con nuevos valores."""
 
         def deep_update(d: Dict[str, Any], u: Dict[str, Any]) -> Dict[str, Any]:
+            """Utility function genérica para merge profundo de diccionarios.
+
+            Note:
+                Este es un uso legítimo de Dict[str, Any] porque es una
+                utility function genérica que no conoce la estructura de
+                los datos. Para configuraciones específicas, usar dataclasses.
+            """
             for k, v in u.items():
                 if isinstance(v, dict) and isinstance(d.get(k), dict):
                     deep_update(d[k], v)
@@ -99,5 +137,20 @@ class ConfigHandler:
             raise ValueError(f"Missing required config keys: {missing_keys}")
 
     def get_section(self, section: str) -> Dict[str, Any]:
-        """Obtiene una sección completa de configuración."""
+        """Obtiene una sección completa de configuración desde archivo.
+
+        Note:
+            Retorna Dict[str, Any] porque ConfigHandler maneja configuración
+            arbitraria desde archivos externos. Si conoces la estructura,
+            considera crear una dataclass y usar:
+
+                section_dict = handler.get_section("model")
+                config = MyModelConfig(**section_dict)
+
+        Args:
+            section: Nombre de la sección (soporta notación dot: "model.optimizer")
+
+        Returns:
+            Diccionario con la sección de configuración, {} si no existe
+        """
         return self.get(section, {})

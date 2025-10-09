@@ -23,10 +23,13 @@ __all__ = [
     # Models
     "BaseModel",
     "ModelConfig",
-    "Hyperparameters",
     "ModelMetadata",
     "TrainingHistory",
     "PerformanceMetrics",
+    "ModelState",
+    "TrainingMode",
+    "ValidationStrategy",
+    "ErrorSeverity",
     # Services
     "ValidationService",
     "LoggingService",

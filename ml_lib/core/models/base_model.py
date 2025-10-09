@@ -83,7 +83,36 @@ class BaseModel:
 
 @dataclass
 class ModelConfig:
-    """Configuración base para modelos."""
+    """Configuración base para modelos con validación.
+
+    Esta clase debe ser heredada por configs específicos de modelos.
+    Proporciona parámetros comunes y validación básica.
+
+    Example:
+        Crear una configuración específica para un modelo::
+
+            @dataclass
+            class LogisticRegressionConfig(ModelConfig):
+                C: float = 1.0  # Regularization strength
+                penalty: str = "l2"
+                solver: str = "lbfgs"
+
+                def __post_init__(self):
+                    super().__post_init__()
+                    if self.C <= 0:
+                        raise ValueError("C must be positive")
+                    if self.penalty not in ["l1", "l2", "elasticnet", "none"]:
+                        raise ValueError(f"Invalid penalty: {self.penalty}")
+
+    Attributes:
+        random_state: Semilla para generador de números aleatorios
+        verbose: Si True, imprime mensajes de progreso
+        n_jobs: Número de trabajos paralelos (-1 para usar todos los cores)
+        validation_fraction: Fracción de datos para validación (0.0-1.0)
+        early_stopping: Si True, detiene el entrenamiento cuando no hay mejora
+        max_iter: Número máximo de iteraciones
+        tol: Tolerancia para criterio de convergencia
+    """
 
     random_state: int = 42
     verbose: bool = False
@@ -93,31 +122,22 @@ class ModelConfig:
     max_iter: int = 1000
     tol: float = 1e-4
 
-
-@dataclass
-class Hyperparameters:
-    """Contenedor para hiperparámetros con validación."""
-
-    values: Dict[str, Any] = field(default_factory=dict)
-
     def __post_init__(self) -> None:
-        """Valida los hiperparámetros después de la inicialización."""
-        self._validate_values()
+        """Validación de configuración base."""
+        if self.max_iter <= 0:
+            raise ValueError(f"max_iter must be positive, got {self.max_iter}")
 
-    def _validate_values(self) -> None:
-        """Valida los valores de los hiperparámetros."""
-        for key, value in self.values.items():
-            self._validate_single_param(key, value)
+        if not 0 <= self.validation_fraction < 1:
+            raise ValueError(
+                f"validation_fraction must be in [0, 1), got {self.validation_fraction}"
+            )
 
-    def _validate_single_param(self, key: str, value: Any) -> None:
-        """Valida un solo parámetro."""
-        if isinstance(value, (int, float)) and np.isnan(value):
-            raise ValueError(f"Hyperparameter {key} cannot be NaN")
-        if isinstance(value, (int, float)) and np.isinf(value):
-            raise ValueError(f"Hyperparameter {key} cannot be infinite")
+        if self.tol <= 0:
+            raise ValueError(f"tol must be positive, got {self.tol}")
 
-    def update(self, **kwargs: Any) -> "Hyperparameters":
-        """Actualiza los hiperparámetros."""
-        self.values.update(kwargs)
-        self._validate_values()
-        return self
+        if self.n_jobs < -1 or self.n_jobs == 0:
+            raise ValueError(
+                f"n_jobs must be -1 (all cores) or positive, got {self.n_jobs}"
+            )
+
+
