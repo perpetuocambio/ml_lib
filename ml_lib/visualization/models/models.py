@@ -175,3 +175,130 @@ class HeatmapData:
     def color_map(self) -> str:
         """Backward compatibility property."""
         return self.color_scheme.value
+
+
+@dataclass
+class BoxPlotData:
+    """Datos específicos para gráficos de caja (boxplot)."""
+
+    data: list[np.ndarray]  # Lista de arrays, uno por caja
+    labels: Optional[List[str]] = None
+    title: str = "Box Plot"
+    xlabel: str = "Categories"
+    ylabel: str = "Values"
+    show_means: bool = True
+    show_fliers: bool = True  # Outliers
+    vert: bool = True  # Vertical boxes
+    grid: bool = True
+
+    def __post_init__(self):
+        """Validación de datos."""
+        if not self.data:
+            raise ValueError("data must not be empty")
+        if self.labels is not None and len(self.labels) != len(self.data):
+            raise ValueError(
+                f"labels length {len(self.labels)} must match data length {len(self.data)}"
+            )
+
+
+@dataclass
+class ViolinPlotData:
+    """Datos específicos para gráficos de violín."""
+
+    data: list[np.ndarray]  # Lista de arrays, uno por violín
+    labels: Optional[List[str]] = None
+    title: str = "Violin Plot"
+    xlabel: str = "Categories"
+    ylabel: str = "Values"
+    show_means: bool = True
+    show_extrema: bool = True
+    show_median: bool = True
+    vert: bool = True
+    grid: bool = True
+
+    def __post_init__(self):
+        """Validación de datos."""
+        if not self.data:
+            raise ValueError("data must not be empty")
+        if self.labels is not None and len(self.labels) != len(self.data):
+            raise ValueError(
+                f"labels length {len(self.labels)} must match data length {len(self.data)}"
+            )
+
+
+@dataclass
+class HistogramData:
+    """Datos específicos para histogramas."""
+
+    data: np.ndarray
+    bins: int | np.ndarray | str = 30
+    title: str = "Histogram"
+    xlabel: str = "Values"
+    ylabel: str = "Frequency"
+    density: bool = False  # Si True, muestra densidad en lugar de conteos
+    cumulative: bool = False
+    alpha: float = 0.7
+    color: str = "blue"
+    grid: bool = True
+
+    def __post_init__(self):
+        """Validación de datos."""
+        if self.data.size == 0:
+            raise ValueError("data must not be empty")
+        if isinstance(self.bins, int) and self.bins <= 0:
+            raise ValueError(f"bins must be positive, got {self.bins}")
+        if not 0 <= self.alpha <= 1:
+            raise ValueError(f"alpha must be in [0, 1], got {self.alpha}")
+
+
+@dataclass
+class PiePlotData:
+    """Datos específicos para gráficos de pastel (pie chart)."""
+
+    values: np.ndarray
+    labels: List[str]
+    title: str = "Pie Chart"
+    explode: Optional[np.ndarray] = None  # Para separar sectores
+    autopct: str = "%1.1f%%"  # Formato de porcentaje
+    startangle: float = 90
+    colors: Optional[List[str]] = None
+    shadow: bool = False
+
+    def __post_init__(self):
+        """Validación de datos."""
+        if len(self.values) != len(self.labels):
+            raise ValueError(
+                f"values length {len(self.values)} must match labels length {len(self.labels)}"
+            )
+        if self.explode is not None and len(self.explode) != len(self.values):
+            raise ValueError(
+                f"explode length must match values length {len(self.values)}"
+            )
+        if np.any(self.values < 0):
+            raise ValueError("values must be non-negative")
+
+
+@dataclass
+class ContourPlotData:
+    """Datos específicos para gráficos de contorno."""
+
+    X: np.ndarray  # Meshgrid X
+    Y: np.ndarray  # Meshgrid Y
+    Z: np.ndarray  # Valores
+    title: str = "Contour Plot"
+    xlabel: str = "X"
+    ylabel: str = "Y"
+    levels: int | np.ndarray = 10
+    filled: bool = True  # Si True, contourf; si False, contour
+    color_scheme: ColorScheme = ColorScheme.VIRIDIS
+    colorbar: bool = True
+    colorbar_label: str = "Values"
+
+    def __post_init__(self):
+        """Validación de datos."""
+        if self.X.shape != self.Y.shape or self.X.shape != self.Z.shape:
+            raise ValueError(
+                f"X, Y, Z must have same shape. Got X:{self.X.shape}, Y:{self.Y.shape}, Z:{self.Z.shape}"
+            )
+        if isinstance(self.levels, int) and self.levels <= 0:
+            raise ValueError(f"levels must be positive, got {self.levels}")

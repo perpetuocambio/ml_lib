@@ -9,7 +9,18 @@ import numpy as np
 import logging
 
 # Importar los modelos específicos
-from .models import PlotConfig, ScatterPlotData, LinePlotData, BarPlotData, HeatmapData
+from ..models import (
+    PlotConfig,
+    ScatterPlotData,
+    LinePlotData,
+    BarPlotData,
+    HeatmapData,
+    BoxPlotData,
+    ViolinPlotData,
+    HistogramData,
+    PiePlotData,
+    ContourPlotData,
+)
 
 
 class VisualizationService:
@@ -235,3 +246,126 @@ class PlottingService:
             rotation=config.rotation,
         )
         return self.create_heatmap(data)
+    def create_box_plot(self, data: BoxPlotData) -> plt.Figure:
+        """Crea un gráfico de caja (boxplot) usando modelo de datos."""
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        bp = ax.boxplot(
+            data.data,
+            labels=data.labels,
+            showmeans=data.show_means,
+            showfliers=data.show_fliers,
+            vert=data.vert,
+            patch_artist=True,
+        )
+
+        ax.set_xlabel(data.xlabel)
+        ax.set_ylabel(data.ylabel)
+        ax.set_title(data.title)
+
+        if data.grid:
+            ax.grid(True, alpha=0.3, axis='y' if data.vert else 'x')
+
+        return fig
+
+    def create_violin_plot(self, data: ViolinPlotData) -> plt.Figure:
+        """Crea un gráfico de violín usando modelo de datos."""
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        parts = ax.violinplot(
+            data.data,
+            showmeans=data.show_means,
+            showextrema=data.show_extrema,
+            showmedians=data.show_median,
+            vert=data.vert,
+        )
+
+        if data.labels:
+            ax.set_xticks(range(1, len(data.labels) + 1))
+            ax.set_xticklabels(data.labels)
+
+        ax.set_xlabel(data.xlabel)
+        ax.set_ylabel(data.ylabel)
+        ax.set_title(data.title)
+
+        if data.grid:
+            ax.grid(True, alpha=0.3, axis='y' if data.vert else 'x')
+
+        return fig
+
+    def create_histogram(self, data: HistogramData) -> plt.Figure:
+        """Crea un histograma usando modelo de datos."""
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        n, bins, patches = ax.hist(
+            data.data,
+            bins=data.bins,
+            density=data.density,
+            cumulative=data.cumulative,
+            alpha=data.alpha,
+            color=data.color,
+            edgecolor='black',
+        )
+
+        ax.set_xlabel(data.xlabel)
+        ax.set_ylabel(data.ylabel)
+        ax.set_title(data.title)
+
+        if data.grid:
+            ax.grid(True, alpha=0.3)
+
+        return fig
+
+    def create_pie_plot(self, data: PiePlotData) -> plt.Figure:
+        """Crea un gráfico de pastel (pie chart) usando modelo de datos."""
+        fig, ax = plt.subplots(figsize=(10, 8))
+
+        wedges, texts, autotexts = ax.pie(
+            data.values,
+            labels=data.labels,
+            explode=data.explode,
+            autopct=data.autopct,
+            startangle=data.startangle,
+            colors=data.colors,
+            shadow=data.shadow,
+        )
+
+        ax.set_title(data.title)
+
+        # Mejorar legibilidad de los textos
+        for autotext in autotexts:
+            autotext.set_color('white')
+            autotext.set_fontweight('bold')
+
+        return fig
+
+    def create_contour_plot(self, data: ContourPlotData) -> plt.Figure:
+        """Crea un gráfico de contorno usando modelo de datos."""
+        fig, ax = plt.subplots(figsize=(10, 8))
+
+        if data.filled:
+            contour = ax.contourf(
+                data.X,
+                data.Y,
+                data.Z,
+                levels=data.levels,
+                cmap=data.color_scheme.value,
+            )
+        else:
+            contour = ax.contour(
+                data.X,
+                data.Y,
+                data.Z,
+                levels=data.levels,
+                cmap=data.color_scheme.value,
+            )
+
+        if data.colorbar:
+            cbar = fig.colorbar(contour, ax=ax)
+            cbar.set_label(data.colorbar_label)
+
+        ax.set_xlabel(data.xlabel)
+        ax.set_ylabel(data.ylabel)
+        ax.set_title(data.title)
+
+        return fig
