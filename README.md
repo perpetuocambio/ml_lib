@@ -16,6 +16,7 @@ Una biblioteca de Machine Learning de alto rendimiento y código agnóstico escr
 ml_lib/
 ├── core/              # Componentes fundamentales
 ├── linalg/            # Operaciones de álgebra lineal
+├── visualization/     # Componentes de visualización generales
 ├── autograd/          # Diferenciación automática
 ├── optimization/      # Algoritmos de optimización
 ├── kernels/           # Métodos de kernel
@@ -47,12 +48,23 @@ Incluimos una aplicación de demostración completa llamada **EcoML Analyzer** q
 - Incluye visualización de resultados ecológicos
 - Demuestra la integración de todos los componentes de la biblioteca
 
+La aplicación utiliza componentes generales de la biblioteca (como los de visualización) y los aplica al dominio ecológico, demostrando el enfoque agnóstico al dominio de nuestra biblioteca.
+
 Para ejecutar la demostración:
 
 ```bash
 cd /src/perpetuocambio/ml_lib
 PYTHONPATH=. python ecoml_analyzer/main.py
 ```
+
+## Módulo de visualización general
+
+El módulo `visualization` proporciona componentes de visualización basados en interfaces, servicios y handlers que pueden ser reutilizados en diferentes dominios. Incluye:
+
+- **Interfaces**: `VisualizationInterface`, `PlotTypeInterface`
+- **Modelos**: `PlotConfig`, `VisualizationMetadata`
+- **Servicios**: `VisualizationService`, `PlottingService`
+- **Handlers**: `VisualizationErrorHandler`, `ImageExportHandler`
 
 ## Instalación
 
@@ -66,8 +78,17 @@ uv pip install -e .
 
 ```python
 from ml_lib.core import EstimatorInterface
+from ml_lib.visualization import VisualizationFactory, PlotConfig
 
-# Ejemplo de uso
+# Ejemplo de uso de componentes generales
+viz = VisualizationFactory.create_visualization(
+    PlotConfig(title="Mi Gráfico", style="seaborn")
+)
+
+fig = viz.plot_scatter(x_data, y_data)
+viz.save_plot(fig, "mi_grafico.png")
+
+# Ejemplo de implementación de estimador
 class MyEstimator(EstimatorInterface):
     def fit(self, X, y, **kwargs):
         # Implementación del ajuste

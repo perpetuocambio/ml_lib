@@ -5,7 +5,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typing import Any, Dict, List, Optional, Tuple
 from .interfaces import VisualizationInterface, PlotTypeInterface
-from .models import PlotConfig, VisualizationMetadata
+from .models import (
+    PlotConfig, VisualizationMetadata, ScatterPlotData, 
+    LinePlotData, BarPlotData, HeatmapData
+)
 from .services import VisualizationService, PlottingService
 from .handlers import VisualizationErrorHandler, VisualizationConfigHandler, ImageExportHandler
 from ml_lib.core import LoggingService
@@ -35,85 +38,70 @@ class GeneralVisualization(VisualizationInterface, PlotTypeInterface):
         """Guarda el gráfico en un archivo."""
         self.export_handler.save_figure(figure, filepath)
     
-    @VisualizationErrorHandler.handle_visualization_error
     def plot_scatter(self, x: np.ndarray, y: np.ndarray, **kwargs) -> plt.Figure:
-        """Crea un gráfico de dispersión."""
-        # Combinar configuración por defecto con parámetros específicos
-        plot_params = {
-            'figsize': kwargs.get('figsize', self.config.figsize),
-            'xlabel': kwargs.get('xlabel', self.config.xlabel),
-            'ylabel': kwargs.get('ylabel', self.config.ylabel),
-            'title': kwargs.get('title', self.config.title),
-            'alpha': kwargs.get('alpha', self.config.alpha),
-            'grid': kwargs.get('grid', self.config.grid),
-            'legend': kwargs.get('legend', self.config.legend),
-        }
-        
+        """Crea un gráfico de dispersión usando modelos de datos."""
         # Validar datos
         self.visualization_service.validate_plot_data(x)
         self.visualization_service.validate_plot_data(y)
         
-        # Sanitizar parámetros
-        plot_params = self.config_handler.sanitize_plot_params(plot_params)
+        # Combinar configuración por defecto con parámetros específicos
+        config = PlotConfig(**{k: v for k, v in self.config.__dict__.items()})
+        for key, value in kwargs.items():
+            if hasattr(config, key):
+                setattr(config, key, value)
         
-        return self.plotting_service.create_scatter_plot(x, y, **plot_params)
+        return self.plotting_service.create_scatter_plot_from_config(
+            x, y, config, 
+            labels=kwargs.get('labels'), 
+            colors=kwargs.get('colors')
+        )
     
-    @VisualizationErrorHandler.handle_visualization_error
     def plot_line(self, x: np.ndarray, y: np.ndarray, **kwargs) -> plt.Figure:
-        """Crea un gráfico de líneas."""
-        plot_params = {
-            'figsize': kwargs.get('figsize', self.config.figsize),
-            'xlabel': kwargs.get('xlabel', self.config.xlabel),
-            'ylabel': kwargs.get('ylabel', self.config.ylabel),
-            'title': kwargs.get('title', self.config.title),
-            'linewidth': kwargs.get('linewidth', 2),
-            'linestyle': kwargs.get('linestyle', '-'),
-            'grid': kwargs.get('grid', self.config.grid),
-        }
-        
-        # Validar y sanitizar
+        """Crea un gráfico de líneas usando modelos de datos."""
+        # Validar datos
         self.visualization_service.validate_plot_data(x)
         self.visualization_service.validate_plot_data(y)
-        plot_params = self.config_handler.sanitize_plot_params(plot_params)
         
-        return self.plotting_service.create_line_plot(x, y, **plot_params)
+        # Combinar configuración por defecto con parámetros específicos
+        config = PlotConfig(**{k: v for k, v in self.config.__dict__.items()})
+        for key, value in kwargs.items():
+            if hasattr(config, key):
+                setattr(config, key, value)
+        
+        return self.plotting_service.create_line_plot_from_config(x, y, config)
     
-    @VisualizationErrorHandler.handle_visualization_error
     def plot_bar(self, x: np.ndarray, heights: np.ndarray, **kwargs) -> plt.Figure:
-        """Crea un gráfico de barras."""
-        plot_params = {
-            'figsize': kwargs.get('figsize', self.config.figsize),
-            'xlabel': kwargs.get('xlabel', self.config.xlabel),
-            'ylabel': kwargs.get('ylabel', self.config.ylabel),
-            'title': kwargs.get('title', self.config.title),
-            'color': kwargs.get('color', 'blue'),
-            'alpha': kwargs.get('alpha', self.config.alpha),
-            'rotation': kwargs.get('rotation', 45),
-            'grid': kwargs.get('grid', self.config.grid),
-        }
-        
-        # Validar y sanitizar
+        """Crea un gráfico de barras usando modelos de datos."""
+        # Validar datos
         self.visualization_service.validate_plot_data(heights)
-        plot_params = self.config_handler.sanitize_plot_params(plot_params)
         
-        return self.plotting_service.create_bar_plot(x, heights, **plot_params)
+        # Combinar configuración por defecto con parámetros específicos
+        config = PlotConfig(**{k: v for k, v in self.config.__dict__.items()})
+        for key, value in kwargs.items():
+            if hasattr(config, key):
+                setattr(config, key, value)
+        
+        return self.plotting_service.create_bar_plot_from_config(
+            x, heights, config, 
+            labels=kwargs.get('labels')
+        )
     
-    @VisualizationErrorHandler.handle_visualization_error
     def plot_heatmap(self, data: np.ndarray, **kwargs) -> plt.Figure:
-        """Crea un heatmap."""
-        plot_params = {
-            'figsize': kwargs.get('figsize', self.config.figsize),
-            'title': kwargs.get('title', self.config.title),
-            'color_map': kwargs.get('color_map', self.config.color_map),
-            'colorbar_label': kwargs.get('colorbar_label', 'Value'),
-            'rotation': kwargs.get('rotation', 45),
-        }
-        
-        # Validar y sanitizar
+        """Crea un heatmap usando modelos de datos."""
+        # Validar datos
         self.visualization_service.validate_plot_data(data)
-        plot_params = self.config_handler.sanitize_plot_params(plot_params)
         
-        return self.plotting_service.create_heatmap(data, **plot_params)
+        # Combinar configuración por defecto con parámetros específicos
+        config = PlotConfig(**{k: v for k, v in self.config.__dict__.items()})
+        for key, value in kwargs.items():
+            if hasattr(config, key):
+                setattr(config, key, value)
+        
+        return self.plotting_service.create_heatmap_from_config(
+            data, config,
+            x_labels=kwargs.get('x_labels'),
+            y_labels=kwargs.get('y_labels')
+        )
 
 
 class VisualizationFactory:

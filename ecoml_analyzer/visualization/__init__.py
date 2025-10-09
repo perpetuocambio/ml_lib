@@ -13,6 +13,7 @@ from plotly.subplots import make_subplots
 # Importar componentes generales de visualización de ml_lib
 from ml_lib.visualization import GeneralVisualization, VisualizationFactory, PlotConfig
 from ml_lib.core import LoggingService
+from ml_lib.visualization.models import ScatterPlotData, LinePlotData, BarPlotData, HeatmapData
 
 # Asegurarse de que plotly está disponible
 try:
@@ -85,8 +86,7 @@ class EcologicalVisualizer:
             normalized_matrix,
             x_labels=site_names,
             y_labels=species_names,
-            title=title,
-            figsize=figsize
+            title=title
         )
         
         self.figures.append(fig)
@@ -94,7 +94,7 @@ class EcologicalVisualizer:
     
     def plot_composition_analysis(
         self,
-        composition_results: Dict[str, np.ndarray],
+        composition_results: Dict[str, Any],  # Usar Dict en lugar de np.ndarray para mayor flexibilidad
         labels: List[str],
         title: str = "Análisis de Composición General",
         figsize: Tuple[int, int] = (12, 8)
@@ -116,7 +116,7 @@ class EcologicalVisualizer:
         fig.suptitle(title)
         
         # Riqueza
-        if 'richness' in composition_results:
+        if 'richness' in composition_results and isinstance(composition_results['richness'], np.ndarray):
             # Usar componente general de visualización para crear el gráfico de barras
             x_vals = np.arange(len(labels))
             heights = composition_results['richness']
@@ -128,7 +128,7 @@ class EcologicalVisualizer:
             axes[0, 0].set_xticklabels(labels, rotation=45, ha="right")
         
         # Diversidad
-        if 'diversity' in composition_results:
+        if 'diversity' in composition_results and isinstance(composition_results['diversity'], np.ndarray):
             x_vals = np.arange(len(labels))
             heights = composition_results['diversity']
             axes[0, 1].bar(x_vals, heights)
@@ -139,7 +139,7 @@ class EcologicalVisualizer:
             axes[0, 1].set_xticklabels(labels, rotation=45, ha="right")
         
         # Abundancia total
-        if 'total_values' in composition_results:
+        if 'total_values' in composition_results and isinstance(composition_results['total_values'], np.ndarray):
             x_vals = np.arange(len(labels))
             heights = composition_results['total_values']
             axes[1, 0].bar(x_vals, heights)
@@ -152,7 +152,7 @@ class EcologicalVisualizer:
         # Distribución
         if 'abundance_distribution' in composition_results:
             dist = composition_results['abundance_distribution']
-            summary_data = [dist['mean'], dist['std'], dist['min'], dist['max']]
+            summary_data = [dist.get('mean', 0), dist.get('std', 0), dist.get('min', 0), dist.get('max', 0)]
             summary_labels = ['Media', 'Std', 'Mín', 'Máx']
             x_vals = np.arange(len(summary_labels))
             axes[1, 1].bar(x_vals, summary_data)
