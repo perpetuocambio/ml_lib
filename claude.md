@@ -7,6 +7,7 @@ ML Library es una biblioteca de Machine Learning de alto rendimiento y código a
 ### Visión del Proyecto
 
 Construir una biblioteca ML moderna que combine:
+
 - **Tipado estricto** con Python type hints para seguridad en desarrollo
 - **Arquitectura modular** siguiendo principios SOLID
 - **Alto rendimiento** optimizado con NumPy y bibliotecas de bajo nivel
@@ -20,6 +21,7 @@ Construir una biblioteca ML moderna que combine:
 El proyecto sigue una arquitectura modular estricta validada por `scripts/check_module_structure.py`:
 
 **Reglas de Estructura:**
+
 1. ❌ **No ficheros .py en la raíz del proyecto** (todo debe estar en `ml_lib/`)
 2. ❌ **No ficheros .py en la raíz de un módulo** (excepto `__init__.py`)
 3. ✅ **Ficheros .py solo en subdirectorios:** `services/`, `interfaces/`, `models/`, `handlers/`
@@ -48,24 +50,28 @@ ml_lib/[modulo]/
 ### Responsabilidades por Capa
 
 **Interfaces (`interfaces/`):**
+
 - Definición de contratos con ABC (Abstract Base Class)
 - Uso de `typing.Protocol` para duck typing cuando sea apropiado
 - Generics con TypeVar para tipado flexible
 - Sin lógica de implementación
 
 **Modelos (`models/`):**
+
 - Data classes con `@dataclass`
 - TypedDict para estructuras de datos
 - Validación de tipos con type hints
 - Sin lógica de negocio
 
 **Servicios (`services/`):**
+
 - Implementación de algoritmos
 - Lógica de negocio principal
 - Operaciones computacionales
 - Inyección de dependencias
 
 **Handlers (`handlers/`):**
+
 - Manejo de errores específicos
 - Gestión de configuración
 - Cache y optimización de memoria
@@ -76,6 +82,7 @@ ml_lib/[modulo]/
 ### 🏗️ Core Infrastructure (Implementado)
 
 **`ml_lib/core/`** - Componentes fundamentales
+
 - ✅ Interfaces base: `EstimatorInterface`, `TransformerInterface`, `MetricInterface`, `OptimizerInterface`
 - ✅ Servicios: `ValidationService`, `LoggingService`
 - ✅ Handlers: `ErrorHandler`, `ConfigHandler`
@@ -84,6 +91,7 @@ ml_lib/[modulo]/
 ### 🔢 Linear Algebra (Implementado)
 
 **`ml_lib/linalg/`** - Operaciones de álgebra lineal optimizadas
+
 - ✅ Interfaces: `MatrixOperationInterface`, `DecompositionInterface`, `SolverInterface`, `BLASInterface`, `LAPACKInterface`
 - ✅ Modelos: `Matrix`, `SparseMatrix`, `DecompositionResult`, `LinearSystemSolution`, `EigenDecomposition`
 - ✅ Servicios: `BLASService`, `LAPACKService`, `MatrixOperationService`, `DecompositionService`, `SolverService`, `SparseMatrixService`
@@ -92,6 +100,7 @@ ml_lib/[modulo]/
 ### 📊 Visualization (Implementado)
 
 **`ml_lib/visualization/`** - Componentes de visualización generales
+
 - ✅ Interfaces: `VisualizationInterface`, `PlotTypeInterface`
 - ✅ Modelos: `PlotConfig`, `VisualizationMetadata`
 - ✅ Servicios: `VisualizationService`, `PlottingService`
@@ -101,6 +110,7 @@ ml_lib/[modulo]/
 ### 🔄 Automatic Differentiation (En Desarrollo)
 
 **`ml_lib/autograd/`** - Diferenciación automática
+
 - Interfaces: `DifferentiableInterface`, `OperationInterface`, `VariableInterface`
 - Modelos: `ComputationalGraph`, `Variable`, `OperationNode`
 - Servicios: `GraphBuilderService`, `GradientComputationService`, `BackwardService`
@@ -109,6 +119,7 @@ ml_lib/[modulo]/
 ### 🎯 Optimization (En Desarrollo)
 
 **`ml_lib/optimization/`** - Algoritmos de optimización numérica
+
 - Interfaces: `OptimizerInterface`, `SchedulerInterface`, `ConstraintInterface`
 - Modelos: `OptimizerState`, `OptimizationResult`, `ConvergenceCriteria`
 - Servicios: `FirstOrderOptimizerService`, `SecondOrderOptimizerService`, `LineSearchService`
@@ -117,6 +128,7 @@ ml_lib/[modulo]/
 ### 🌐 Kernel Methods (Planificado)
 
 **`ml_lib/kernels/`** - Métodos de kernel y SVM
+
 - Interfaces: `KernelInterface`, `KernelMethodInterface`, `SimilarityInterface`
 - Modelos: `KernelMatrix`, `KernelParams`, `SVMModel`
 - Servicios: `KernelComputationService`, `KernelMatrixService`, `HyperparameterService`
@@ -125,6 +137,7 @@ ml_lib/[modulo]/
 ### 📈 Probabilistic Models (Planificado)
 
 **`ml_lib/probabilistic/`** - Modelos probabilísticos
+
 - Interfaces: `DistributionInterface`, `GraphicalModelInterface`, `InferenceInterface`
 - Modelos: `BayesianNetwork`, `MarkovChain`, `LatentVariableModel`
 - Servicios: `InferenceService`, `SamplingService`, `EMService`
@@ -133,6 +146,7 @@ ml_lib/[modulo]/
 ### 🧠 Neural Networks (Planificado)
 
 **`ml_lib/neural/`** - Redes neuronales
+
 - Interfaces: `LayerInterface`, `ActivationInterface`, `LossInterface`
 - Modelos: `NeuralNetwork`, `LayerConfig`, `TrainingState`
 - Servicios: `LayerService`, `ActivationService`, `BackpropagationService`
@@ -141,6 +155,7 @@ ml_lib/[modulo]/
 ### 🌲 Ensemble Methods (Planificado)
 
 **`ml_lib/ensemble/`** - Métodos de ensemble
+
 - Interfaces: `EnsembleInterface`, `WeakLearnerInterface`, `AggregationInterface`
 - Modelos: `EnsembleModel`, `DecisionTree`, `BoostingState`
 - Servicios: `BoostingService`, `BaggingService`, `StackingService`
@@ -149,6 +164,7 @@ ml_lib/[modulo]/
 ### 🔧 Feature Engineering (Planificado)
 
 **`ml_lib/feature_engineering/`** - Ingeniería de características
+
 - Interfaces: `SelectorInterface`, `ExtractorInterface`, `FeatureInterface`
 - Modelos: `FeatureSet`, `TransformationPipeline`, `FeatureMetadata`
 - Servicios: `SelectionService`, `ExtractionService`, `SynthesisService`
@@ -157,6 +173,7 @@ ml_lib/[modulo]/
 ### 📦 Data Processing (Planificado)
 
 **`ml_lib/data_processing/`** - Procesamiento de datos a escala
+
 - Interfaces: `DataLoaderInterface`, `ProcessorInterface`, `IteratorInterface`
 - Modelos: `Dataset`, `Batch`, `DataConfig`
 - Servicios: `StreamingService`, `BatchService`, `DistributedService`
@@ -165,6 +182,7 @@ ml_lib/[modulo]/
 ### 🎲 Uncertainty Quantification (Planificado)
 
 **`ml_lib/uncertainty/`** - Cuantificación de incertidumbre
+
 - Interfaces: `UncertaintyInterface`, `CalibratorInterface`, `IntervalInterface`
 - Modelos: `UncertaintyEstimate`, `CalibrationCurve`, `PredictionInterval`
 - Servicios: `CalibrationService`, `ConformalService`, `EnsembleUncertaintyService`
@@ -173,6 +191,7 @@ ml_lib/[modulo]/
 ### ⏱️ Time Series (Planificado)
 
 **`ml_lib/time_series/`** - Modelado de series temporales
+
 - Interfaces: `ForecasterInterface`, `TimeSeriesModelInterface`, `SequenceInterface`
 - Modelos: `TimeSeries`, `ForecastResult`, `ARIMAModel`
 - Servicios: `ForecastingService`, `DecompositionService`, `StationarityService`
@@ -181,6 +200,7 @@ ml_lib/[modulo]/
 ### 🎮 Reinforcement Learning (Planificado)
 
 **`ml_lib/reinforcement/`** - Aprendizaje por refuerzo
+
 - Interfaces: `AgentInterface`, `EnvironmentInterface`, `PolicyInterface`
 - Modelos: `Agent`, `State`, `Transition`
 - Servicios: `PolicyService`, `ValueFunctionService`, `EnvironmentService`
@@ -189,6 +209,7 @@ ml_lib/[modulo]/
 ### 🔍 Interpretability (Planificado)
 
 **`ml_lib/interpretability/`** - Interpretación de modelos
+
 - Interfaces: `ExplainerInterface`, `AttributionInterface`, `VisualizationInterface`
 - Modelos: `Explanation`, `AttributionMap`, `FeatureImportance`
 - Servicios: `ExplanationService`, `AttributionService`, `VisualizationService`
@@ -197,6 +218,7 @@ ml_lib/[modulo]/
 ### 🤖 AutoML (Planificado)
 
 **`ml_lib/automl/`** - Automatización de ML
+
 - Interfaces: `OptimizerInterface`, `SearchSpaceInterface`, `ObjectiveInterface`
 - Modelos: `SearchSpace`, `Trial`, `OptimizationResult`
 - Servicios: `HyperparameterOptimizationService`, `NASService`, `MetaLearningService`
@@ -205,6 +227,7 @@ ml_lib/[modulo]/
 ### ⚖️ Fairness (Planificado)
 
 **`ml_lib/fairness/`** - Equidad y sesgo
+
 - Interfaces: `FairnessMetricInterface`, `DebiaserInterface`, `ConstraintInterface`
 - Modelos: `FairnessReport`, `ProtectedAttribute`, `MitigationResult`
 - Servicios: `BiasDetectionService`, `MitigationService`, `MetricService`
@@ -213,6 +236,7 @@ ml_lib/[modulo]/
 ### 🚀 Deployment (Planificado)
 
 **`ml_lib/deployment/`** - Despliegue de modelos
+
 - Interfaces: `ServerInterface`, `MonitorInterface`, `RegistryInterface`
 - Modelos: `ModelArtifact`, `MonitoringMetrics`, `DeploymentConfig`
 - Servicios: `ServingService`, `MonitoringService`, `VersioningService`
@@ -221,6 +245,7 @@ ml_lib/[modulo]/
 ### 🔌 Plugin System (Planificado)
 
 **`ml_lib/plugin_system/`** - Sistema de plugins
+
 - Interfaces: `PluginInterface`, `HookInterface`, `ExtensionInterface`
 - Modelos: `PluginMetadata`, `HookSpecification`, `ExtensionConfig`
 - Servicios: `DiscoveryService`, `LoadingService`, `RegistryService`
@@ -229,6 +254,7 @@ ml_lib/[modulo]/
 ### ⚡ Performance (Planificado)
 
 **`ml_lib/performance/`** - Rendimiento y optimización
+
 - Interfaces: `ProfilerInterface`, `CompilerInterface`, `CacheInterface`
 - Modelos: `ProfilingResult`, `PerformanceMetrics`, `CacheConfig`
 - Servicios: `ProfilingService`, `CompilationService`, `CachingService`
@@ -237,6 +263,7 @@ ml_lib/[modulo]/
 ### 🛠️ Utils (Planificado)
 
 **`ml_lib/utils/`** - Utilidades generales
+
 - Interfaces: `SerializableInterface`, `RandomStateInterface`, `ParallelInterface`
 - Modelos: `Config`, `RandomState`, `JobConfig`
 - Servicios: `SerializationService`, `RandomService`, `ParallelService`
@@ -249,6 +276,7 @@ ml_lib/[modulo]/
 **`ecoml_analyzer/`** - Aplicación de análisis ecológico
 
 Aplicación completa que demuestra el uso de la biblioteca en un contexto real:
+
 - Análisis de abundancia de especies
 - Análisis de diversidad y comunidades ecológicas
 - Distribución de especies
@@ -329,17 +357,20 @@ class VisualizationFactory:
 ## Stack Tecnológico
 
 ### Dependencias Core
+
 - **Python**: ≥3.10
 - **NumPy**: ≥1.21.0 (operaciones numéricas)
 - **SciPy**: ≥1.7.0 (algoritmos científicos)
 - **Pandas**: ≥1.3.0 (manipulación de datos)
 
 ### Visualización
+
 - **Matplotlib**: ≥3.5.0
 - **Seaborn**: ≥0.11.0
 - **Plotly**: ≥5.0.0
 
 ### Desarrollo
+
 - **pytest**: Testing
 - **mypy**: Type checking
 - **black**: Formatting
@@ -351,6 +382,7 @@ class VisualizationFactory:
 ### Crear un Nuevo Módulo
 
 1. **Crear estructura de directorios:**
+
 ```bash
 mkdir -p ml_lib/[modulo]/{interfaces,models,services,handlers}
 touch ml_lib/[modulo]/__init__.py
@@ -358,6 +390,7 @@ touch ml_lib/[modulo]/{interfaces,models,services,handlers}/__init__.py
 ```
 
 2. **Definir interfaces en `interfaces/`:**
+
 ```python
 from abc import ABC, abstractmethod
 
@@ -368,6 +401,7 @@ class MyInterface(ABC):
 ```
 
 3. **Crear modelos en `models/`:**
+
 ```python
 from dataclasses import dataclass
 
@@ -378,6 +412,7 @@ class MyModel:
 ```
 
 4. **Implementar servicios en `services/`:**
+
 ```python
 class MyService:
     def __init__(self, dependency: SomeDependency):
@@ -389,6 +424,7 @@ class MyService:
 ```
 
 5. **Añadir handlers en `handlers/`:**
+
 ```python
 class MyHandler:
     def handle_error(self, error: Exception) -> None:
@@ -397,6 +433,7 @@ class MyHandler:
 ```
 
 6. **Exportar API en `__init__.py`:**
+
 ```python
 from .interfaces import MyInterface
 from .models import MyModel
@@ -429,11 +466,13 @@ El backlog está organizado en User Stories ubicadas en `docs/backlog/`. **Ver `
 **00_code_quality/** - Fundamentos de calidad de código (66 horas estimadas)
 
 - **US 0.1**: Refactorización a Clases con Tipado Fuerte (28h)
+
   - Eliminar uso excesivo de diccionarios
   - Convertir strings mágicos en Enums
   - Crear clases dataclass bien tipadas
 
 - **US 0.2**: Seguridad de Tipos Completa (20h)
+
   - Eliminar uso innecesario de `Any`
   - Configurar mypy en modo strict
   - Implementar Generics correctamente
@@ -448,6 +487,7 @@ El backlog está organizado en User Stories ubicadas en `docs/backlog/`. **Ver `
 ### Épicas Implementadas
 
 1. **01_core_infrastructure/** - Infraestructura base ✅ (Implementado)
+
    - US 1.1: Interfaces consistentes
    - US 1.2: Validación de entradas
    - US 1.3: Manejo de errores y logging
@@ -461,6 +501,7 @@ El backlog está organizado en User Stories ubicadas en `docs/backlog/`. **Ver `
 ### Épicas en Desarrollo
 
 3. **03_automatic_differentiation/** - Diferenciación automática 🚧 (En desarrollo)
+
    - US 3.1: Grafo computacional
    - US 3.2: Backpropagation
 
@@ -517,7 +558,7 @@ python3 scripts/check_module_structure.py
 
 ```bash
 # Ejecutar aplicación de demostración
-cd /src/perpetuocambio/ml_lib
+cd .
 PYTHONPATH=. python3 ecoml_analyzer/main.py
 ```
 
@@ -770,6 +811,7 @@ result.confidence_scores  # ✅ Tipos claros
 ```
 
 **Excepciones legítimas para tuplas**:
+
 - Pares matemáticos universales (como meshgrid → `(X, Y)`)
 - Descomposiciones estándar (QR → `(Q, R)`, pero mejor usar dataclass)
 - Cuando hay SOLO 2 elementos con semántica obvia

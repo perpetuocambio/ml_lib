@@ -52,7 +52,7 @@ La aplicación utiliza componentes generales de la biblioteca (como los de visua
 Para ejecutar la demostración:
 
 ```bash
-cd /src/perpetuocambio/ml_lib
+cd .
 PYTHONPATH=. python ecoml_analyzer/main.py
 ```
 

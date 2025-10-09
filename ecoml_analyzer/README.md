@@ -17,12 +17,14 @@ EcoML Analyzer es una aplicación que demuestra cómo nuestra biblioteca de ML p
 ## Características principales
 
 ### 1. Preprocesamiento de datos ecológicos
+
 - Lectura de datos de abundancia de especies desde archivos CSV
 - Normalización de datos (abundancia relativa, presencia/ausencia, transformaciones)
 - Filtrado de especies por criterios de ocurrencia y abundancia
 - Cálculo de índices de diversidad ecológica
 
 ### 2. Análisis ecológico avanzado
+
 - Cálculo de índices de diversidad (Shannon, Simpson, riqueza)
 - Análisis de componentes principales (PCA) y coordenadas principales (PCoA)
 - Clustering de sitios basado en composición de especies
@@ -31,12 +33,14 @@ EcoML Analyzer es una aplicación que demuestra cómo nuestra biblioteca de ML p
 - Análisis multi-especie y agrupamiento en guildas
 
 ### 3. Integración con nuestra biblioteca ML
+
 - Uso de interfaces de estimadores personalizados
 - Cálculos de álgebra lineal optimizados con nuestra biblioteca `linalg`
 - Modelos personalizados que extienden nuestra arquitectura base
 - Validación y manejo de errores consistentes
 
 ### 4. Visualización de resultados
+
 - Heatmaps de abundancia de especies
 - Gráficos de índices de diversidad
 - Análisis de comunidades (PCA, PCoA)
@@ -61,7 +65,7 @@ uv pip install -e .
 Para ejecutar la demostración completa:
 
 ```bash
-cd /src/perpetuocambio/ml_lib
+cd .
 PYTHONPATH=. python ecoml_analyzer/main.py
 ```
 
@@ -70,7 +74,7 @@ PYTHONPATH=. python ecoml_analyzer/main.py
 Para una ejecución rápida:
 
 ```bash
-cd /src/perpetuocambio/ml_lib
+cd .
 PYTHONPATH=. python -c "
 from ecoml_analyzer.main import run_simple_example
 run_simple_example()
@@ -106,6 +110,7 @@ La aplicación demuestra cómo:
 5. **Integrar** nuestra biblioteca personalizada con herramientas científicas
 
 Específicamente, la demostración:
+
 - Genera datos sintéticos de abundancia de especies con estructura de hábitat
 - Calcula índices de diversidad ecológica
 - Realiza análisis de comunidades usando PCA y PCoA

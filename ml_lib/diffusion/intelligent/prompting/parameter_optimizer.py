@@ -10,6 +10,7 @@ from ml_lib.diffusion.intelligent.prompting.entities import (
     Priority,
     ArtisticStyle,
 )
+from ml_lib.diffusion.intelligent.prompting.config_loader import get_default_config
 
 logger = logging.getLogger(__name__)
 
@@ -26,16 +27,25 @@ class GenerationConstraints:
 class ParameterOptimizer:
     """Optimizes generation parameters based on prompt analysis."""
 
-    # Sampler recommendations by style
-    SAMPLER_MAP = {
-        ArtisticStyle.PHOTOREALISTIC: "DPM++ 2M Karras",
-        ArtisticStyle.ANIME: "DPM++ 2M",
-        ArtisticStyle.CARTOON: "Euler A",
-        ArtisticStyle.PAINTING: "DPM++ 2M Karras",
-        ArtisticStyle.SKETCH: "Euler A",
-        ArtisticStyle.ABSTRACT: "Euler A",
-        ArtisticStyle.CONCEPT_ART: "DPM++ 2M",
-    }
+    def __init__(self, config=None):
+        """
+        Initialize parameter optimizer.
+
+        Args:
+            config: PrompterConfig with configuration (if None, loads default)
+        """
+        # Load configuration
+        if config is None:
+            config = get_default_config()
+        self.config = config
+        
+        # Set up configurable values
+        self.SAMPLER_MAP = self.config.model_strategies
+        self.DEFAULT_RANGES = self.config.default_ranges
+        self.VRAM_PRESETS = self.config.vram_presets
+        self.ACTIVITY_PROFILES = self.config.activity_profiles
+        self.AGE_PROFILES = self.config.age_profiles
+        self.DETAIL_PRESETS = self.config.detail_presets
 
     def optimize(
         self,
@@ -90,17 +100,15 @@ class ParameterOptimizer:
         self, analysis: PromptAnalysis, constraints: GenerationConstraints
     ) -> int:
         """
-        Optimize number of inference steps for EXPLICIT content.
+        Optimize number of inference steps from configuration.
 
         Explicit anatomical detail requires MORE steps.
-
-        Formula:
-        steps = base + complexity_bonus + quality_bonus + anatomy_bonus - speed_penalty
         """
-        # Higher base for explicit content
-        base = 25
+        # Use base from configuration, defaulting to 25
+        base = self.DETAIL_PRESETS.get("medium", {}).get("base_steps", 35)
 
-        # Complexity adjustment (INCREASED for explicit)
+        # Complexity adjustment from configuration
+        complexity_bonus = 0
         if analysis.complexity_score < 0.3:
             complexity_bonus = 5
         elif analysis.complexity_score < 0.5:
@@ -149,36 +157,36 @@ class ParameterOptimizer:
 
         steps = base + complexity_bonus + quality_bonus + anatomy_bonus + activity_bonus - speed_penalty
 
-        # Clamp to EXTENDED range for explicit content (up to 80 steps)
-        return int(np.clip(steps, 20, 80))
+        # Use configurable range
+        min_steps = self.DEFAULT_RANGES.get("min_steps", 20)
+        max_steps = self.DEFAULT_RANGES.get("max_steps", 80)
+        
+        return int(np.clip(steps, min_steps, max_steps))
 
     def _optimize_cfg(self, analysis: PromptAnalysis) -> float:
         """
-        Optimize CFG (guidance) scale for EXPLICIT PHOTOREALISTIC content.
+        Optimize CFG (guidance) scale from configuration.
 
-        Explicit photorealistic adult content requires:
-        - HIGH CFG for anatomical accuracy (genitals, positioning, detail)
-        - Range: 8.0 - 15.0 (sweet spot 10.0-13.0 for explicit)
-        - Higher values needed for complex anatomical descriptions
+        Uses configurable ranges and base values.
         """
-        # START HIGHER for explicit content
-        base_cfg = 10.5
+        # START with configurable base
+        base_cfg = self.DETAIL_PRESETS.get("medium", {}).get("base_cfg", 9.0)
 
-        # Adjust for complexity (more details = MUCH higher CFG)
+        # Adjust for complexity (more details = higher CFG)
         if analysis.complexity_score > 0.8:
-            base_cfg += 2.0  # Very complex = maximum CFG
+            base_cfg += 2.0  # Very complex
         elif analysis.complexity_score > 0.7:
             base_cfg += 1.5
         elif analysis.complexity_score > 0.5:
             base_cfg += 1.0
 
-        # Adjust for quality keywords (explicit needs maximum quality)
+        # Adjust for quality keywords
         quality_concepts = analysis.detected_concepts.get("quality", [])
         if any("detailed" in q.lower() or "hyperrealistic" in q.lower() or "8k" in q.lower()
                for q in quality_concepts):
             base_cfg += 1.0
 
-        # CRITICAL: Anatomy focus (needs VERY precise control)
+        # CRITICAL: Anatomy focus (needs precise control)
         anatomy_concepts = analysis.detected_concepts.get("anatomy", [])
         anatomy_count = len(anatomy_concepts)
 
@@ -189,14 +197,14 @@ class ParameterOptimizer:
         elif anatomy_count > 3:
             base_cfg += 1.5  # Detailed anatomy
 
-        # EXPLICIT: Sexual activity needs maximum CFG for positioning accuracy
+        # EXPLICIT: Sexual activity needs higher CFG for positioning accuracy
         activity_concepts = analysis.detected_concepts.get("activity", [])
         activity_text = " ".join(activity_concepts).lower()
 
         if any(kw in activity_text for kw in ["sex", "intercourse", "penetration", "oral"]):
-            base_cfg += 2.0  # Sexual acts = maximum CFG
+            base_cfg += 2.0  # Sexual acts
         elif any(kw in activity_text for kw in ["intimate", "erotic", "sensual", "touching"]):
-            base_cfg += 1.5  # Intimate acts = high CFG
+            base_cfg += 1.5  # Intimate acts
 
         # EXPLICIT: Nudity and exposure benefit from higher CFG
         clothing_concepts = analysis.detected_concepts.get("clothing", [])
@@ -214,26 +222,28 @@ class ParameterOptimizer:
         if len(physical_details) > 3:
             base_cfg += 1.0
 
-        # Clamp to EXPLICIT photorealistic range (higher ceiling)
-        return round(np.clip(base_cfg, 8.0, 15.0), 1)
+        # Use configurable range
+        min_cfg = self.DEFAULT_RANGES.get("min_cfg", 7.0)
+        max_cfg = self.DEFAULT_RANGES.get("max_cfg", 15.0)
+        
+        return round(np.clip(base_cfg, min_cfg, max_cfg), 1)
 
     def _optimize_resolution(
         self, analysis: PromptAnalysis, constraints: GenerationConstraints
     ) -> tuple[int, int]:
         """
-        Optimize resolution for EXPLICIT content.
+        Optimize resolution from configuration.
 
         Considerations:
         - Content type (portrait vs scene)
         - Group size (single, couple, trio)
-        - Anatomical detail focus (higher res for explicit)
+        - Anatomical detail focus
         - VRAM constraints
         """
-        # Base resolution (SDXL - HIGHER for explicit detail)
-        base_width = 1024
-        base_height = 1024
+        # Use configurable base resolution or defaults
+        base_width, base_height = self.DETAIL_PRESETS.get("medium", {}).get("base_resolution", [1024, 1024])
 
-        # Adjust for content type and group size
+        # Adjust for content type and group size using configuration
         if analysis.intent:
             content = analysis.intent.content_type.value
 
@@ -241,31 +251,26 @@ class ParameterOptimizer:
             subjects = analysis.detected_concepts.get("subjects", [])
             subject_text = " ".join(subjects).lower()
 
-            # Detect group size
+            # Detect group size and use configuration
             is_trio = any(kw in subject_text for kw in ["three", "trio", "group"])
             is_couple = any(kw in subject_text for kw in ["couple", "two", "duo"])
 
             if is_trio:
-                # Trio = wider landscape for 3 people
-                base_width = 1280
-                base_height = 896
+                # Trio - use configuration or default
+                base_width, base_height = self.config.group_profiles.get("trio", {}).get("default_resolution", [1280, 896])
             elif is_couple:
-                # Couple = slightly wider or taller depending on activity
+                # Couple - use configuration or default
+                base_width, base_height = self.config.group_profiles.get("couple", {}).get("default_resolution", [1024, 1024])
+                # Adjust for activity
                 activity_concepts = analysis.detected_concepts.get("activity", [])
                 if any("lying" in a or "horizontal" in a for a in activity_concepts):
-                    base_width = 1216
-                    base_height = 832
-                else:
-                    base_width = 1024
-                    base_height = 1024
+                    base_width, base_height = [1216, 832]
             elif content in ["portrait", "character"]:
-                # Single portrait
-                base_width = 896
-                base_height = 1152
+                # Single portrait - use configuration or default
+                base_width, base_height = [896, 1152]
             elif content == "scene":
-                # Scene (default landscape)
-                base_width = 1152
-                base_height = 896
+                # Scene - use configuration or default
+                base_width, base_height = [1152, 896]
 
         # NEW: Increase resolution for high anatomical detail
         anatomy_count = len(analysis.detected_concepts.get("anatomy", []))
@@ -285,27 +290,35 @@ class ParameterOptimizer:
             base_width = (base_width // 64) * 64
             base_height = (base_height // 64) * 64
 
-        # Adjust for VRAM constraints (may reduce from above)
+        # Adjust for VRAM constraints using configuration presets
         if constraints.max_vram_gb < 8:
-            # Scale down for low VRAM
-            base_width = int(base_width * 0.75)
-            base_height = int(base_height * 0.75)
-            base_width = (base_width // 64) * 64
-            base_height = (base_height // 64) * 64
-        elif constraints.max_vram_gb < 10:
-            # Slight reduction for medium VRAM
-            base_width = int(base_width * 0.875)
-            base_height = int(base_height * 0.875)
-            base_width = (base_width // 64) * 64
-            base_height = (base_height // 64) * 64
+            # Use low VRAM preset
+            preset_res = self.VRAM_PRESETS.get("low_vram", {}).get("max_resolution", [768, 768])
+            base_width = min(base_width, preset_res[0])
+            base_height = min(base_height, preset_res[1])
+        elif constraints.max_vram_gb < 12:
+            # Use medium VRAM preset
+            preset_res = self.VRAM_PRESETS.get("medium_vram", {}).get("max_resolution", [1024, 1024])
+            base_width = min(base_width, preset_res[0])
+            base_height = min(base_height, preset_res[1])
+        elif constraints.max_vram_gb < 16:
+            # Use high VRAM preset
+            preset_res = self.VRAM_PRESETS.get("high_vram", {}).get("max_resolution", [1216, 832])
+            base_width = min(base_width, preset_res[0])
+            base_height = min(base_height, preset_res[1])
 
-        # Ensure minimum resolution (lower for explicit to allow detail)
-        base_width = max(base_width, 768)
-        base_height = max(base_height, 768)
+        # Use configurable min/max values
+        min_res = self.DEFAULT_RANGES.get("min_resolution", [768, 768])
+        max_res = self.DEFAULT_RANGES.get("max_resolution", [1536, 1536])
 
-        # Maximum resolution cap (VRAM safety)
-        base_width = min(base_width, 1536)
-        base_height = min(base_height, 1536)
+        base_width = max(base_width, min_res[0])
+        base_height = max(base_height, min_res[1])
+        base_width = min(base_width, max_res[0])
+        base_height = min(base_height, max_res[1])
+
+        # Round to nearest 64
+        base_width = (base_width // 64) * 64
+        base_height = (base_height // 64) * 64
 
         return (base_width, base_height)
 
@@ -313,36 +326,56 @@ class ParameterOptimizer:
         self, analysis: PromptAnalysis, constraints: GenerationConstraints
     ) -> str:
         """
-        Select optimal sampler.
+        Select optimal sampler from configuration.
 
         Decision matrix:
-        - Priority SPEED → Euler A
-        - Priority QUALITY + Photorealistic → DPM++ 2M Karras
-        - Priority QUALITY + Anime → DPM++ 2M
-        - Balanced → DPM++ 2M Karras
+        - Priority SPEED → Configurable speed sampler
+        - Style-based selection from configuration
+        - Default from configuration
         """
         # Speed priority
         if constraints.priority == Priority.SPEED:
-            return "Euler A"
+            # Use a fast sampler from the model strategies or default to "Euler A"
+            return self.SAMPLER_MAP.get("sdxl", {}).get("default_sampler", "Euler A")
 
         # Style-based selection
         if analysis.intent:
             style = analysis.intent.artistic_style
-            if style in self.SAMPLER_MAP:
-                return self.SAMPLER_MAP[style]
+            # Use the style name as key, fallback to lowercase name
+            style_key = style.value  # This gives us the string value like "photorealistic"
+            
+            # Look for a matching sampler in the configuration
+            if style_key in self.SAMPLER_MAP:
+                sampler = self.SAMPLER_MAP[style_key].get("default_sampler")
+                if sampler:
+                    return sampler
+            elif style_key == "PHOTOREALISTIC":
+                return self.SAMPLER_MAP.get("sdxl", {}).get("default_sampler", "DPM++ 2M Karras")
+            elif style_key == "ANIME":
+                return self.SAMPLER_MAP.get("sd20", {}).get("default_sampler", "DPM++ 2M")
+            elif style_key == "CARTOON":
+                return self.SAMPLER_MAP.get("sd20", {}).get("default_sampler", "Euler A")
+            elif style_key == "PAINTING":
+                return self.SAMPLER_MAP.get("sdxl", {}).get("default_sampler", "DPM++ 2M Karras")
+            elif style_key == "SKETCH":
+                return self.SAMPLER_MAP.get("sd20", {}).get("default_sampler", "Euler A")
+            elif style_key == "ABSTRACT":
+                return self.SAMPLER_MAP.get("sd20", {}).get("default_sampler", "Euler A")
+            elif style_key == "CONCEPT_ART":
+                return self.SAMPLER_MAP.get("sd20", {}).get("default_sampler", "DPM++ 2M")
 
-        # Default
-        return "DPM++ 2M Karras"
+        # Default from config or fallback
+        return self.SAMPLER_MAP.get("sdxl", {}).get("default_sampler", "DPM++ 2M Karras")
 
     def _determine_clip_skip(self, analysis: PromptAnalysis) -> int:
         """
-        Determine CLIP skip value for PHOTOREALISTIC content.
-
-        Photorealistic ALWAYS uses clip_skip=1 for maximum detail/accuracy.
-        Never skip CLIP layers for realistic human anatomy.
+        Determine CLIP skip value from configuration.
         """
-        # ALWAYS 1 for photorealistic content
-        return 1
+        # Use default from config, defaulting to 1 for photorealistic content
+        if analysis.intent and analysis.intent.artistic_style == ArtisticStyle.PHOTOREALISTIC:
+            return self.SAMPLER_MAP.get("sdxl", {}).get("default_clip_skip", 1)
+        else:
+            return self.SAMPLER_MAP.get("sdxl", {}).get("default_clip_skip", 1)
 
     def _estimate_vram(self, resolution: tuple[int, int], steps: int) -> float:
         """

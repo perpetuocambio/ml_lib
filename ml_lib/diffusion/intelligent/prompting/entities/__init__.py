@@ -17,6 +17,11 @@ from ml_lib.diffusion.intelligent.prompting.entities.optimized_parameters import
     OptimizedParameters,
     Priority,
 )
+from ml_lib.diffusion.intelligent.prompting.entities.character_attribute import (
+    GeneratedCharacter,
+    CharacterAttributeSet,
+    AttributeConfig,
+)
 
 __all__ = [
     "PromptAnalysis",
@@ -28,4 +33,7 @@ __all__ = [
     "LoRARecommendation",
     "OptimizedParameters",
     "Priority",
+    "GeneratedCharacter",
+    "CharacterAttributeSet",
+    "AttributeConfig",
 ]

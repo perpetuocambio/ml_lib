@@ -3,6 +3,7 @@
 ## 🎯 **OBJETIVO PRINCIPAL**
 
 Crear un sistema inteligente de generación de imágenes fotorrealistas EXPLÍCITAS con:
+
 - **Contenido adulto** (NSFW, explícito, anatómico)
 - **Edades 30+** (desde 30 años hasta senectud)
 - **Diversidad étnica** (contrarrestar sesgo racial de modelos CivitAI)
@@ -17,6 +18,7 @@ Crear un sistema inteligente de generación de imágenes fotorrealistas EXPLÍCI
 **Archivo**: `ml_lib/diffusion/intelligent/prompting/character_generator.py`
 
 **Funcionalidad**:
+
 - Genera personajes aleatorios con atributos consistentes
 - **CRÍTICO**: Contrarresta sesgo racial de modelos
   - 70% mínimo de personajes no-blancos
@@ -24,6 +26,7 @@ Crear un sistema inteligente de generación de imágenes fotorrealistas EXPLÍCI
   - Pesos de prompt más altos (1.3-1.6) para etnias no-blancas
 
 **Atributos barajados**:
+
 - Edad (30-85 años)
 - Etnia (caucásica, latina, asiática, negra, medio-oriente, mestiza)
 - Tono de piel (6 niveles: muy claro → oscuro)
@@ -37,6 +40,7 @@ Crear un sistema inteligente de generación de imágenes fotorrealistas EXPLÍCI
 - Iluminación (sugerida automáticamente)
 
 **Consistencia étnica automática**:
+
 ```yaml
 Ejemplo: Mujer negra africana
   ✓ Piel: "dark skin" (peso 1.6)
@@ -46,6 +50,7 @@ Ejemplo: Mujer negra africana
 ```
 
 **Uso**:
+
 ```python
 from ml_lib.diffusion.intelligent.prompting.character_generator import CharacterGenerator
 
@@ -76,6 +81,7 @@ prompt = character.to_prompt()
 Todos los atributos y reglas están en archivos YAML editables:
 
 #### `concept_categories.yaml`
+
 - 12 categorías de conceptos para análisis semántico
 - **Anatomía EXPLÍCITA**: genitales, pechos, glúteos, zonas íntimas
 - **Actividades EXPLÍCITAS**: actos sexuales, posiciones, penetración
@@ -83,11 +89,13 @@ Todos los atributos y reglas están en archivos YAML editables:
 - **Diversidad**: etnias, tonos de piel, texturas de cabello
 
 #### `lora_filters.yaml`
+
 - **Bloqueados**: anime, cartoon, manga, underage, etc.
 - **Prioritarios**: photorealistic, NSFW, mature, anatomy, etc.
 - **Pesos de scoring**: priority 25%, anatomy 20%, keywords 25%, tags 20%, popularity 10%
 
 #### `generation_profiles.yaml`
+
 - **Perfiles de edad** (30s, 40s, 50s, 60+): modificadores de CFG/steps
 - **Perfiles de grupo** (single, couple, trio): resoluciones óptimas
 - **Perfiles de actividad** (intimate_static, explicit_static, sexual_activity): boosts de CFG/steps
@@ -95,6 +103,7 @@ Todos los atributos y reglas están en archivos YAML editables:
 - **Presets de VRAM** (low, medium, high, ultra)
 
 #### `character_attributes.yaml` (NUEVO)
+
 - **Tonos de piel** (6 niveles) con asociaciones étnicas
 - **Etnias** (7 grupos) con pesos de prompt
 - **Texturas de cabello** (6 tipos) con consistencia étnica
@@ -107,6 +116,7 @@ Todos los atributos y reglas están en archivos YAML editables:
 - **Objetivos de diversidad** (min 70% no-blanco, min 30% piel oscura)
 
 #### `prompting_strategies.yaml` (NUEVO)
+
 - **Estructura de prompt óptima** (10 pasos ordenados)
 - **Estrategias por modelo** (SDXL base, SDXL NSFW finetuned, Pony)
 - **Negative prompts** (bloqueadores de estilo, edad, anatomía)
@@ -117,6 +127,7 @@ Todos los atributos y reglas están en archivos YAML editables:
 - **Errores comunes** (over-weighting, conflictos, keyword spam)
 
 #### `local_models.yaml` (NUEVO)
+
 - **Checkpoints locales categorizados** (44 modelos)
   - Primarios: `pornmaster_proSDXLV7`, `epicphotogasm_ultimateFidelity`, etc.
   - Por edad: `naturalBeautiesREAL` para 50+, etc.
@@ -133,6 +144,7 @@ Todos los atributos y reglas están en archivos YAML editables:
 **Archivo**: `ml_lib/diffusion/intelligent/prompting/config_loader.py`
 
 **Funcionalidad**:
+
 ```python
 from ml_lib.diffusion.intelligent.prompting.config_loader import get_default_config
 
@@ -153,6 +165,7 @@ config = reload_config()
 ### 4. **PromptAnalyzer** (Actualizado)
 
 **Cambios**:
+
 - Categorías EXPLÍCITAS (anatomía íntima, actividades sexuales)
 - Categorías de edad (age_attributes)
 - Categorías de detalles físicos (physical_details)
@@ -166,6 +179,7 @@ config = reload_config()
 **Cambios**:
 
 **CFG Scale**:
+
 - Rango: **8.0 - 15.0** (antes 7.0-12.0)
 - Base: **10.5** (antes 9.0)
 - Boosts:
@@ -178,6 +192,7 @@ config = reload_config()
   - +0.5 para indicadores de edad
 
 **Steps**:
+
 - Rango: **20 - 80** (antes 15-60)
 - Base: **25** (antes 20)
 - Boosts:
@@ -187,6 +202,7 @@ config = reload_config()
   - +35 para complejidad máxima
 
 **Resolución**:
+
 - Detección de grupo (single/couple/trio)
 - Aumento automático para detalle anatómico extremo (+12.5%)
 - Rangos específicos:
@@ -206,10 +222,12 @@ config = reload_config()
 **Cambios**:
 
 **Filtrado**:
+
 - Bloquea anime, cartoon, manga, underage
 - Filtra LoRAs antes de scoring
 
 **Scoring actualizado**:
+
 - **25%** Priority tags (photorealistic, NSFW, mature, 30+)
 - **20%** Anatomy tags (breasts, genitals, realistic anatomy)
 - **25%** Keyword matching
@@ -217,6 +235,7 @@ config = reload_config()
 - **10%** Popularity (reducido)
 
 **Nuevos métodos**:
+
 - `_filter_blocked_loras()`: Elimina incompatibles
 - `_priority_tag_score()`: Score para NSFW/realistic/mature
 - `_anatomy_tag_score()`: Score para detalle anatómico
@@ -260,6 +279,7 @@ docs/diffusion/
 ### 1. **Refactorizar componentes para usar ConfigLoader**
 
 **Archivos a modificar**:
+
 - `prompt_analyzer.py`: Cargar `concept_categories.yaml`
 - `lora_recommender.py`: Cargar `lora_filters.yaml`
 - `parameter_optimizer.py`: Cargar `generation_profiles.yaml`
@@ -273,6 +293,7 @@ docs/diffusion/
 **Nuevo archivo**: `model_selector.py`
 
 **Funcionalidad**:
+
 ```python
 class ModelSelector:
     def select_checkpoint(
@@ -299,6 +320,7 @@ class ModelSelector:
 **Nuevo archivo**: `prompt_builder.py`
 
 **Funcionalidad**:
+
 ```python
 class PromptBuilder:
     def build_prompt(
@@ -328,6 +350,7 @@ class PromptBuilder:
 **Nuevo archivo**: `intelligent_generation_pipeline.py`
 
 **Workflow completo**:
+
 ```python
 class IntelligentGenerationPipeline:
     def generate_from_concept(
@@ -376,6 +399,7 @@ class IntelligentGenerationPipeline:
 **CRÍTICO**: Validar que los modelos locales puedan generar etnias diversas
 
 **Test Plan**:
+
 ```python
 # Test 1: African American woman, 40s
 test_prompts = [
@@ -404,6 +428,7 @@ models_to_test = [
 ### 6. **Documentar LoRAs útiles**
 
 De los **1206 LoRAs** locales:
+
 - Identificar LoRAs fotorrealistas (no Pony)
 - Categorizar por función (anatomía, ropa, actividad)
 - Agregar a `local_models.yaml`
@@ -438,22 +463,26 @@ class GenerationLogger:
 ## 📊 **MÉTRICAS DE ÉXITO**
 
 ### Diversidad Étnica:
+
 - ✅ CharacterGenerator genera ≥70% personajes no-blancos
 - ⏳ Modelos locales pueden renderizar etnias diversas (test needed)
 - ⏳ Pesos de prompt (1.4-1.6) contrarrestan sesgo efectivamente
 
 ### Precisión de Edad:
+
 - ✅ Sistema soporta 30-85 años con keywords específicos
 - ⏳ Modelos renderan edades 60+ correctamente (test needed)
 - ⏳ Grey hair, age lines aparecen apropiadamente
 
 ### Detalle Anatómico:
+
 - ✅ Categorías explícitas completas (genitales, actos sexuales)
 - ✅ CFG 8-15 para precisión anatómica
 - ✅ Steps 20-80 para detalle extremo
 - ⏳ Validar calidad de genitales/anatomía íntima en outputs
 
 ### Performance:
+
 - ✅ Sistema de memoria (offloading) implementado
 - ✅ Soporta GPUs con <8GB VRAM
 - ⏳ Validar tiempos de generación con configuraciones actuales
@@ -514,10 +543,12 @@ for decision, reason in result.reasoning.items():
 1. **Sesgo racial**: Todos los modelos de CivitAI están sesgados hacia personas blancas. El sistema usa pesos altos (1.4-1.6) para compensar, pero **se requiere testing exhaustivo**.
 
 2. **Pony LoRAs**: Tienes 1206 LoRAs, muchos basados en Pony Diffusion. Pony NO es ideal para fotorrealismo puro. Se recomienda:
+
    - Buscar/descargar LoRAs SDXL nativos para anatomía realista
    - Testear Pony LoRAs con checkpoints SDXL para ver compatibilidad
 
 3. **Edad 60+**: Modelos tienden a rejuvenecer. Usar:
+
    - CFG alto (12-15)
    - Age keywords con peso alto (1.3-1.4)
    - Modelo `naturalBeautiesREAL_nbREAL250629` (mejor para senior)
@@ -531,9 +562,10 @@ for decision, reason in result.reasoning.items():
 
 ## 💾 **BACKLOG ACTUALIZADO**
 
-Ver: `/src/perpetuocambio/ml_lib/docs/backlog/14_intelligent_image_generation/`
+Ver: `./docs/backlog/14_intelligent_image_generation/`
 
 **Épica 14** actualizada con:
+
 - ✅ US 14.1: Model Hub Integration (COMPLETADO)
 - ✅ US 14.2: Intelligent Prompting System (COMPLETADO + ENHANCED)
 - ✅ US 14.3: Memory Management (COMPLETADO)
@@ -557,6 +589,7 @@ Se ha implementado un sistema robusto y configurable para generación de conteni
 - ✅ **Best practices** de CivitAI/ComfyUI incorporadas
 
 **Falta**:
+
 - Refactorización final para usar ConfigLoader 100%
 - ModelSelector implementation
 - PromptBuilder implementation

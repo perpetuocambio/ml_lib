@@ -14,6 +14,7 @@ from ml_lib.diffusion.intelligent.prompting.entities import (
     PromptAnalysis,
     LoRARecommendation,
 )
+from ml_lib.diffusion.intelligent.prompting.config_loader import get_default_config
 
 logger = logging.getLogger(__name__)
 
@@ -25,63 +26,40 @@ class LoRARecommender:
     Filters out anime, cartoon, and stylized content.
     """
 
-    # Blocklist: Tags that indicate incompatible styles
-    BLOCKED_TAGS = {
-        "anime", "cartoon", "comic", "illustration", "drawn",
-        "animated", "cel shaded", "2d", "manga", "stylized",
-        "artistic", "painting", "sketch", "lineart",
-        "hentai", "3d render", "cgi", "non-photorealistic",
-        "teen", "young", "loli", "shota", "child", "minor",  # Age safety
-        "18", "19", "20s", "twenties",  # Below 30
-    }
-
-    # Priority tags for photorealistic adult content
-    PRIORITY_TAGS = {
-        # Realism
-        "photorealistic", "realistic", "photo", "photography",
-        "hyperrealistic", "ultra realistic", "lifelike",
-
-        # Adult content
-        "nsfw", "adult", "explicit", "nude", "naked",
-        "erotic", "sexual", "porn", "xxx", "mature content",
-
-        # Age appropriateness (30+)
-        "milf", "mature", "30+", "40+", "50+", "60+",
-        "older woman", "experienced", "cougar",
-
-        # Body types and features
-        "anatomy", "realistic anatomy", "detailed body",
-        "skin detail", "skin texture", "pores",
-
-        # Quality
-        "professional", "high quality", "detailed",
-        "8k", "16k", "masterpiece",
-    }
-
-    # Anatomy-specific LoRA indicators
-    ANATOMY_TAGS = {
-        "breasts", "nipples", "anatomy", "body",
-        "vagina", "vulva", "genitals", "intimate",
-        "realistic skin", "skin detail", "pores",
-        "realistic body", "anatomically correct",
-    }
-
-    def __init__(self, registry: ModelRegistry):
+    def __init__(self, registry: ModelRegistry, config=None):
         """
         Initialize LoRA recommender.
 
         Args:
             registry: Model registry for accessing LoRA metadata
+            config: PrompterConfig with configuration (if None, loads default)
         """
         self.registry = registry
-        logger.info("LoRARecommender initialized for EXPLICIT photorealistic content (30+)")
+        
+        # Load configuration
+        if config is None:
+            config = get_default_config()
+        self.config = config
+        
+        # Set up configurable values
+        self.BLOCKED_TAGS = set(config.blocked_tags)
+        self.PRIORITY_TAGS = set(config.priority_tags)
+        self.ANATOMY_TAGS = set(config.anatomy_tags)
+        self.PRIORITY_WEIGHT = config.scoring_weights.get("priority_score_weight", 0.25)
+        self.ANATOMY_WEIGHT = config.scoring_weights.get("anatomy_score_weight", 0.20)
+        self.KEYWORD_WEIGHT = config.scoring_weights.get("keyword_score_weight", 0.25)
+        self.TAG_WEIGHT = config.scoring_weights.get("tag_score_weight", 0.20)
+        self.POPULARITY_WEIGHT = config.scoring_weights.get("popularity_score_weight", 0.10)
+        self.LORA_LIMITS = config.lora_limits
+        
+        logger.info("LoRARecommender initialized with configuration")
 
     def recommend(
         self,
         prompt_analysis: PromptAnalysis,
         base_model: str,
-        max_loras: int = 3,
-        min_confidence: float = 0.5,
+        max_loras: Optional[int] = None,
+        min_confidence: Optional[float] = None,
     ) -> list[LoRARecommendation]:
         """
         Recommend LoRAs for the prompt.
@@ -97,12 +75,18 @@ class LoRARecommender:
         Args:
             prompt_analysis: Analyzed prompt
             base_model: Base model being used
-            max_loras: Maximum LoRAs to recommend
-            min_confidence: Minimum confidence threshold
+            max_loras: Maximum LoRAs to recommend (uses config default if None)
+            min_confidence: Minimum confidence threshold (uses config default if None)
 
         Returns:
             List of LoRA recommendations
         """
+        # Use configuration defaults if not provided
+        if max_loras is None:
+            max_loras = self.LORA_LIMITS.get("max_loras", 3)
+        if min_confidence is None:
+            min_confidence = self.LORA_LIMITS.get("min_confidence", 0.5)
+            
         # 1. Get compatible LoRAs
         base_model_enum = self._parse_base_model(base_model)
         candidates = self.registry.list_models(
@@ -189,19 +173,14 @@ class LoRARecommender:
         self, lora: ModelMetadata, analysis: PromptAnalysis
     ) -> float:
         """
-        Calculate relevance score for a LoRA.
+        Calculate relevance score for a LoRA based on configuration.
 
-        NEW WEIGHTS for explicit photorealistic content:
-        - Priority tag bonus (25%) - NSFW, realistic, mature
-        - Anatomy tag bonus (20%) - Body parts, skin detail
-        - Keyword matching (25%)
-        - Tag matching (20%)
-        - Popularity (10%)
+        Uses configurable weights from configuration.
         """
-        # NEW: Priority tag boost (photorealistic adult content)
+        # Priority tag boost (photorealistic adult content)
         priority_score = self._priority_tag_score(lora)
 
-        # NEW: Anatomy tag boost (detailed body parts)
+        # Anatomy tag boost (detailed body parts)
         anatomy_score = self._anatomy_tag_score(lora, analysis)
 
         # Keyword matching in name/description
@@ -210,16 +189,16 @@ class LoRARecommender:
         # Tag matching
         tag_score = self._tag_match_score(lora, analysis)
 
-        # Popularity (normalized rating) - REDUCED weight
+        # Popularity (normalized rating)
         popularity_score = min(lora.rating / 5.0, 1.0) if lora.rating > 0 else 0.5
 
-        # Weighted combination (NEW FORMULA)
+        # Weighted combination using configurable weights
         relevance = (
-            0.25 * priority_score    # Photorealistic adult priority
-            + 0.20 * anatomy_score   # Anatomical detail focus
-            + 0.25 * keyword_score   # Keyword matching
-            + 0.20 * tag_score       # Tag matching
-            + 0.10 * popularity_score  # Popularity (reduced)
+            self.PRIORITY_WEIGHT * priority_score
+            + self.ANATOMY_WEIGHT * anatomy_score
+            + self.KEYWORD_WEIGHT * keyword_score
+            + self.TAG_WEIGHT * tag_score
+            + self.POPULARITY_WEIGHT * popularity_score
         )
 
         return min(max(relevance, 0.0), 1.0)
@@ -343,7 +322,7 @@ class LoRARecommender:
         - Relevance score
         - Complexity of prompt
         """
-        # Start with recommended weight or default
+        # Start with recommended weight or default from config
         base_weight = lora.recommended_weight if lora.recommended_weight else 0.7
 
         # Adjust by relevance
@@ -353,8 +332,12 @@ class LoRARecommender:
         if analysis.complexity_score > 0.7:
             weight *= 0.9
 
-        # Clamp to reasonable range
-        return min(max(weight, 0.3), 1.2)
+        # Use configurable limits
+        min_weight = self.LORA_LIMITS.get("min_individual_weight", 0.3)
+        max_weight = self.LORA_LIMITS.get("max_individual_weight", 1.2)
+
+        # Clamp to reasonable range from config
+        return min(max(weight, min_weight), max_weight)
 
     def _generate_reasoning(
         self, lora: ModelMetadata, analysis: PromptAnalysis, score: float
@@ -444,16 +427,19 @@ class LoRARecommender:
         """
         Rebalance LoRA weights to avoid over-influence.
 
-        Total weight should not exceed 3.0 to maintain base model character.
+        Total weight should not exceed configurable threshold to maintain base model character.
         """
         if not recommendations:
             return recommendations
 
         total_weight = sum(rec.suggested_alpha for rec in recommendations)
 
+        # Use configurable max total weight
+        max_total_weight = self.LORA_LIMITS.get("max_total_weight", 3.0)
+        
         # If total exceeds threshold, scale down
-        if total_weight > 3.0:
-            scale_factor = 3.0 / total_weight
+        if total_weight > max_total_weight:
+            scale_factor = max_total_weight / total_weight
             for rec in recommendations:
                 rec.suggested_alpha *= scale_factor
                 rec.suggested_alpha = round(rec.suggested_alpha, 2)
