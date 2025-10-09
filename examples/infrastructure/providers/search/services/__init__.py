@@ -1,1 +1,0 @@
-# Application search services module

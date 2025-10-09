@@ -1,1 +1,0 @@
-"""Bayesian statistical analysis techniques."""
