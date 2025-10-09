@@ -1,5 +1,59 @@
 import sys
+import re
 from pathlib import Path
+from typing import List, Tuple
+
+
+def check_code_quality(ml_lib_path: Path) -> Tuple[bool, List[str]]:
+    """
+    Verifica principios de calidad de código.
+
+    Returns:
+        (tiene_errores, lista_de_warnings)
+    """
+    warnings = []
+
+    # Patrón para detectar Dict[str, Any] en return types
+    dict_any_pattern = re.compile(r'-> .*Dict\[str,\s*Any\]')
+
+    # Patrón para detectar tuplas largas (>2 elementos) en return types
+    long_tuple_pattern = re.compile(r'-> .*Tuple\[([^\]]+)\]')
+
+    for py_file in ml_lib_path.rglob("*.py"):
+        if py_file.name.startswith("test_") or "__pycache__" in str(py_file):
+            continue
+
+        try:
+            content = py_file.read_text(encoding='utf-8')
+            lines = content.split('\n')
+
+            for line_num, line in enumerate(lines, 1):
+                # Detectar Dict[str, Any] en return types
+                if dict_any_pattern.search(line):
+                    warnings.append(
+                        f"⚠️  Calidad: {py_file.relative_to(ml_lib_path.parent)}:{line_num}\n"
+                        f"    Detectado Dict[str, Any] en tipo de retorno.\n"
+                        f"    Considera usar una dataclass en su lugar.\n"
+                        f"    → {line.strip()}"
+                    )
+
+                # Detectar tuplas largas (>2 elementos)
+                match = long_tuple_pattern.search(line)
+                if match:
+                    tuple_content = match.group(1)
+                    num_elements = tuple_content.count(',') + 1
+                    if num_elements > 2:
+                        warnings.append(
+                            f"⚠️  Calidad: {py_file.relative_to(ml_lib_path.parent)}:{line_num}\n"
+                            f"    Detectada tupla con {num_elements} elementos en tipo de retorno.\n"
+                            f"    Considera usar una dataclass para mayor claridad.\n"
+                            f"    → {line.strip()}"
+                        )
+
+        except Exception as e:
+            warnings.append(f"⚠️  Error leyendo {py_file}: {e}")
+
+    return len(warnings) > 0, warnings
 
 
 def main():
@@ -69,11 +123,26 @@ def main():
                 )
                 error_found = True
 
+    # Verificación de calidad de código
+    print("\nVerificando calidad de código...")
+    has_quality_issues, quality_warnings = check_code_quality(ml_lib_path)
+
+    if quality_warnings:
+        print("\n📋 Advertencias de Calidad de Código:")
+        print("=" * 80)
+        for warning in quality_warnings:
+            print(warning)
+            print()
+
     if error_found:
-        print("\nFallo la validación de estructura.", file=sys.stderr)
+        print("\n❌ Fallo la validación de estructura.", file=sys.stderr)
         sys.exit(1)
+    elif has_quality_issues:
+        print("\n⚠️  La estructura es correcta, pero hay advertencias de calidad.")
+        print("    Consulta docs/architecture/INTERFACE_IMPROVEMENTS.md para mejores prácticas.")
+        sys.exit(0)  # No fallar por advertencias, solo informar
     else:
-        print("\nLa estructura del proyecto y los módulos es correcta.")
+        print("\n✅ La estructura del proyecto y la calidad de código son correctas.")
         sys.exit(0)
 
 

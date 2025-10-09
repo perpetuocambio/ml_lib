@@ -723,6 +723,57 @@ def test_validation_service_shape():
 - ✅ **USAR** `numpy.typing` para arrays
 - 📖 **VER** `docs/backlog/00_code_quality/US_0.2_type_safety.md`
 
+#### Interfaces Limpias - No Tuplas ni Dicts Confusos ❌
+
+**Principio: El usuario NO debe adivinar qué retorna una función**
+
+- ❌ **NUNCA** retornar `Tuple[np.ndarray, Dict[str, Any]]` en interfaces públicas
+- ❌ **NUNCA** retornar tuplas con >2 elementos sin documentación clara
+- ✅ **SIEMPRE** crear dataclasses de resultado para operaciones complejas
+- ✅ **USAR** nombres semánticos en lugar de índices numéricos
+- 📖 **VER** `docs/architecture/INTERFACE_IMPROVEMENTS.md`
+
+**Ejemplos:**
+
+```python
+# ❌ MAL - Usuario debe adivinar
+def predict_with_metadata(X: np.ndarray) -> Tuple[np.ndarray, Dict[str, Any]]:
+    predictions = model.predict(X)
+    metadata = {"confidence": 0.95, "time_ms": 123}
+    return predictions, metadata
+
+# Usuario debe recordar orden y adivinar claves del dict
+preds, meta = model.predict_with_metadata(X)
+confidence = meta["confidence"]  # ¿Existe esta clave?
+
+# ✅ BIEN - Claridad total
+@dataclass
+class PredictionResult:
+    """Resultado de predicción con metadatos."""
+    predictions: np.ndarray
+    confidence_scores: np.ndarray
+    execution_time_ms: float
+    feature_importances: Optional[np.ndarray] = None
+
+def predict_detailed(X: np.ndarray) -> PredictionResult:
+    result = PredictionResult(
+        predictions=model.predict(X),
+        confidence_scores=confidence,
+        execution_time_ms=123.5
+    )
+    return result
+
+# Usuario tiene autocompletado y claridad
+result = model.predict_detailed(X)
+result.predictions  # ✅ IDE muestra qué está disponible
+result.confidence_scores  # ✅ Tipos claros
+```
+
+**Excepciones legítimas para tuplas**:
+- Pares matemáticos universales (como meshgrid → `(X, Y)`)
+- Descomposiciones estándar (QR → `(Q, R)`, pero mejor usar dataclass)
+- Cuando hay SOLO 2 elementos con semántica obvia
+
 ### Checklist Antes de Cualquier Commit
 
 - [ ] ✅ Estructura validada: `python3 scripts/check_module_structure.py`

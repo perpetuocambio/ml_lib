@@ -13,6 +13,7 @@ Mejoras de calidad de código que deben completarse antes de continuar con nuevo
   - Convertir strings mágicos en Enums
   - Crear clases dataclass bien tipadas
   - **Estimación:** 28 horas
+  - **Estado:** 🚧 50% completado
 
 - **[US 0.2: Seguridad de Tipos Completa](00_code_quality/US_0.2_type_safety.md)** ⚡ CRÍTICO
   - Eliminar uso innecesario de `Any`
@@ -28,7 +29,14 @@ Mejoras de calidad de código que deben completarse antes de continuar con nuevo
   - ArrayValidator completo
   - **Estimación:** 18 horas
 
-**Total Épica 0:** 66 horas (~8 días)
+- **[US 0.4: Interfaces Limpias y Result Classes](00_code_quality/US_0.4_clean_interfaces.md)** ⚡ CRÍTICO
+  - Eliminar Dict[str, Any] y tuplas confusas de interfaces
+  - Crear result classes para descomposiciones (QR, LU, SVD)
+  - Crear config classes para estimadores/optimizadores
+  - Sistema de configuración fuertemente tipado
+  - **Estimación:** 14 horas
+
+**Total Épica 0:** 80 horas (~10 días)
 
 ---
 
@@ -266,14 +274,15 @@ Aprendizaje por refuerzo.
 
 ### Sprint 0: Code Quality Foundation (PRÓXIMO) ⚡
 
-**Duración:** 2 semanas
+**Duración:** 2.5 semanas
 **Objetivo:** Establecer estándares de calidad antes de continuar
 
-- US 0.1: Refactorización a Clases (28h)
+- US 0.1: Refactorización a Clases (28h) - 50% completado
 - US 0.2: Seguridad de Tipos (20h)
 - US 0.3: Validación y Robustez (18h)
+- US 0.4: Interfaces Limpias (14h) - 📋 Planificado
 
-**Total:** 66 horas
+**Total:** 80 horas
 
 ### Sprint 1: Automatic Differentiation
 
@@ -314,7 +323,7 @@ Los sprints posteriores se planificarán según prioridades del negocio y depend
 
 | Épica | User Stories | Completadas | En Progreso | Pendientes | % Completado |
 |-------|--------------|-------------|-------------|------------|--------------|
-| 0: Code Quality | 3 | 0 | 0 | 3 | 0% |
+| 0: Code Quality | 4 | 0 | 1 | 3 | 12% |
 | 1: Core | 4 | 4 | 0 | 0 | 100% |
 | 2: Linalg | 3 | 3 | 0 | 0 | 100% |
 | 3: Autograd | 2 | 0 | 1 | 1 | 0% |
@@ -331,10 +340,10 @@ Los sprints posteriores se planificarán según prioridades del negocio y depend
 
 ### Total
 
-- **Total User Stories:** 41
+- **Total User Stories:** 42
 - **Completadas:** 7 (17%)
-- **En Progreso:** 2 (5%)
-- **Pendientes:** 32 (78%)
+- **En Progreso:** 3 (7%)
+- **Pendientes:** 32 (76%)
 
 ---
 
