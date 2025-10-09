@@ -10,7 +10,7 @@ from pathlib import Path
 
 # Importar componentes generales de ml_lib
 from ml_lib.core import TransformerInterface
-from ml_lib.linalg import Matrix
+from ml_lib.linalg.services.linalg import Matrix
 
 
 class EcologicalDataReader:

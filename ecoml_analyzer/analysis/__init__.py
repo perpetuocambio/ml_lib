@@ -15,7 +15,7 @@ from ml_lib.core import (
     ErrorHandler,
     LoggingService,
 )
-from ml_lib.linalg import Matrix, BLASService, DecompositionService
+from ml_lib.linalg.services.linalg import Matrix, BLASService, DecompositionService
 
 # Importar componentes generales de scikit-learn para demostración
 # En una implementación completa, estos serían reemplazados por componentes de ml_lib

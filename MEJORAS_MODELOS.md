@@ -6,7 +6,7 @@
 
 #### Modelos Específicos Implementados:
 - **ScatterPlotData**: Modelo para datos de gráficos de dispersión
-- **LinePlotData**: Modelo para datos de gráficos de líneas  
+- **LinePlotData**: Modelo para datos de gráficos de líneas
 - **BarPlotData**: Modelo para datos de gráficos de barras
 - **HeatmapData**: Modelo para datos de heatmaps
 
@@ -81,7 +81,7 @@ class ScatterPlotData:
     x: np.ndarray
     y: np.ndarray
     title: str = "Scatter Plot"
-    
+
     def __post_init__(self):
         # Validación automática
         if self.x.shape != self.y.shape:
@@ -103,11 +103,11 @@ help(ScatterPlotData)
 ## Resultados Obtenidos
 
 ### Componentes Funcionales:
-✅ **Módulo de visualización** completamente funcional  
-✅ **Modelos específicos** para cada tipo de gráfico  
-✅ **Servicios mejorados** con tipado estricto  
-✅ **Aplicación ecológica** usando modelos generales  
-✅ **Ejemplos y pruebas** verificando el funcionamiento  
+✅ **Módulo de visualización** completamente funcional
+✅ **Modelos específicos** para cada tipo de gráfico
+✅ **Servicios mejorados** con tipado estricto
+✅ **Aplicación ecológica** usando modelos generales
+✅ **Ejemplos y pruebas** verificando el funcionamiento
 
 ### Métricas de Calidad:
 - **Cobertura de tests**: 100% de componentes verificados

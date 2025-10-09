@@ -12,9 +12,13 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 
 # Importar componentes generales de visualización de ml_lib
-from ml_lib.visualization import GeneralVisualization, VisualizationFactory, PlotConfig
+from ml_lib.visualization.services.visualization import (
+    GeneralVisualization,
+    VisualizationFactory,
+    PlotConfig,
+)
 from ml_lib.core import LoggingService
-from ml_lib.visualization.models import (
+from ml_lib.visualization.models.models import (
     ScatterPlotData,
     LinePlotData,
     BarPlotData,
