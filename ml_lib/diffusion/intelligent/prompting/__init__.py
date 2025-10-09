@@ -6,6 +6,11 @@ from ml_lib.diffusion.intelligent.prompting.parameter_optimizer import Parameter
 from ml_lib.diffusion.intelligent.prompting.character_generator import CharacterGenerator
 from ml_lib.diffusion.intelligent.prompting.negative_prompt_generator import NegativePromptGenerator
 from ml_lib.diffusion.intelligent.prompting.intelligent_generator import IntelligentCharacterGenerator
+from ml_lib.diffusion.intelligent.prompting.enhanced_generator import EnhancedCharacterGenerator, GenerationPreferences
+from ml_lib.diffusion.intelligent.prompting.enhanced_attributes import (
+    CharacterAttributeSet, AttributeDefinition, AttributeType
+)
+from ml_lib.diffusion.intelligent.prompting.enhanced_config_loader import EnhancedConfigLoader
 
 __all__ = [
     "PromptAnalyzer",
@@ -14,4 +19,10 @@ __all__ = [
     "CharacterGenerator",
     "NegativePromptGenerator",
     "IntelligentCharacterGenerator",
+    "EnhancedCharacterGenerator",
+    "GenerationPreferences",
+    "CharacterAttributeSet",
+    "AttributeDefinition",
+    "AttributeType",
+    "EnhancedConfigLoader",
 ]
