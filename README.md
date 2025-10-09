@@ -34,24 +34,24 @@ ml_lib/
 ├── testing/           # Pruebas y validación
 ├── plugin_system/     # Sistema de plugins
 ├── performance/       # Rendimiento y optimización
-├── bioml_analyzer/    # Aplicación de demostración biológica
+├── ecoml_analyzer/    # Aplicación de demostración ecológica
 └── utils/             # Utilidades generales
 ```
 
-## Aplicación de demostración: BioML Analyzer
+## Aplicación de demostración: EcoML Analyzer
 
-Incluimos una aplicación de demostración completa llamada **BioML Analyzer** que ejemplifica el uso de nuestra biblioteca en un contexto biológico real. La aplicación:
+Incluimos una aplicación de demostración completa llamada **EcoML Analyzer** que ejemplifica el uso de nuestra biblioteca en un contexto ecológico real. La aplicación:
 
-- Analiza datos de expresión génica
-- Realiza análisis estadísticos y de machine learning
-- Incluye visualización de resultados
+- Analiza datos de abundancia de especies
+- Realiza análisis de diversidad, comunidades ecológicas y distribución de especies
+- Incluye visualización de resultados ecológicos
 - Demuestra la integración de todos los componentes de la biblioteca
 
 Para ejecutar la demostración:
 
 ```bash
 cd /src/perpetuocambio/ml_lib
-PYTHONPATH=. python bioml_analyzer/main.py
+PYTHONPATH=. python ecoml_analyzer/main.py
 ```
 
 ## Instalación
