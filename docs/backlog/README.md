@@ -270,6 +270,48 @@ Aprendizaje por refuerzo.
 
 ---
 
+### 🔥 Épica 14: Intelligent Image Generation (NUEVA - ALTA PRIORIDAD)
+
+Sistema inteligente de generación de imágenes con HuggingFace y CivitAI.
+
+**Objetivo:** Democratizar la generación de imágenes IA mediante selección automática de modelos, LoRAs y parámetros basándose en análisis semántico del prompt, con gestión eficiente de memoria.
+
+#### User Stories:
+
+- **[US 14.1: Integración con Model Hubs](14_intelligent_image_generation/US_14.1_model_hub_integration.md)** ⚡ CRÍTICO
+  - HuggingFace Hub integration
+  - CivitAI API integration
+  - Model Registry unificado
+  - Cache management con verificación de integridad
+  - **Estimación:** 32 horas
+
+- **[US 14.2: Sistema Inteligente de Prompting](14_intelligent_image_generation/US_14.2_intelligent_prompting_system.md)** ⚡ CRÍTICO
+  - Análisis semántico con Ollama (via ml_lib.llm)
+  - Recomendación inteligente de LoRAs
+  - Optimización automática de parámetros
+  - Learning engine con feedback loop
+  - **Estimación:** 40 horas
+
+- **[US 14.3: Gestión Eficiente de Memoria](14_intelligent_image_generation/US_14.3_efficient_memory_management.md)** ⚡ CRÍTICO
+  - Model offloading automático (CPU/GPU)
+  - Model Pool con LRU eviction
+  - Quantización automática (fp16, int8)
+  - Sequential loading para VRAM limitado
+  - **Estimación:** 24 horas
+
+- **[US 14.4: Pipeline Integration](14_intelligent_image_generation/US_14.4_pipeline_integration.md)** ⚡ CRÍTICO
+  - Pipeline unificado end-to-end
+  - Modos AUTO, ASSISTED, MANUAL
+  - Batch processing
+  - Sistema de explicaciones
+  - **Estimación:** 20 horas
+
+**Total Épica 14:** 116 horas (~14-15 días)
+
+**Documentación completa:** [Ver README de Épica 14](14_intelligent_image_generation/README.md)
+
+---
+
 ## Priorización y Roadmap
 
 ### Sprint 0: Code Quality Foundation (PRÓXIMO) ⚡
@@ -337,13 +379,14 @@ Los sprints posteriores se planificarán según prioridades del negocio y depend
 | 11: Uncertainty | 3 | 0 | 0 | 3 | 0% |
 | 12: Time Series | 3 | 0 | 0 | 3 | 0% |
 | 13: RL | 1 | 0 | 0 | 1 | 0% |
+| **14: Intelligent Image Gen** | **4** | **0** | **0** | **4** | **0%** |
 
 ### Total
 
-- **Total User Stories:** 42
-- **Completadas:** 7 (17%)
+- **Total User Stories:** 46
+- **Completadas:** 7 (15%)
 - **En Progreso:** 3 (7%)
-- **Pendientes:** 32 (76%)
+- **Pendientes:** 36 (78%)
 
 ---
 

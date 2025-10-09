@@ -1,0 +1,574 @@
+# Concept categories for photorealistic EXPLICIT adult content
+# Focus: Mature adults (30+), couples/groups, anatomical detail
+#
+# This file defines the vocabulary for semantic prompt analysis.
+
+subjects:
+  # Primary subjects - MATURE ADULTS ONLY (30+)
+  - woman
+  - women
+  - mature woman
+  - mature women
+  - couple
+  - two women
+  - three women
+  - group
+  - models
+  - people
+  - duo
+  - trio
+  # Gender combinations
+  - female
+  - male
+  - lesbian
+  - heterosexual
+  # Age ranges (30+)
+  - 30s
+  - thirties
+  - 40s
+  - forties
+  - 50s
+  - fifties
+  - 60s
+  - sixties
+  - mature
+  - milf
+  - cougar
+  - older woman
+  - experienced
+  - seasoned
+
+age_attributes:
+  # Physical maturity indicators (30+)
+  - mature beauty
+  - mature features
+  - experienced
+  - age lines
+  - laugh lines
+  - crow's feet
+  - natural aging
+  - silver hair
+  - grey hair
+  - salt and pepper
+  - mature skin
+  - mature physique
+  # Age ranges
+  - early 30s
+  - mid 30s
+  - late 30s
+  - early 40s
+  - mid 40s
+  - late 40s
+  - early 50s
+  - mid 50s
+  - late 50s
+  - 60+
+  - senior
+  - elderly
+
+style:
+  # Always photorealistic focus
+  - photorealistic
+  - realistic
+  - hyperrealistic
+  - photo
+  - professional photography
+  - high-end photography
+  - ultra realistic
+  - lifelike
+  - true to life
+  # Fantasy elements (but still realistic)
+  - fantasy realistic
+  - sci-fi realistic
+  - period realistic
+
+anatomy:
+  # General body attributes
+  - body
+  - physique
+  - figure
+  - curves
+  - athletic
+  - toned
+  - skin
+  - skin texture
+  - skin details
+  - pores
+  - freckles
+  - voluptuous
+  - hourglass
+  - statuesque
+  - shapely
+
+  # EXPLICIT - Upper body
+  - breasts
+  - chest
+  - bust
+  - cleavage
+  - décolletage
+  - nipples
+  - areola
+  - breast shape
+  - breast size
+  - large breasts
+  - medium breasts
+  - small breasts
+  - natural breasts
+  - firm breasts
+  - soft breasts
+  - breast tissue
+  - underboob
+  - sideboob
+
+  # EXPLICIT - Torso and core
+  - waist
+  - torso
+  - abs
+  - stomach
+  - belly
+  - navel
+  - belly button
+  - midriff
+  - ribcage
+  - sides
+  - obliques
+
+  # EXPLICIT - Lower body
+  - hips
+  - pelvis
+  - pubic area
+  - mons pubis
+  - vulva
+  - labia
+  - vagina
+  - intimate area
+  - inner thighs
+  - thigh gap
+  - crotch
+
+  # EXPLICIT - Legs and posterior
+  - legs
+  - thighs
+  - calves
+  - ankles
+  - feet
+  - buttocks
+  - ass
+  - rear
+  - glutes
+  - bottom
+  - butt cheeks
+  - butt crack
+  - anus
+  - perineum
+
+  # EXPLICIT - Arms and extremities
+  - arms
+  - shoulders
+  - hands
+  - fingers
+  - armpits
+  - underarms
+
+  # EXPLICIT - Back
+  - back
+  - spine
+  - lower back
+  - shoulder blades
+  - back dimples
+  - sacrum
+
+  # Face and head (detailed)
+  - face
+  - facial features
+  - eyes
+  - lips
+  - mouth
+  - tongue
+  - teeth
+  - nose
+  - cheeks
+  - chin
+  - neck
+  - throat
+  - collarbone
+  - hair
+  - scalp
+  - ears
+  - earlobes
+
+  # Physical states (explicit)
+  - wet
+  - moist
+  - oiled
+  - sweaty
+  - glistening
+  - aroused
+  - flushed
+  - erect nipples
+  - hard nipples
+  - goosebumps
+  - trembling
+  - quivering
+  - spread
+  - open
+  - exposed
+  - revealed
+
+activity:
+  # Posing and positioning
+  - posing
+  - standing
+  - sitting
+  - lying
+  - kneeling
+  - squatting
+  - bending
+  - arching
+  - stretching
+  - legs spread
+  - legs open
+  - legs crossed
+  - arms raised
+  - hands behind head
+
+  # EXPLICIT - Intimate activities
+  - embracing
+  - kissing
+  - touching
+  - caressing
+  - fondling
+  - groping
+  - massaging
+  - stroking
+  - licking
+  - sucking
+  - biting
+  - nibbling
+
+  # EXPLICIT - Sexual activities
+  - sensual
+  - erotic
+  - intimate
+  - sexual
+  - making love
+  - sex
+  - intercourse
+  - penetration
+  - oral
+  - fellatio
+  - cunnilingus
+  - 69
+  - masturbation
+  - self-pleasure
+  - touching herself
+  - fingering
+  - digital penetration
+
+  # EXPLICIT - Positions
+  - missionary
+  - doggy style
+  - cowgirl
+  - reverse cowgirl
+  - spooning
+  - scissoring
+  - 69 position
+  - standing sex
+  - bent over
+  - on all fours
+
+  # Activities
+  - exercise
+  - yoga
+  - dancing
+  - stretching
+  - showering
+  - bathing
+  - swimming
+
+  # Settings
+  - boudoir
+  - bedroom
+  - intimate scene
+  - adult content
+  - romantic
+  - passionate
+  - lustful
+
+clothing:
+  # Nudity states (EXPLICIT)
+  - nude
+  - naked
+  - completely nude
+  - fully nude
+  - topless
+  - bottomless
+  - no clothes
+  - undressed
+  - unclothed
+  - bare
+  - exposed breasts
+  - exposed genitals
+  - exposed buttocks
+
+  # Minimal clothing
+  - lingerie
+  - underwear
+  - bra
+  - panties
+  - thong
+  - g-string
+  - lace
+  - silk
+  - satin
+  - garter belt
+  - stockings
+  - suspenders
+  - corset
+  - bustier
+  - teddy
+  - babydoll
+
+  # Revealing clothing
+  - bikini
+  - swimsuit
+  - revealing
+  - skimpy
+  - dress
+  - skirt
+  - shirt
+  - tight clothing
+  - see-through
+  - sheer
+  - transparent
+  - mesh
+  - low cut
+  - plunging neckline
+  - backless
+  - mini skirt
+  - short shorts
+  - crop top
+
+  # Partial states
+  - partially clothed
+  - partially undressed
+  - unbuttoned
+  - unzipped
+  - pulled down
+  - pulled up
+  - clothing aside
+  - panties aside
+  - bra off
+
+setting:
+  # Indoor intimate
+  - bedroom
+  - bathroom
+  - shower
+  - bathtub
+  - bed
+  - couch
+  - sofa
+  - floor
+  - carpet
+  - rug
+  - hotel room
+  - apartment
+  - studio
+  - dungeon
+  - sauna
+  - spa
+  - hot tub
+  - jacuzzi
+
+  # Outdoor intimate
+  - beach
+  - pool
+  - garden
+  - nature
+  - forest
+  - lake
+  - river
+  - waterfall
+  - urban
+  - rooftop
+  - balcony
+  - terrace
+
+  # Lighting context
+  - indoors
+  - outdoors
+  - interior
+  - exterior
+  - private
+  - secluded
+  - hidden
+  - public
+
+lighting:
+  # Professional lighting for maximum realism
+  - natural light
+  - window light
+  - golden hour
+  - sunset light
+  - sunrise light
+  - midday sun
+  - overcast light
+  - studio lighting
+  - soft box
+  - rim lighting
+  - backlighting
+  - dramatic lighting
+  - moody lighting
+  - warm lighting
+  - cool lighting
+  - cinematic lighting
+  - professional lighting
+  - candlelight
+  - firelight
+  - ambient light
+  - high key
+  - low key
+  - chiaroscuro
+
+camera:
+  # Professional photography angles (EXPLICIT focus)
+  - portrait
+  - full body
+  - close-up
+  - extreme close-up
+  - medium shot
+  - wide shot
+  - cowboy shot
+  - dutch angle
+  - from above
+  - from below
+  - eye level
+  - worm's eye view
+  - bird's eye view
+  - over the shoulder
+
+  # EXPLICIT angles
+  - upskirt
+  - downblouse
+  - crotch shot
+  - ass shot
+  - breast focus
+  - face focus
+  - genital focus
+  - spread legs POV
+  - intimate POV
+  - between legs
+
+  # Technical
+  - bokeh
+  - shallow depth of field
+  - deep focus
+  - sharp focus
+  - macro
+  - detail shot
+  - texture focus
+  - 35mm
+  - 50mm
+  - 85mm
+  - telephoto
+  - wide angle
+
+quality:
+  # Maximum realism keywords
+  - 8k
+  - 16k
+  - high resolution
+  - ultra detailed
+  - extremely detailed
+  - photorealistic
+  - hyperrealistic
+  - realistic skin
+  - realistic anatomy
+  - professional photograph
+  - award winning
+  - masterpiece
+  - high quality
+  - sharp
+  - crisp
+  - detailed
+  - intricate details
+  - anatomically correct
+  - realistic lighting
+  - realistic shadows
+  - subsurface scattering
+  - skin pores visible
+  - fine details
+
+mood:
+  # Emotional/atmospheric (EXPLICIT)
+  - sensual
+  - intimate
+  - romantic
+  - passionate
+  - seductive
+  - alluring
+  - confident
+  - powerful
+  - elegant
+  - sophisticated
+  - natural
+  - candid
+  - lustful
+  - desirous
+  - aroused
+  - excited
+  - submissive
+  - dominant
+  - playful
+  - teasing
+  - vulnerable
+  - exposed
+  - uninhibited
+  - wild
+  - tender
+  - loving
+  - aggressive
+  - rough
+
+physical_details:
+  # Skin details
+  - skin pores
+  - skin texture
+  - veins visible
+  - goosebumps
+  - freckles
+  - moles
+  - birthmarks
+  - scars
+  - tan lines
+  - pale skin
+  - dark skin
+  - olive skin
+  - smooth skin
+  - soft skin
+  - firm skin
+
+  # Hair (body)
+  - pubic hair
+  - trimmed
+  - shaved
+  - waxed
+  - natural
+  - hairy
+  - smooth
+  - stubble
+  - armpit hair
+  - leg hair
+
+  # Fluids and secretions (EXPLICIT)
+  - sweat
+  - moisture
+  - wetness
+  - lubrication
+  - arousal fluid
+  - vaginal fluid
+  - saliva
+  - oil
+  - lotion
+  - water droplets

@@ -1,0 +1,9 @@
+npx claude-code-templates@latest --mcp integration/memory-integration --yes
+npx claude-code-templates@latest --mcp devtools/context7 --yes
+npx claude-code-templates@latest --mcp browser_automation/playwright-mcp-server --yes
+npx claude-code-templates@latest --mcp filesystem/filesystem-access --yes
+npx claude-code-templates@latest --setting statusline/context-monitor --yes
+npx claude-code-templates@latest --setting environment/performance-optimization --yes
+npx claude-code-templates@latest --command automation/workflow-orchestrator --yes
+npx claude-code-templates@latest --agent development-tools/context-manager --yes
+npx claude-code-templates@latest --agent development-team/backend-architect --yes

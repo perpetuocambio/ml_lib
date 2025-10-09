@@ -1,0 +1,115 @@
+# LoRA filtering and prioritization configuration
+# For PHOTOREALISTIC EXPLICIT adult content (30+)
+
+# Blocklist: Tags that indicate incompatible styles
+blocked_tags:
+  # Non-photorealistic styles
+  - anime
+  - cartoon
+  - comic
+  - illustration
+  - drawn
+  - animated
+  - cel shaded
+  - 2d
+  - manga
+  - stylized
+  - artistic
+  - painting
+  - sketch
+  - lineart
+  - hentai
+  - 3d render
+  - cgi
+  - non-photorealistic
+
+  # Age safety (below 30)
+  - teen
+  - young
+  - loli
+  - shota
+  - child
+  - minor
+  - 18
+  - 19
+  - 20s
+  - twenties
+
+# Priority tags for photorealistic adult content
+priority_tags:
+  # Realism
+  - photorealistic
+  - realistic
+  - photo
+  - photography
+  - hyperrealistic
+  - ultra realistic
+  - lifelike
+
+  # Adult content
+  - nsfw
+  - adult
+  - explicit
+  - nude
+  - naked
+  - erotic
+  - sexual
+  - porn
+  - xxx
+  - mature content
+
+  # Age appropriateness (30+)
+  - milf
+  - mature
+  - 30+
+  - 40+
+  - 50+
+  - 60+
+  - older woman
+  - experienced
+  - cougar
+
+  # Body types and features
+  - anatomy
+  - realistic anatomy
+  - detailed body
+  - skin detail
+  - skin texture
+  - pores
+
+  # Quality
+  - professional
+  - high quality
+  - detailed
+  - 8k
+  - 16k
+  - masterpiece
+
+# Anatomy-specific LoRA indicators
+anatomy_tags:
+  - breasts
+  - nipples
+  - anatomy
+  - body
+  - vagina
+  - vulva
+  - genitals
+  - intimate
+  - realistic skin
+  - skin detail
+  - pores
+  - realistic body
+  - anatomically correct
+
+# Scoring weights (must sum to 1.0)
+scoring_weights:
+  priority_score: 0.25    # Photorealistic adult priority
+  anatomy_score: 0.20     # Anatomical detail focus
+  keyword_score: 0.25     # Keyword matching
+  tag_score: 0.20         # Tag matching
+  popularity_score: 0.10  # Popularity (reduced)
+
+# LoRA recommendation limits
+max_loras: 3
+min_confidence: 0.5
+max_total_weight: 3.0  # Total alpha should not exceed this

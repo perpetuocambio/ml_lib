@@ -24,6 +24,13 @@ claude mcp add fetch -s user -- npx -y @kazuph/mcp-fetch
 echo "🔍 Setting up server Memory..."
 claude mcp add memory -s user -- npx -y @modelcontextprotocol/server-memory@latest
 
+
+# Install Web Server Memory
+echo "🔍 Setting up server Memory..."
+claude mcp add memory -s user -- npx -y @modelcontextprotocol/server-memory@latest
+
+
+
 # Verify installation
 echo "✅ Verifying installation..."
 claude mcp list

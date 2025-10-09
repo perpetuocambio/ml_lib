@@ -1,0 +1,321 @@
+# Professional prompting strategies for photorealistic NSFW content
+# Based on best practices from CivitAI, ComfyUI, and community research
+#
+# Sources:
+# - CivitAI model cards and top-rated images
+# - ComfyUI workflow analysis
+# - Stable Diffusion community wikis
+# - NSFW-specific model documentation
+
+# Prompt structure templates
+prompt_structure:
+  recommended_order:
+    description: "Optimal token order for photorealistic NSFW"
+    structure:
+      1_quality_tokens:
+        position: "START (highest priority)"
+        examples:
+          - "(masterpiece, best quality, photorealistic:1.4)"
+          - "(8k, RAW photo, highest quality:1.3)"
+          - "(hyperrealistic, professional photography:1.2)"
+        reasoning: "Quality tokens at start have maximum influence"
+
+      2_subject_definition:
+        position: "EARLY (high priority)"
+        examples:
+          - "1woman, mature woman in her 40s"
+          - "2women, couple, lesbian lovers"
+          - "mature milf, 50 years old"
+        reasoning: "Subject must be established early for coherent generation"
+
+      3_age_and_features:
+        position: "AFTER subject"
+        examples:
+          - "age 45, mature features, laugh lines"
+          - "silver hair, age lines, experienced beauty"
+          - "natural aging, mature skin"
+        reasoning: "Age tokens need strong weighting for accurate rendering"
+
+      4_body_description:
+        position: "MIDDLE (anatomical focus)"
+        examples:
+          - "detailed anatomy, realistic proportions"
+          - "large natural breasts, (wide hips:1.2), thick thighs"
+          - "athletic physique, toned body, (muscular definition:1.1)"
+        weighting_tips:
+          - Use (word:1.2) for emphasis on key features
+          - Avoid conflicting descriptors (petite + voluptuous)
+
+      5_explicit_anatomy:
+        position: "MIDDLE (if needed)"
+        examples:
+          - "exposed breasts, (erect nipples:1.2), detailed areola"
+          - "spread legs, (visible vulva:1.3), detailed labia"
+          - "(realistic genitals:1.4), anatomically correct"
+        weighting_tips:
+          - Higher weights (1.3-1.5) for explicit details
+          - Use anatomical correctness keywords
+
+      6_pose_and_activity:
+        position: "MIDDLE-LATE"
+        examples:
+          - "lying on bed, legs spread, (intimate pose:1.2)"
+          - "kneeling, arching back, presenting"
+          - "cowgirl position, (penetration:1.4), (sex:1.3)"
+        weighting_tips:
+          - Complex poses need higher weights
+          - Sexual positions benefit from 1.3-1.5 weighting
+
+      7_clothing_state:
+        position: "MIDDLE"
+        examples:
+          - "completely nude, (naked:1.2)"
+          - "wearing black lingerie, (lace bra:1.1), matching panties"
+          - "topless, (exposed breasts:1.2), wearing skirt"
+
+      8_setting_and_environment:
+        position: "LATE (lower priority)"
+        examples:
+          - "bedroom, (lying on bed:1.1), soft sheets"
+          - "outdoor, beach setting, natural lighting"
+          - "professional photo studio, white background"
+
+      9_lighting_and_camera:
+        position: "LATE"
+        examples:
+          - "(natural window light:1.2), golden hour, warm tones"
+          - "studio lighting, soft box, professional setup"
+          - "close-up, (detailed skin texture:1.3), shallow depth of field"
+
+      10_negative_prompt_mandatory:
+        position: "SEPARATE (negative prompt)"
+        examples:
+          - "cartoon, anime, 3d, illustration, painting, drawing"
+          - "young, teen, child, underage, loli"
+          - "deformed, distorted, bad anatomy, mutation"
+        reasoning: "Critical for filtering unwanted styles and safety"
+
+# Model-specific strategies
+model_strategies:
+  sdxl_base:
+    description: "SDXL 1.0 base model strategies"
+    cfg_sweet_spot: [7.0, 10.0]
+    steps_recommended: [30, 50]
+    sampler_best: "DPM++ 2M Karras"
+    prompt_tips:
+      - "SDXL responds well to natural language"
+      - "Less need for keyword spamming vs SD1.5"
+      - "Quality tokens still important but can be simpler"
+      - "Better at anatomy, less need for extreme weighting"
+    example_prompt: |
+      (masterpiece, best quality, photorealistic:1.3), mature woman in her 40s,
+      natural beauty, detailed skin texture, professional photography, 8k
+
+  sdxl_nsfw_finetunes:
+    description: "NSFW-specific SDXL fine-tunes (e.g., RealVisXL, JuggernautXL)"
+    cfg_sweet_spot: [8.0, 12.0]
+    steps_recommended: [35, 60]
+    sampler_best: "DPM++ 2M Karras"
+    prompt_tips:
+      - "Can handle explicit anatomy keywords directly"
+      - "Age keywords CRITICAL for 30+ content"
+      - "Higher CFG for anatomical accuracy"
+      - "Responds well to weighted tokens for body parts"
+    example_prompt: |
+      (masterpiece, photorealistic, 8k:1.4), mature milf 45 years old,
+      (large natural breasts:1.3), (wide hips:1.2), detailed anatomy,
+      completely nude, lying on bed, legs spread, (intimate pose:1.2),
+      (realistic skin detail:1.3), natural window light, bedroom setting
+
+  pony_diffusion:
+    description: "Pony Diffusion (if used for photorealistic)"
+    cfg_sweet_spot: [6.0, 9.0]
+    notes: "NOT RECOMMENDED for our photorealistic focus"
+    reasoning: "Pony is trained on stylized/furry content"
+
+# Negative prompt best practices
+negative_prompts:
+  essential_exclusions:
+    style_blocks:
+      - "cartoon, anime, 3d render, illustration, painting, drawing, art, sketch"
+      - "cgi, rendered, fake, artificial"
+      - "cel shaded, comic, manga, hentai"
+
+    age_safety:
+      - "young, teen, teenager, child, minor, underage"
+      - "loli, shota, youthful, juvenile"
+      - "18, 19, 20s, twenties"
+
+    quality_blocks:
+      - "low quality, worst quality, low resolution, blurry"
+      - "jpeg artifacts, compression, pixelated"
+      - "watermark, text, signature, username"
+
+    anatomy_blocks:
+      - "bad anatomy, deformed, disfigured, mutation"
+      - "extra limbs, missing limbs, fused fingers"
+      - "bad hands, bad feet, malformed"
+      - "unrealistic proportions, distorted body"
+
+  recommended_negative_prompt: |
+    cartoon, anime, 3d, illustration, painting, drawing, cgi, rendered,
+    young, teen, child, underage, loli, 18, 19, 20s,
+    low quality, blurry, bad anatomy, deformed, extra limbs,
+    watermark, text, signature
+
+# Weighting syntax guide
+weighting_syntax:
+  emphasis_methods:
+    parentheses_single:
+      syntax: "(keyword)"
+      multiplier: 1.1
+      example: "(detailed skin)"
+      use_case: "Mild emphasis"
+
+    parentheses_double:
+      syntax: "((keyword))"
+      multiplier: 1.21
+      example: "((photorealistic))"
+      use_case: "Strong emphasis"
+
+    explicit_weight:
+      syntax: "(keyword:1.3)"
+      multiplier: "1.3x (custom)"
+      example: "(erect nipples:1.3)"
+      use_case: "Precise control, recommended for explicit details"
+
+    de_emphasis:
+      syntax: "[keyword]"
+      multiplier: 0.9
+      example: "[clothing]"
+      use_case: "Reduce influence (rarely needed)"
+
+  weighting_guidelines:
+    quality_tokens: "1.2 - 1.4"
+    age_keywords: "1.1 - 1.3 (critical for 30+)"
+    body_features: "1.1 - 1.3"
+    explicit_anatomy: "1.3 - 1.5 (maximum detail)"
+    activities_poses: "1.2 - 1.4"
+    background_setting: "0.9 - 1.1 (lower priority)"
+
+# Token limit awareness
+token_management:
+  sdxl_limit: 77
+  best_practices:
+    - "Keep prompts under 70 tokens for safety"
+    - "Prioritize important concepts at start"
+    - "Use commas to separate concepts"
+    - "Avoid redundant keywords"
+    - "Combine related concepts: 'large natural breasts' vs 'large, natural, breasts'"
+
+# Age rendering optimization
+age_rendering:
+  critical_keywords_30_40:
+    primary: ["30s", "thirties", "mature woman"]
+    supporting: ["youthful mature", "prime", "experienced"]
+    avoid: ["milf", "older"] # Too strong for 30s
+
+  critical_keywords_40_50:
+    primary: ["40s", "forties", "mature milf", "milf"]
+    supporting: ["laugh lines", "subtle aging", "experienced beauty"]
+    weighting: "Use (mature:1.2) or (milf:1.2)"
+
+  critical_keywords_50_60:
+    primary: ["50s", "fifties", "mature", "older woman"]
+    supporting: ["age lines", "silver hair", "natural aging"]
+    weighting: "Use (mature:1.3), (age lines:1.2)"
+
+  critical_keywords_60_plus:
+    primary: ["60s", "sixties", "senior", "elderly"]
+    supporting: ["grey hair", "wrinkles", "aged", "grandmother"]
+    weighting: "Use (senior:1.4), (aged:1.3)"
+    notes: "Requires high CFG (12-15) for accurate age rendering"
+
+# Anatomy detail optimization
+anatomy_prompting:
+  skin_detail:
+    keywords: ["realistic skin", "skin texture", "pores", "skin detail"]
+    weighting: 1.2 - 1.4
+    placement: "After body description"
+    cfg_impact: "Higher CFG (11+) shows more detail"
+
+  breast_rendering:
+    natural_look: "(natural breasts:1.2), realistic breast shape"
+    size_control:
+      - "large breasts" # Use alone or with weight
+      - "(huge breasts:1.3)" # For very large
+      - "medium breasts, perky"
+    detail: "(detailed nipples:1.3), realistic areola, (breast texture:1.2)"
+    avoid: "fake breasts, implants, unnatural" # Add to negative
+
+  genital_rendering:
+    realistic: "(realistic vulva:1.4), (detailed labia:1.3), anatomically correct"
+    visibility: "spread legs, (visible genitals:1.3), (intimate details:1.4)"
+    cfg_requirement: "CFG 12-15 for accurate genital rendering"
+    steps_requirement: "60+ steps for fine detail"
+
+  pose_accuracy:
+    simple_poses: "standing, sitting, lying - lower weights (1.0-1.1)"
+    complex_poses: "(kneeling, arching back:1.2), (presenting:1.3)"
+    sexual_positions: "(missionary position:1.4), (penetration:1.5), (sex:1.4)"
+    notes: "Sexual positions need highest weights and CFG"
+
+# Lighting and photography
+photography_techniques:
+  lighting_prompts:
+    natural:
+      - "(natural window light:1.2), golden hour, warm soft lighting"
+      - "sunlight, outdoor lighting, bright daylight"
+
+    studio:
+      - "studio lighting, professional photography, soft box"
+      - "(three-point lighting:1.1), rim light, professional setup"
+
+    dramatic:
+      - "(dramatic lighting:1.2), chiaroscuro, contrast"
+      - "moody lighting, dark shadows, cinematic"
+
+  camera_technique:
+    portrait: "portrait photography, 85mm lens, shallow depth of field"
+    full_body: "full body shot, medium distance, balanced framing"
+    close_up: "(close-up:1.2), (macro detail:1.3), extreme detail, sharp focus"
+    pov_angles: "(POV angle:1.2), first person view, intimate perspective"
+
+# Common mistakes to avoid
+common_mistakes:
+  over_weighting:
+    problem: "Too many (keyword:1.5) leads to artifacts"
+    solution: "Reserve 1.4+ for critical explicit details only"
+
+  conflicting_keywords:
+    problem: "petite + voluptuous, young + mature"
+    solution: "Choose ONE body type, ONE age descriptor"
+
+  keyword_spam:
+    problem: "beautiful, gorgeous, stunning, pretty, attractive..."
+    solution: "Pick 1-2 quality descriptors, let photorealism speak"
+
+  ignoring_negative:
+    problem: "No negative prompt or weak negative"
+    solution: "ALWAYS use comprehensive negative prompt"
+
+  wrong_cfg:
+    problem: "CFG too low (<7) or too high (>15)"
+    solution: "Stay in 8-13 range for explicit content"
+
+# LoRA integration
+lora_usage:
+  syntax: "<lora:model_name:weight>"
+  recommended_weights:
+    detail_loras: 0.6 - 0.8
+    style_loras: 0.5 - 0.7
+    anatomy_loras: 0.7 - 1.0
+    age_loras: 0.6 - 0.9
+
+  multiple_loras:
+    max_recommended: 3
+    total_weight_limit: 2.5 - 3.0
+    priority: "Anatomy > Detail > Style"
+
+  example: |
+    <lora:realistic_anatomy:0.8>, <lora:detailed_skin:0.7>, <lora:mature_women:0.6>

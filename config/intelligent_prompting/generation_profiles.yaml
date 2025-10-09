@@ -1,0 +1,232 @@
+# Generation profiles for different scenarios
+# Optimized for EXPLICIT photorealistic adult content (30+)
+
+# Age range profiles - Adjust parameters for different age groups
+age_profiles:
+  thirties:  # 30-39 years
+    age_range: [30, 39]
+    description: "Early mature adults, peak physical condition"
+    cfg_modifier: 0.0      # Base CFG
+    steps_modifier: 0      # Base steps
+    skin_smoothness: high
+    detail_focus:
+      - skin texture
+      - athletic physique
+      - minimal aging signs
+
+  forties:  # 40-49 years
+    age_range: [40, 49]
+    description: "Mid-mature adults, experienced beauty"
+    cfg_modifier: 0.5      # Slightly higher CFG for subtle age features
+    steps_modifier: 5      # More steps for age detail
+    skin_smoothness: medium-high
+    detail_focus:
+      - subtle age lines
+      - mature skin texture
+      - maintained physique
+      - confidence
+
+  fifties:  # 50-59 years
+    age_range: [50, 59]
+    description: "Mature adults, distinguished features"
+    cfg_modifier: 1.0      # Higher CFG for age features
+    steps_modifier: 10     # More steps for detailed aging
+    skin_smoothness: medium
+    detail_focus:
+      - age lines
+      - mature features
+      - skin texture detail
+      - natural aging
+      - silver hair
+
+  sixties_plus:  # 60+ years
+    age_range: [60, 100]
+    description: "Senior adults, natural aging beauty"
+    cfg_modifier: 1.5      # Highest CFG for age accuracy
+    steps_modifier: 15     # Maximum steps for detail
+    skin_smoothness: medium-low
+    detail_focus:
+      - pronounced age lines
+      - senior features
+      - skin detail
+      - natural aging
+      - grey/white hair
+      - mature physique
+
+# Group size profiles
+group_profiles:
+  single:
+    subjects: 1
+    description: "Single subject portrait or full body"
+    resolution:
+      portrait: [896, 1152]     # Vertical
+      full_body: [832, 1216]    # Slightly wider vertical
+      close_up: [1024, 1024]    # Square
+    composition_hints:
+      - center subject
+      - rule of thirds
+      - negative space
+
+  couple:
+    subjects: 2
+    description: "Two people, intimate or interactive"
+    resolution:
+      portrait: [1024, 1024]    # Square for flexibility
+      horizontal: [1216, 832]   # Lying/horizontal activities
+      vertical: [896, 1152]     # Standing/vertical
+    composition_hints:
+      - interaction focus
+      - balanced composition
+      - intimate framing
+      - body language
+
+  trio:
+    subjects: 3
+    description: "Three people, group scene"
+    resolution:
+      landscape: [1280, 896]    # Wide landscape
+      balanced: [1152, 896]     # Balanced landscape
+    composition_hints:
+      - triangular composition
+      - depth layering
+      - group dynamics
+      - wider framing
+
+# Activity-based parameter adjustments
+activity_profiles:
+  intimate_static:
+    description: "Intimate poses, minimal movement"
+    activities: [embracing, kissing, touching, caressing]
+    cfg_boost: 1.5
+    steps_boost: 10
+    sampler_preference: "DPM++ 2M Karras"  # Quality over speed
+
+  explicit_static:
+    description: "Explicit poses, detailed anatomy required"
+    activities: [posing, displaying, spreading, exposing]
+    cfg_boost: 2.0
+    steps_boost: 15
+    sampler_preference: "DPM++ 2M Karras"
+    detail_focus:
+      - anatomical accuracy
+      - skin detail
+      - lighting on body
+
+  sexual_activity:
+    description: "Sexual activities, complex positioning"
+    activities: [sex, intercourse, penetration, oral]
+    cfg_boost: 2.5    # Maximum CFG for position accuracy
+    steps_boost: 20   # Maximum steps
+    sampler_preference: "DPM++ 2M Karras"
+    detail_focus:
+      - positioning accuracy
+      - anatomical detail
+      - interaction points
+      - body mechanics
+
+  dynamic_movement:
+    description: "Movement-based activities"
+    activities: [dancing, exercise, yoga, stretching]
+    cfg_boost: 1.0
+    steps_boost: 5
+    sampler_preference: "DPM++ 2M"  # Slightly faster
+    detail_focus:
+      - motion capture
+      - muscle definition
+      - dynamic pose
+
+# Detail level presets
+detail_presets:
+  soft_focus:
+    description: "Softer detail, romantic atmosphere"
+    cfg_range: [8.0, 10.0]
+    steps_range: [25, 35]
+    quality_keywords:
+      - soft lighting
+      - romantic
+      - dreamy
+      - ethereal
+
+  standard_detail:
+    description: "Standard photorealistic detail"
+    cfg_range: [10.0, 12.0]
+    steps_range: [30, 50]
+    quality_keywords:
+      - photorealistic
+      - detailed
+      - professional
+
+  maximum_detail:
+    description: "Extreme anatomical detail"
+    cfg_range: [12.0, 15.0]
+    steps_range: [50, 80]
+    quality_keywords:
+      - hyperrealistic
+      - ultra detailed
+      - 8k
+      - 16k
+      - anatomically correct
+      - skin pores visible
+      - extreme detail
+
+# Default parameter ranges (EXPLICIT content optimized)
+default_ranges:
+  cfg_scale:
+    min: 8.0
+    max: 15.0
+    default: 10.5
+    description: "Higher range for explicit anatomical accuracy"
+
+  steps:
+    min: 20
+    max: 80
+    default: 35
+    description: "Extended range for detailed anatomy"
+
+  resolution:
+    min_dimension: 768
+    max_dimension: 1536
+    standard_sizes:
+      - [896, 1152]    # Portrait
+      - [1024, 1024]   # Square
+      - [1152, 896]    # Landscape
+      - [1216, 832]    # Wide landscape
+      - [1280, 896]    # Ultra-wide (trio)
+
+  clip_skip:
+    photorealistic: 1  # ALWAYS 1 for maximum detail
+    description: "Never skip CLIP layers for realistic anatomy"
+
+# VRAM-based optimization presets
+vram_presets:
+  low_vram:  # < 8GB
+    max_vram_gb: 8
+    resolution_multiplier: 0.75
+    batch_size: 1
+    offload_strategy: "SEQUENTIAL"
+    enable_xformers: true
+    enable_vae_tiling: true
+
+  medium_vram:  # 8-12GB
+    max_vram_gb: 12
+    resolution_multiplier: 0.875
+    batch_size: 1
+    offload_strategy: "CPU_OFFLOAD"
+    enable_xformers: true
+    enable_vae_tiling: false
+
+  high_vram:  # 12-16GB
+    max_vram_gb: 16
+    resolution_multiplier: 1.0
+    batch_size: 1
+    offload_strategy: "BALANCED"
+    enable_xformers: true
+    enable_vae_tiling: false
+
+  ultra_vram:  # > 16GB
+    max_vram_gb: 24
+    resolution_multiplier: 1.125
+    batch_size: 2
+    offload_strategy: "FULL_GPU"
+    enable_xformers: false  # Not needed with lots of VRAM
+    enable_vae_tiling: false
