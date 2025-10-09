@@ -10,6 +10,11 @@ from .models import (
     Matrix,
     SparseMatrix,
     MatrixOperationConfig,
+    QRDecompositionResult,
+    LUDecompositionResult,
+    SVDDecompositionResult,
+    EigenDecompositionResult,
+    CholeskyDecompositionResult,
 )
 from .services import (
     BLASService,
@@ -93,19 +98,20 @@ class LinearAlgebraEngine:
         """Producto matriz-vector optimizado."""
         return self.blas_service.gemv(alpha, A, x, beta, y)
 
-    def qr_decomposition(self, A: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def qr_decomposition(self, A: np.ndarray) -> QRDecompositionResult:
         """Factorización QR."""
-        return self.lapack_service.qr_factorize(A)
+        Q, R = self.lapack_service.qr_factorize(A)
+        return QRDecompositionResult(Q=Q, R=R)
 
-    def lu_decomposition(
-        self, A: np.ndarray
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def lu_decomposition(self, A: np.ndarray) -> LUDecompositionResult:
         """Factorización LU."""
-        return self.lapack_service.lu_factorize(A)
+        P, L, U = self.lapack_service.lu_factorize(A)
+        return LUDecompositionResult(L=L, U=U, P=P)
 
-    def cholesky_decomposition(self, A: np.ndarray) -> np.ndarray:
+    def cholesky_decomposition(self, A: np.ndarray) -> CholeskyDecompositionResult:
         """Factorización de Cholesky."""
-        return self.lapack_service.cholesky_factorize(A)
+        L = self.lapack_service.cholesky_factorize(A)
+        return CholeskyDecompositionResult(L=L)
 
     def solve_linear_system(self, A: np.ndarray, b: np.ndarray) -> np.ndarray:
         """Resuelve sistema lineal Ax = b."""
@@ -117,15 +123,15 @@ class LinearAlgebraEngine:
 
     def svd_decomposition(
         self, A: np.ndarray, full_matrices: bool = True
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> SVDDecompositionResult:
         """Descomposición SVD."""
         U, s, Vt = np.linalg.svd(A, full_matrices=full_matrices)
-        return U, s, Vt
+        return SVDDecompositionResult(U=U, s=s, Vt=Vt)
 
-    def eigen_decomposition(self, A: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def eigen_decomposition(self, A: np.ndarray) -> EigenDecompositionResult:
         """Descomposición de valores propios."""
         eigenvalues, eigenvectors = np.linalg.eigh(A)
-        return eigenvalues, eigenvectors
+        return EigenDecompositionResult(eigenvalues=eigenvalues, eigenvectors=eigenvectors)
 
     def sparse_matmul(self, A: SparseMatrix, B: np.ndarray) -> np.ndarray:
         """Producto matricial disperso-denso."""

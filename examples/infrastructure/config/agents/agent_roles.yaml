@@ -1,0 +1,118 @@
+# Definiciones de roles de agentes para el sistema Director de Orquesta
+# Configuración estática que define capacidades, niveles de autonomía y herramientas disponibles
+
+roles:
+  biologist:
+    display_name: "Biólogo de Campo"
+    role_id: "biologist"
+    description: "Especialista en análisis biológico, ecológico y ambiental"
+    autonomy_level: "AUTONOMOUS"
+    cost_threshold: 6
+    available_mcp_tools:
+      - "execute_network_analysis"
+      - "execute_swot_analysis"
+      - "upload_document_tool"
+      - "execute_data_analysis"
+    specializations:
+      - "fauna_analysis"
+      - "ecosystem_assessment"
+      - "biodiversity_evaluation"
+      - "environmental_impact"
+    prompt_template_id: "biologist_system_prompt"
+
+  economist:
+    display_name: "Analista Económico"
+    role_id: "economist"
+    description: "Especialista en análisis económico, financiero y de mercados"
+    autonomy_level: "AUTONOMOUS"
+    cost_threshold: 6
+    available_mcp_tools:
+      - "execute_swot_analysis"
+      - "execute_ach_analysis"
+      - "upload_document_tool"
+      - "execute_data_analysis"
+    specializations:
+      - "market_analysis"
+      - "cost_benefit_analysis"
+      - "financial_modeling"
+      - "economic_impact_assessment"
+    prompt_template_id: "economist_system_prompt"
+
+  intelligence_analyst:
+    display_name: "Analista de Inteligencia"
+    role_id: "intelligence_analyst"
+    description: "Especialista en análisis de inteligencia estructurada y evaluación de hipótesis"
+    autonomy_level: "SUPERVISED"
+    cost_threshold: 4
+    available_mcp_tools:
+      - "execute_ach_analysis"
+      - "execute_network_analysis"
+      - "execute_swot_analysis"
+      - "upload_document_tool"
+    specializations:
+      - "hypothesis_evaluation"
+      - "structured_analysis"
+      - "threat_assessment"
+      - "pattern_recognition"
+    prompt_template_id: "intelligence_analyst_system_prompt"
+
+  sociologist:
+    display_name: "Sociólogo"
+    role_id: "sociologist"
+    description: "Especialista en análisis social, cultural y demográfico"
+    autonomy_level: "AUTONOMOUS"
+    cost_threshold: 5
+    available_mcp_tools:
+      - "execute_network_analysis"
+      - "execute_swot_analysis"
+      - "upload_document_tool"
+    specializations:
+      - "social_network_analysis"
+      - "demographic_analysis"
+      - "cultural_impact_assessment"
+      - "stakeholder_mapping"
+    prompt_template_id: "sociologist_system_prompt"
+
+  legal_analyst:
+    display_name: "Analista Legal"
+    role_id: "legal_analyst"
+    description: "Especialista en análisis legal, regulatorio y de compliance"
+    autonomy_level: "SUPERVISED"
+    cost_threshold: 3
+    available_mcp_tools:
+      - "execute_swot_analysis"
+      - "upload_document_tool"
+    specializations:
+      - "regulatory_analysis"
+      - "compliance_assessment"
+      - "legal_risk_evaluation"
+      - "policy_impact_analysis"
+    prompt_template_id: "legal_analyst_system_prompt"
+
+# Configuración de niveles de autonomía
+autonomy_levels:
+  AUTONOMOUS:
+    display_name: "Autónomo"
+    can_auto_approve: true
+    max_cost_threshold: 6
+    requires_supervision: false
+
+  SUPERVISED:
+    display_name: "Supervisado"
+    can_auto_approve: true
+    max_cost_threshold: 4
+    requires_supervision: true
+
+  GUIDED:
+    display_name: "Guiado"
+    can_auto_approve: false
+    max_cost_threshold: 2
+    requires_supervision: true
+
+# Mapeo de herramientas MCP a costos estimados
+tool_costs:
+  execute_swot_analysis: 3
+  execute_ach_analysis: 5
+  execute_network_analysis: 6
+  execute_data_analysis: 4
+  upload_document_tool: 2

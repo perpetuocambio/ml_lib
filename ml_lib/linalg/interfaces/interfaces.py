@@ -3,9 +3,16 @@ Interfaces para operaciones de álgebra lineal en ml_lib
 """
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, TYPE_CHECKING
 import numpy as np
 
+if TYPE_CHECKING:
+    from ..models import (
+        QRDecompositionResult,
+        LUDecompositionResult,
+        SVDDecompositionResult,
+        CholeskyDecompositionResult,
+    )
 
 T = TypeVar("T", bound=np.ndarray)
 MatrixType = TypeVar("MatrixType", bound="Matrix")
@@ -39,13 +46,13 @@ class DecompositionInterface(ABC, Generic[T]):
     """Interface base para descomposiciones matriciales."""
 
     @abstractmethod
-    def decompose(self, A: T) -> tuple:
-        """Realiza la descomposición de la matriz A."""
+    def decompose(self, A: T) -> "SVDDecompositionResult":
+        """Realiza la descomposición SVD de la matriz A."""
         pass
 
     @abstractmethod
-    def reconstruct(self, *components) -> T:
-        """Reconstruye la matriz desde sus componentes."""
+    def reconstruct(self, result: "SVDDecompositionResult") -> T:
+        """Reconstruye la matriz desde sus componentes SVD."""
         pass
 
 
@@ -81,16 +88,16 @@ class LAPACKInterface(ABC, Generic[T]):
     """Interface para operaciones LAPACK."""
 
     @abstractmethod
-    def qr_factorize(self, A: T) -> tuple[T, T]:
+    def qr_factorize(self, A: T) -> "QRDecompositionResult":
         """Factorización QR de la matriz A."""
         pass
 
     @abstractmethod
-    def lu_factorize(self, A: T) -> tuple[T, T, T]:
+    def lu_factorize(self, A: T) -> "LUDecompositionResult":
         """Factorización LU de la matriz A."""
         pass
 
     @abstractmethod
-    def cholesky_factorize(self, A: T) -> T:
+    def cholesky_factorize(self, A: T) -> "CholeskyDecompositionResult":
         """Factorización de Cholesky de la matriz A."""
         pass

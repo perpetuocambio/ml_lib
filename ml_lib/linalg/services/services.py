@@ -11,6 +11,10 @@ from scipy.sparse import csr_matrix, csc_matrix, coo_matrix
 # Importar modelos e interfaces
 from .models import (
     SparseMatrix,
+    QRDecompositionResult,
+    LUDecompositionResult,
+    SVDDecompositionResult,
+    CholeskyDecompositionResult,
 )
 from .interfaces import (
     MatrixOperationInterface,
@@ -137,7 +141,7 @@ class LAPACKService(LAPACKInterface[np.ndarray]):
         self.logger = logger
 
     @staticmethod
-    def qr_factorize(A: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def qr_factorize(A: np.ndarray) -> QRDecompositionResult:
         """
         Factorización QR de la matriz A.
 
@@ -145,17 +149,17 @@ class LAPACKService(LAPACKInterface[np.ndarray]):
             A: Matriz de entrada (m x n)
 
         Returns:
-            Tupla (Q, R) donde A = Q @ R
+            QRDecompositionResult donde A = Q @ R
         """
         if A.ndim != 2:
             raise ValueError("A debe ser una matriz 2D")
 
         # Usar scipy.linalg.qr
         Q, R = np.linalg.qr(A)
-        return Q, R
+        return QRDecompositionResult(Q=Q, R=R)
 
     @staticmethod
-    def lu_factorize(A: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def lu_factorize(A: np.ndarray) -> LUDecompositionResult:
         """
         Factorización LU de la matriz A.
 
@@ -163,17 +167,17 @@ class LAPACKService(LAPACKInterface[np.ndarray]):
             A: Matriz de entrada (n x n)
 
         Returns:
-            Tupla (P, L, U) donde P @ A = L @ U
+            LUDecompositionResult donde P @ A = L @ U
         """
         if A.ndim != 2 or A.shape[0] != A.shape[1]:
             raise ValueError("A debe ser una matriz cuadrada 2D")
 
         # Usar scipy.linalg.lu
         P, L, U = np.linalg.lu(A)
-        return P, L, U
+        return LUDecompositionResult(L=L, U=U, P=P)
 
     @staticmethod
-    def cholesky_factorize(A: np.ndarray) -> np.ndarray:
+    def cholesky_factorize(A: np.ndarray) -> CholeskyDecompositionResult:
         """
         Factorización de Cholesky de la matriz A.
 
@@ -181,7 +185,7 @@ class LAPACKService(LAPACKInterface[np.ndarray]):
             A: Matriz simétrica definida positiva (n x n)
 
         Returns:
-            Matriz triangular inferior L tal que A = L @ L.T
+            CholeskyDecompositionResult donde A = L @ L.T
         """
         if A.ndim != 2 or A.shape[0] != A.shape[1]:
             raise ValueError("A debe ser una matriz cuadrada 2D")
@@ -192,7 +196,7 @@ class LAPACKService(LAPACKInterface[np.ndarray]):
 
         # Usar scipy.linalg.cholesky
         L = np.linalg.cholesky(A)
-        return L
+        return CholeskyDecompositionResult(L=L)
 
 
 class MatrixOperationService(MatrixOperationInterface[np.ndarray]):
@@ -224,17 +228,14 @@ class DecompositionService(DecompositionInterface[np.ndarray]):
     def __init__(self, logger: logging.Logger):
         self.logger = logger
 
-    def decompose(self, A: np.ndarray) -> tuple:
+    def decompose(self, A: np.ndarray) -> SVDDecompositionResult:
         """Realiza descomposición SVD de la matriz A."""
         U, s, Vt = np.linalg.svd(A, full_matrices=True)
-        return (U, s, Vt)
+        return SVDDecompositionResult(U=U, s=s, Vt=Vt)
 
-    def reconstruct(self, U: np.ndarray, s: np.ndarray, Vt: np.ndarray) -> np.ndarray:
+    def reconstruct(self, result: SVDDecompositionResult) -> np.ndarray:
         """Reconstruye la matriz desde sus componentes SVD."""
-        # Reconstruir matriz usando SVD
-        S = np.zeros((U.shape[1], Vt.shape[0]))
-        np.fill_diagonal(S, s)
-        return U @ S @ Vt
+        return result.reconstruct()
 
 
 class SolverService(SolverInterface[np.ndarray]):
