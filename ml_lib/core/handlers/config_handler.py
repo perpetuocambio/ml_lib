@@ -108,13 +108,19 @@ class ConfigHandler:
     def update(self, updates: Dict[str, Any]) -> "ConfigHandler":
         """Actualiza la configuración con nuevos valores."""
 
-        def deep_update(d: Dict[str, Any], u: Dict[str, Any]) -> Dict[str, Any]:
+        def deep_update(d: dict, u: dict) -> dict:
             """Utility function genérica para merge profundo de diccionarios.
 
+            Args:
+                d: Diccionario base a actualizar
+                u: Diccionario con actualizaciones
+
+            Returns:
+                Diccionario actualizado con merge profundo.
+
             Note:
-                Este es un uso legítimo de Dict[str, Any] porque es una
-                utility function genérica que no conoce la estructura de
-                los datos. Para configuraciones específicas, usar dataclasses.
+                Usa dict sin tipos porque es una utility genérica.
+                Para configuraciones específicas, usar dataclasses.
             """
             for k, v in u.items():
                 if isinstance(v, dict) and isinstance(d.get(k), dict):
@@ -136,21 +142,21 @@ class ConfigHandler:
         if missing_keys:
             raise ValueError(f"Missing required config keys: {missing_keys}")
 
-    def get_section(self, section: str) -> Dict[str, Any]:
+    def get_section(self, section: str) -> dict:
         """Obtiene una sección completa de configuración desde archivo.
-
-        Note:
-            Retorna Dict[str, Any] porque ConfigHandler maneja configuración
-            arbitraria desde archivos externos. Si conoces la estructura,
-            considera crear una dataclass y usar:
-
-                section_dict = handler.get_section("model")
-                config = MyModelConfig(**section_dict)
 
         Args:
             section: Nombre de la sección (soporta notación dot: "model.optimizer")
 
         Returns:
-            Diccionario con la sección de configuración, {} si no existe
+            Diccionario con la sección de configuración, {} si no existe.
+
+        Note:
+            Retorna dict sin tipos porque maneja configuración arbitraria
+            desde archivos externos. Si conoces la estructura, considera
+            crear una dataclass:
+
+                section_dict = handler.get_section("model")
+                config = MyModelConfig(**section_dict)
         """
         return self.get(section, {})

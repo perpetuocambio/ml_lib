@@ -4,8 +4,8 @@ Modelos para el Módulo 3: Optimización Numérica Avanzada
 Define modelos de datos para configuración de optimización y
 parámetros de control de los algoritmos.
 """
-from dataclasses import dataclass
-from typing import Optional, Dict, Any
+from dataclasses import dataclass, asdict
+from typing import Optional
 import numpy as np
 
 
@@ -33,18 +33,13 @@ class OptimizationConfig:
     eps: float = 1e-8
     verbose: bool = False
     
-    def to_dict(self) -> Dict[str, Any]:
-        """Convierte la configuración a un diccionario."""
-        return {
-            'maxiter': self.maxiter,
-            'maxfev': self.maxfev,
-            'tol': self.tol,
-            'ftol': self.ftol,
-            'xtol': self.xtol,
-            'gtol': self.gtol,
-            'eps': self.eps,
-            'verbose': self.verbose
-        }
+    def to_dict(self) -> dict:
+        """Convierte la configuración a un diccionario.
+
+        Returns:
+            Diccionario con todos los campos de configuración.
+        """
+        return asdict(self)
 
 
 @dataclass

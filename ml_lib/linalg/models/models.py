@@ -8,6 +8,24 @@ import numpy as np
 
 
 @dataclass
+class MemoryLayoutInfo:
+    """Información sobre el layout de memoria de una matriz."""
+
+    c_contiguous: bool
+    f_contiguous: bool
+    layout: str
+    nbytes: int
+    itemsize: int
+
+
+@dataclass
+class MatrixMetadata:
+    """Metadata for matrix operations."""
+    created_at: str = ""
+    operation: str = ""
+    source: str = ""
+
+@dataclass
 class Matrix:
     """Representación de una matriz con metadatos."""
 
@@ -16,7 +34,7 @@ class Matrix:
     dtype: np.dtype = field(init=False)
     is_sparse: bool = False
     layout: str = "C"  # C-contiguous o F-contiguous
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: MatrixMetadata = field(default_factory=MatrixMetadata)
     cache_key: Optional[str] = None
 
     def __post_init__(self):
@@ -52,15 +70,19 @@ class Matrix:
             return False
         return np.allclose(self.data, self.data.T, rtol=rtol, atol=atol)
 
-    def memory_layout_info(self) -> Dict[str, Any]:
-        """Información sobre el layout de memoria."""
-        return {
-            "c_contiguous": self.data.flags.c_contiguous,
-            "f_contiguous": self.data.flags.f_contiguous,
-            "layout": self.layout,
-            "nbytes": self.data.nbytes,
-            "itemsize": self.data.itemsize,
-        }
+    def memory_layout_info(self) -> MemoryLayoutInfo:
+        """Información sobre el layout de memoria.
+
+        Returns:
+            MemoryLayoutInfo con detalles sobre contiguidad, layout y uso de memoria.
+        """
+        return MemoryLayoutInfo(
+            c_contiguous=self.data.flags.c_contiguous,
+            f_contiguous=self.data.flags.f_contiguous,
+            layout=self.layout,
+            nbytes=self.data.nbytes,
+            itemsize=self.data.itemsize,
+        )
 
 
 @dataclass
@@ -88,6 +110,12 @@ class SparseMatrix:
 
 
 @dataclass
+class DecompositionMetadata:
+    """Metadata for decomposition results."""
+    created_at: str = ""
+    notes: str = ""
+
+@dataclass
 class DecompositionResult:
     """Resultado de una descomposición matricial."""
 
@@ -98,18 +126,21 @@ class DecompositionResult:
     error: Optional[float] = None
     converged: bool = True
     iterations: Optional[int] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: DecompositionMetadata = field(default_factory=DecompositionMetadata)
 
     def __post_init__(self):
         """Inicialización posterior a la creación."""
-        self.metadata["created_at"] = self._get_timestamp()
-
-    def _get_timestamp(self) -> str:
-        """Obtiene marca de tiempo."""
         from datetime import datetime
+        if not self.metadata.created_at:
+            self.metadata.created_at = datetime.now().isoformat()
 
-        return datetime.now().isoformat()
 
+@dataclass
+class ConvergenceInfo:
+    """Convergence information for iterative solvers."""
+    tolerance: float = 1e-6
+    residual_norm: float = 0.0
+    converged: bool = False
 
 @dataclass
 class LinearSystemSolution:
@@ -120,18 +151,14 @@ class LinearSystemSolution:
     method: str
     condition_number: float
     iterations: Optional[int] = None
-    convergence_info: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    convergence_info: ConvergenceInfo = field(default_factory=ConvergenceInfo)
+    metadata: MatrixMetadata = field(default_factory=MatrixMetadata)
 
     def __post_init__(self):
         """Inicialización posterior a la creación."""
-        self.metadata["created_at"] = self._get_timestamp()
-
-    def _get_timestamp(self) -> str:
-        """Obtiene marca de tiempo."""
         from datetime import datetime
-
-        return datetime.now().isoformat()
+        if not self.metadata.created_at:
+            self.metadata.created_at = datetime.now().isoformat()
 
 
 @dataclass
@@ -145,18 +172,20 @@ class EigenDecomposition:
     memory_used: float
     converged: bool = True
     iterations: Optional[int] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: DecompositionMetadata = field(default_factory=DecompositionMetadata)
 
     def __post_init__(self):
         """Inicialización posterior a la creación."""
-        self.metadata["created_at"] = self._get_timestamp()
-
-    def _get_timestamp(self) -> str:
-        """Obtiene marca de tiempo."""
         from datetime import datetime
+        if not self.metadata.created_at:
+            self.metadata.created_at = datetime.now().isoformat()
 
-        return datetime.now().isoformat()
 
+@dataclass
+class CustomMatrixParams:
+    """Custom parameters for matrix operations."""
+    experimental_features: bool = False
+    debug_mode: bool = False
 
 @dataclass
 class MatrixOperationConfig:
@@ -171,4 +200,4 @@ class MatrixOperationConfig:
     optimization_level: str = "O2"  # O0, O1, O2, O3
     use_simd: bool = True
     simd_instruction_set: str = "AVX2"  # SSE, AVX, AVX2, AVX512
-    custom_params: Dict[str, Any] = field(default_factory=dict)
+    custom_params: CustomMatrixParams = field(default_factory=CustomMatrixParams)

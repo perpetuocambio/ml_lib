@@ -36,7 +36,7 @@ class AttributeDefinition:
     # Metadata and flags
     is_blocked: bool = False  # For content safety
     is_recommended: bool = False  # For preferred combinations
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, str] = field(default_factory=dict)  # String metadata only
     
     def __post_init__(self):
         """Initialize default values."""

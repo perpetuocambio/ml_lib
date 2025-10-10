@@ -29,7 +29,7 @@ class PlotConfig:
     colorbar_label: str = "Value"
     center: Optional[float] = None
     # Solo para backward compatibility - preferir usar campos específicos
-    _additional_params: Dict[str, Any] = field(default_factory=dict, repr=False)
+    _additional_params: dict[str, float | str | bool] = field(default_factory=dict, repr=False)
 
     def __post_init__(self):
         """Validación de configuración."""
@@ -46,8 +46,12 @@ class PlotConfig:
         return self.color_scheme.value
 
     @property
-    def additional_params(self) -> Dict[str, Any]:
-        """Backward compatibility property (deprecated)."""
+    def additional_params(self) -> dict:
+        """Backward compatibility property (deprecated).
+
+        Returns:
+            Diccionario con parámetros adicionales. Usar campos específicos en su lugar.
+        """
         return self._additional_params
 
 

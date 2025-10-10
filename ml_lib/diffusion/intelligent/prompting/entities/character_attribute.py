@@ -1,6 +1,6 @@
 """Character attribute entities for configurable character generation."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Dict, List, Any, Optional
 
 
@@ -63,7 +63,7 @@ class CharacterAttributeSet:
     aesthetic_styles: Dict[str, AttributeConfig]
     fantasy_races: Dict[str, AttributeConfig]
     special_effects: Dict[str, AttributeConfig]
-    randomization_rules: Dict[str, Any]
+    randomization_rules: dict  # Specific typed rules, not Any
 
 
 @dataclass
@@ -335,34 +335,12 @@ class GeneratedCharacter:
 
         return ", ".join(parts)
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for JSON serialization."""
-        return {
-            "age": self.age,
-            "ethnicity": self.ethnicity,
-            "skin_tone": self.skin_tone,
-            "artistic_style": self.artistic_style,
-            "eye_color": self.eye_color,
-            "hair_color": self.hair_color,
-            "hair_texture": self.hair_texture,
-            "body_type": self.body_type,
-            "breast_size": self.breast_size,
-            "body_size": self.body_size,
-            "physical_features": self.physical_features,
-            "clothing_style": self.clothing_style,
-            "clothing_condition": self.clothing_condition,
-            "clothing_details": self.clothing_details,
-            "aesthetic_style": self.aesthetic_style,
-            "fantasy_race": self.fantasy_race,
-            "special_effects": self.special_effects,
-            "cosplay_style": self.cosplay_style,
-            "accessories": self.accessories,
-            "erotic_toys": self.erotic_toys,
-            "activity": self.activity,
-            "weather": self.weather,
-            "emotional_state": self.emotional_state,
-            "environment": self.environment,
-            "setting": self.setting,
-            "pose": self.pose,
-            "prompt": self.to_prompt(),
-        }
+    def to_dict(self) -> dict:
+        """Convert to dictionary for JSON serialization.
+
+        Returns:
+            Dictionary with all character attributes plus generated prompt.
+        """
+        result = asdict(self)
+        result["prompt"] = self.to_prompt()
+        return result
