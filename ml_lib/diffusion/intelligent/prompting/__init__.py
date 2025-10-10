@@ -1,28 +1,77 @@
-"""Intelligent prompting and parameter optimization."""
+"""Intelligent prompting and parameter optimization.
 
-from ml_lib.diffusion.intelligent.prompting.prompt_analyzer import PromptAnalyzer
-from ml_lib.diffusion.intelligent.prompting.lora_recommender import LoRARecommender
-from ml_lib.diffusion.intelligent.prompting.parameter_optimizer import ParameterOptimizer
-from ml_lib.diffusion.intelligent.prompting.character_generator import CharacterGenerator
-from ml_lib.diffusion.intelligent.prompting.negative_prompt_generator import NegativePromptGenerator
-from ml_lib.diffusion.intelligent.prompting.intelligent_generator import IntelligentCharacterGenerator
-from ml_lib.diffusion.intelligent.prompting.enhanced_generator import EnhancedCharacterGenerator, GenerationPreferences
-from ml_lib.diffusion.intelligent.prompting.enhanced_attributes import (
-    CharacterAttributeSet, AttributeDefinition, AttributeType
+This module provides intelligent character generation with:
+- Strong typing (no Dict/dict in public APIs)
+- Enums for all limited values
+- Clean service-oriented architecture
+- Uniform probability selection (fantasy-appropriate)
+
+PUBLIC API:
+- Services: CharacterGenerator, LoRARecommender, ParameterOptimizer, etc.
+- Models: ValidationResult, GenerationPreferences, GeneratedCharacter
+- Enums: SafetyLevel, CharacterFocus, QualityTarget, ComplexityLevel
+- Types: AttributeType, AttributeDefinition
+"""
+
+# ==================== PUBLIC SERVICES ====================
+from ml_lib.diffusion.intelligent.prompting.services import (
+    CharacterGenerator,
+    LoRARecommender,
+    NegativePromptGenerator,
+    ParameterOptimizer,
+    PromptAnalyzer,
 )
-from ml_lib.diffusion.intelligent.prompting.enhanced_config_loader import EnhancedConfigLoader
+
+# ==================== MODELS ====================
+from ml_lib.diffusion.intelligent.prompting.models import (
+    ValidationResult,
+    CompatibilityMap,
+    ConceptMap,
+    SelectedAttributes,
+    GenerationPreferences,
+)
+
+from ml_lib.diffusion.intelligent.prompting.entities import (
+    GeneratedCharacter,
+)
+
+# ==================== ENUMS ====================
+from ml_lib.diffusion.intelligent.prompting.enums import (
+    SafetyLevel,
+    CharacterFocus,
+    QualityTarget,
+    ComplexityLevel,
+)
+
+# ==================== CORE TYPES ====================
+from ml_lib.diffusion.intelligent.prompting.core import (
+    AttributeType,
+    AttributeDefinition,
+)
 
 __all__ = [
-    "PromptAnalyzer",
-    "LoRARecommender",
-    "ParameterOptimizer",
+    # === PUBLIC SERVICES (Main API) ===
     "CharacterGenerator",
+    "LoRARecommender",
     "NegativePromptGenerator",
-    "IntelligentCharacterGenerator",
-    "EnhancedCharacterGenerator",
+    "ParameterOptimizer",
+    "PromptAnalyzer",
+
+    # === MODELS (Data classes) ===
+    "ValidationResult",
+    "CompatibilityMap",
+    "ConceptMap",
+    "SelectedAttributes",
     "GenerationPreferences",
-    "CharacterAttributeSet",
-    "AttributeDefinition",
+    "GeneratedCharacter",
+
+    # === ENUMS (Configuration) ===
+    "SafetyLevel",
+    "CharacterFocus",
+    "QualityTarget",
+    "ComplexityLevel",
+
+    # === CORE TYPES (For advanced usage) ===
     "AttributeType",
-    "EnhancedConfigLoader",
+    "AttributeDefinition",
 ]

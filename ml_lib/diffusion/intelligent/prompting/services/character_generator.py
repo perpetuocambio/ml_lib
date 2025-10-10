@@ -1,4 +1,4 @@
-"""Enhanced character generator using class-based attribute system."""
+"""Character generator using class-based attribute system."""
 
 import logging
 import random
@@ -6,11 +6,13 @@ from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from pathlib import Path
 
-from ml_lib.diffusion.intelligent.prompting.enhanced_attributes import (
-    CharacterAttributeSet, AttributeDefinition, AttributeType, AttributeCollection
+from ml_lib.diffusion.intelligent.prompting.core import AttributeType, AttributeDefinition
+from ml_lib.diffusion.intelligent.prompting.handlers import (
+    CharacterAttributeSet, AttributeCollection
 )
-from ml_lib.diffusion.intelligent.prompting.enhanced_config_loader import EnhancedConfigLoader
+from ml_lib.diffusion.intelligent.prompting.handlers import ConfigLoader
 from ml_lib.diffusion.intelligent.prompting.entities import GeneratedCharacter
+from ml_lib.diffusion.intelligent.prompting.models import ValidationResult
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +20,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class GenerationPreferences:
     """Preferences for character generation."""
-    
+
     target_age: Optional[int] = None
     target_ethnicity: Optional[str] = None
     target_style: Optional[str] = None
@@ -29,10 +31,10 @@ class GenerationPreferences:
     diversity_target: float = 0.6  # Percentage of non-white characters
 
 
-class EnhancedCharacterGenerator:
-    """Enhanced character generator using class-based attribute system."""
-    
-    def __init__(self, config_loader: Optional[EnhancedConfigLoader] = None):
+class CharacterGenerator:
+    """Character generator using class-based attribute system."""
+
+    def __init__(self, config_loader: Optional[ConfigLoader] = None):
         """
         Initialize enhanced character generator.
         
@@ -40,7 +42,7 @@ class EnhancedCharacterGenerator:
             config_loader: Configuration loader (creates default if None)
         """
         if config_loader is None:
-            config_loader = EnhancedConfigLoader()
+            config_loader = ConfigLoader()
         
         self.config_loader = config_loader
         self.attribute_set = config_loader.get_attribute_set()
@@ -98,12 +100,12 @@ class EnhancedCharacterGenerator:
         selected_attributes.extend(detail_attributes)
         
         # Step 5: Validate all selections
-        validation_results = self.config_loader.validate_character_selection(selected_attributes)
-        
-        if not validation_results["is_valid"]:
-            logger.warning(f"Character generation issues: {validation_results['issues']}")
+        validation_result = self.config_loader.validate_character_selection(selected_attributes)
+
+        if not validation_result.is_valid:
+            logger.warning(f"Character generation issues: {validation_result.issues}")
             # Attempt to resolve conflicts
-            selected_attributes = self._resolve_conflicts(selected_attributes, validation_results)
+            selected_attributes = self._resolve_conflicts(selected_attributes, validation_result)
         
         # Step 6: Create final character
         character = self._create_character_from_attributes(selected_attributes, preferences)
@@ -157,12 +159,12 @@ class EnhancedCharacterGenerator:
         """
         # If specific age requested, find matching attribute
         if preferences.target_age:
-            for attribute in collection.attributes.values():
+            for attribute in collection.all_attributes():
                 if attribute.validate_age(preferences.target_age):
                     return attribute
-        
-        # Otherwise, weighted selection
-        return collection.select_by_probability()
+
+        # Otherwise, uniform random selection
+        return collection.select_random()
     
     def _select_ethnicity_attribute(self, collection: AttributeCollection,
                                   preferences: GenerationPreferences,
@@ -180,7 +182,7 @@ class EnhancedCharacterGenerator:
         """
         # Get available attributes (excluding blocked ones)
         available_attributes = [
-            attr for attr in collection.attributes.values()
+            attr for attr in collection.all_attributes()
             if not attr.is_blocked
         ]
         
@@ -300,8 +302,8 @@ class EnhancedCharacterGenerator:
         
         # Get compatible options
         compatible_hair = hair_collection.get_compatible_attributes(selected_attributes)
-        
-        return hair_collection.select_by_probability() if compatible_hair else None
+
+        return hair_collection.select_random() if compatible_hair else None
     
     def _select_hair_texture(self, ethnicity_attr: Optional[AttributeDefinition],
                            selected_attributes: List[AttributeDefinition]) -> Optional[AttributeDefinition]:
@@ -309,8 +311,8 @@ class EnhancedCharacterGenerator:
         texture_collection = self.attribute_set.get_collection(AttributeType.HAIR_TEXTURE)
         if not texture_collection:
             return None
-        
-        return texture_collection.select_by_probability()
+
+        return texture_collection.select_random()
     
     def _select_eye_color(self, ethnicity_attr: Optional[AttributeDefinition],
                          selected_attributes: List[AttributeDefinition]) -> Optional[AttributeDefinition]:
@@ -318,8 +320,8 @@ class EnhancedCharacterGenerator:
         eye_collection = self.attribute_set.get_collection(AttributeType.EYE_COLOR)
         if not eye_collection:
             return None
-        
-        return eye_collection.select_by_probability()
+
+        return eye_collection.select_random()
     
     def _select_body_type(self, age_attr: Optional[AttributeDefinition],
                          selected_attributes: List[AttributeDefinition]) -> Optional[AttributeDefinition]:
@@ -327,8 +329,8 @@ class EnhancedCharacterGenerator:
         body_collection = self.attribute_set.get_collection(AttributeType.BODY_TYPE)
         if not body_collection:
             return None
-        
-        return body_collection.select_by_probability()
+
+        return body_collection.select_random()
     
     def _select_breast_size(self, age_attr: Optional[AttributeDefinition],
                            body_type_attr: Optional[AttributeDefinition],
@@ -337,8 +339,8 @@ class EnhancedCharacterGenerator:
         breast_collection = self.attribute_set.get_collection(AttributeType.BREAST_SIZE)
         if not breast_collection:
             return None
-        
-        return breast_collection.select_by_probability()
+
+        return breast_collection.select_random()
     
     def _select_style_attributes(self, selected_attributes: List[AttributeDefinition],
                                 preferences: GenerationPreferences) -> List[AttributeDefinition]:
@@ -450,47 +452,45 @@ class EnhancedCharacterGenerator:
         accessory_collection = self.attribute_set.get_collection(AttributeType.ACCESSORY)
         if not accessory_collection:
             return None
-        
-        return accessory_collection.select_by_probability()
+
+        return accessory_collection.select_random()
     
     def _select_special_effect(self, selected_attributes: List[AttributeDefinition]) -> Optional[AttributeDefinition]:
         """Select special effect."""
         effect_collection = self.attribute_set.get_collection(AttributeType.SPECIAL_EFFECT)
         if not effect_collection:
             return None
-        
-        return effect_collection.select_by_probability()
+
+        return effect_collection.select_random()
     
     def _resolve_conflicts(self, attributes: List[AttributeDefinition],
-                          validation_results: Dict[str, Any]) -> List[AttributeDefinition]:
+                          validation_result: ValidationResult) -> List[AttributeDefinition]:
         """
         Resolve attribute conflicts.
-        
+
         Args:
             attributes: Current attributes
-            validation_results: Validation results
-            
+            validation_result: Validation result
+
         Returns:
             Resolved attributes
         """
         resolved_attributes = attributes.copy()
-        
+
         # Handle blocked content issues
-        blocked_issues = validation_results.get("blocked_content_issues", [])
-        if blocked_issues:
+        if validation_result.has_blocking_issues:
             # Remove blocked attributes
             resolved_attributes = [
-                attr for attr in resolved_attributes 
+                attr for attr in resolved_attributes
                 if not attr.is_blocked
             ]
-        
+
         # Handle compatibility issues
-        compatibility_issues = validation_results.get("compatibility_issues", [])
-        if compatibility_issues:
+        if not validation_result.is_valid:
             # This would implement more sophisticated conflict resolution
             # For now, we'll just log the issues
-            logger.info(f"Compatibility issues found: {compatibility_issues}")
-        
+            logger.info(f"Compatibility issues found: {validation_result.compatibility_issue_count}")
+
         return resolved_attributes
     
     def _create_character_from_attributes(self, attributes: List[AttributeDefinition],
@@ -534,6 +534,8 @@ class EnhancedCharacterGenerator:
             ethnicity=ethnicity_attr.name if ethnicity_attr else "caucasian",
             ethnicity_keywords=ethnicity_attr.keywords if ethnicity_attr else ["caucasian"],
             ethnicity_prompt_weight=ethnicity_attr.prompt_weight if ethnicity_attr else 1.0,
+            artistic_style="photorealistic",  # Default
+            artistic_keywords=["photorealistic", "detailed"],
             eye_color=eye_color_attr.name if eye_color_attr else "brown",
             eye_keywords=eye_color_attr.keywords if eye_color_attr else ["brown eyes"],
             hair_color=hair_color_attr.name if hair_color_attr else "brown",
@@ -545,14 +547,24 @@ class EnhancedCharacterGenerator:
             body_keywords=body_type_attr.keywords if body_type_attr else ["curvy body"],
             breast_size=breast_size_attr.name if breast_size_attr else "large",
             breast_keywords=breast_size_attr.keywords if breast_size_attr else ["large breasts"],
+            body_size="average",  # Default
+            body_size_keywords=["average build"],
+            physical_features="none",  # Default
+            physical_feature_keywords=[],
             clothing_style=clothing_style_attr.name if clothing_style_attr else "nude",
             clothing_keywords=clothing_style_attr.keywords if clothing_style_attr else ["nude"],
             clothing_condition="intact",  # Default
             clothing_condition_keywords=["intact clothes"],
             clothing_details="none",  # Default
-            clothing_detail_keywords=["undetailed"],
+            clothing_detail_keywords=[],
+            aesthetic_style=aesthetic_style_attr.name if aesthetic_style_attr else "none",
+            aesthetic_keywords=aesthetic_style_attr.keywords if aesthetic_style_attr else [],
+            fantasy_race="none",  # Default
+            fantasy_race_keywords=[],
+            special_effects="none",  # Default
+            special_effect_keywords=[],
             cosplay_style="original_character",  # Default
-            cosplay_keywords=["original character"],
+            cosplay_keywords=[],
             accessories=[],  # Would populate from selected accessories
             accessory_keywords=[],
             erotic_toys=[],  # Default empty

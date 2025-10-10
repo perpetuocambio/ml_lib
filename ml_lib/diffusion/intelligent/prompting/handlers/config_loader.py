@@ -2,16 +2,19 @@
 
 import yaml
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import List, Optional
 
-from ml_lib.diffusion.intelligent.prompting.enhanced_attributes import (
-    CharacterAttributeSet, AttributeDefinition, AttributeType
-)
+from ml_lib.diffusion.intelligent.prompting.core import AttributeType, AttributeDefinition
+from ml_lib.diffusion.intelligent.prompting.handlers import CharacterAttributeSet
+from ml_lib.diffusion.intelligent.prompting.models import ValidationResult, CompatibilityMap
 
 
-class EnhancedConfigLoader:
-    """Enhanced configuration loader that converts YAML to class-based attributes."""
-    
+class ConfigLoader:
+    """Configuration loader that converts YAML to class-based attributes."""
+
+    # Safety terms for content filtering
+    BLOCKED_TERMS = ['schoolgirl', 'school uniform', 'underage', 'minor', 'child', 'teen']
+
     def __init__(self, config_dir: Optional[Path] = None):
         """
         Initialize enhanced config loader.
@@ -63,61 +66,60 @@ class EnhancedConfigLoader:
         """
         return self.attribute_set.get_attribute(attribute_type, name)
     
-    def get_compatible_attributes(self, selected_attributes: List[AttributeDefinition]) -> Dict[AttributeType, List[AttributeDefinition]]:
+    def get_compatible_attributes(self, selected_attributes: List[AttributeDefinition]) -> CompatibilityMap:
         """
         Get attributes that are compatible with currently selected attributes.
-        
+
         Args:
             selected_attributes: Currently selected attributes
-            
+
         Returns:
-            Dictionary mapping attribute types to compatible attributes
+            CompatibilityMap with compatible attributes by type
         """
-        compatible = {}
-        
+        compatibility_map = CompatibilityMap()
+
         for attr_type in AttributeType:
             collection = self.attribute_set.get_collection(attr_type)
             if collection:
                 compatible_attributes = collection.get_compatible_attributes(selected_attributes)
                 if compatible_attributes:
-                    compatible[attr_type] = compatible_attributes
-        
-        return compatible
+                    compatibility_map.add_compatible_attributes(attr_type, compatible_attributes)
+
+        return compatibility_map
     
-    def validate_character_selection(self, selected_attributes: List[AttributeDefinition]) -> Dict[str, Any]:
+    def validate_character_selection(self, selected_attributes: List[AttributeDefinition]) -> ValidationResult:
         """
         Validate a complete character selection.
-        
+
         Args:
             selected_attributes: All selected attributes for a character
-            
+
         Returns:
-            Validation results including compatibility, issues, and suggestions
+            ValidationResult with compatibility, issues, and suggestions
         """
         # Validate compatibility
         is_compatible, compatibility_issues = self.attribute_set.validate_compatibility(selected_attributes)
-        
+
         # Validate age consistency
         age_consistency_issues = self._validate_age_consistency(selected_attributes)
-        
+
         # Check for blocked content
         blocked_content_issues = self._check_for_blocked_content(selected_attributes)
-        
+
         # Collect all issues
         all_issues = compatibility_issues + age_consistency_issues + blocked_content_issues
-        
+
         # Generate suggestions for improvement
         suggestions = self._generate_improvement_suggestions(selected_attributes, all_issues)
-        
-        return {
-            "is_valid": len(all_issues) == 0,
-            "compatibility_valid": is_compatible,
-            "issues": all_issues,
-            "age_consistency_issues": age_consistency_issues,
-            "blocked_content_issues": blocked_content_issues,
-            "suggestions": suggestions,
-            "total_issue_count": len(all_issues)
-        }
+
+        return ValidationResult(
+            is_valid=len(all_issues) == 0,
+            compatibility_valid=is_compatible,
+            issues=all_issues,
+            age_consistency_issues=age_consistency_issues,
+            blocked_content_issues=blocked_content_issues,
+            suggestions=suggestions
+        )
     
     def _validate_age_consistency(self, selected_attributes: List[AttributeDefinition]) -> List[str]:
         """
@@ -164,16 +166,14 @@ class EnhancedConfigLoader:
             List of blocked content issues
         """
         issues = []
-        
-        blocked_terms = ['schoolgirl', 'school uniform', 'underage', 'minor', 'child', 'teen']
-        
+
         for attribute in selected_attributes:
             if attribute.is_blocked:
                 issues.append(f"Blocked content: '{attribute.name}' ({attribute.attribute_type.value})")
-            
+
             # Additional check for keywords
             for keyword in attribute.keywords:
-                if any(blocked_term in keyword.lower() for blocked_term in blocked_terms):
+                if any(blocked_term in keyword.lower() for blocked_term in self.BLOCKED_TERMS):
                     issues.append(f"Potentially blocked keyword in '{attribute.name}': '{keyword}'")
         
         return issues
@@ -220,23 +220,25 @@ class EnhancedConfigLoader:
 # Example usage
 if __name__ == "__main__":
     # Create loader
-    loader = EnhancedConfigLoader()
-    
+    loader = ConfigLoader()
+
     # Get attribute set
     attribute_set = loader.get_attribute_set()
-    
-    print(f"Loaded {sum(len(collection.attributes) for collection in attribute_set.collections.values())} attributes")
-    
+
+    # Count total attributes using all_attributes()
+    total = sum(len(collection.all_attributes()) for collection in attribute_set.collections.values())
+    print(f"Loaded {total} attributes")
+
     # Test getting specific attributes
     age_attr = loader.get_attribute(AttributeType.AGE_RANGE, "milf")
     if age_attr:
         print(f"Found age attribute: {age_attr.name} with keywords {age_attr.keywords}")
-    
+
     # Test validation
     test_attributes = []
     if age_attr:
         test_attributes.append(age_attr)
-    
+
     # Validate (would need more attributes for meaningful validation)
     if test_attributes:
         validation_results = loader.validate_character_selection(test_attributes)
