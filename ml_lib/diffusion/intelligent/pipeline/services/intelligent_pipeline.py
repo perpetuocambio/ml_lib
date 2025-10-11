@@ -82,9 +82,14 @@ class IntelligentGenerationPipeline:
                 ParameterOptimizer,
                 LearningEngine,
             )
-            from ml_lib.diffusion.intelligent.memory.services import (
+            from ml_lib.diffusion.intelligent.memory import (
                 MemoryManager,
                 ModelOffloader,
+            )
+            from ml_lib.diffusion.intelligent.memory.services.memory_optimizer import (
+                MemoryOptimizer,
+                MemoryOptimizationConfig,
+                OptimizationLevel,
             )
 
             # Model Registry (US 14.1)
@@ -102,14 +107,20 @@ class IntelligentGenerationPipeline:
             # Parameter Optimization (US 14.2)
             self.param_optimizer = ParameterOptimizer()
 
-            # Memory Management (US 14.3)
-            self.memory_manager = MemoryManager(
-                max_vram_gb=self.config.memory_settings.max_vram_gb
-            )
+            # Memory Management (US 14.3) - OUR MARKET VALUE DIFFERENTIATOR
+            self.memory_manager = MemoryManager()
             self.model_offloader = ModelOffloader(
                 strategy=self.config.memory_settings.offload_strategy,
                 max_vram_gb=self.config.memory_settings.max_vram_gb,
+                memory_manager=self.memory_manager,
             )
+
+            # Memory Optimizer (EXTREME OPTIMIZATION - MARKET VALUE)
+            opt_level = self._get_optimization_level()
+            opt_config = MemoryOptimizationConfig.from_level(opt_level)
+            self.memory_optimizer = MemoryOptimizer(opt_config)
+
+            logger.info(f"Memory optimizer enabled: {opt_level.value} mode")
 
             # Learning Engine (US 14.2)
             if self.config.enable_learning:
@@ -135,7 +146,41 @@ class IntelligentGenerationPipeline:
             self.param_optimizer = None
             self.memory_manager = None
             self.model_offloader = None
+            self.memory_optimizer = None
             self.learning_engine = None
+
+    def _get_optimization_level(self) -> "OptimizationLevel":
+        """
+        Determine memory optimization level from config.
+
+        Returns:
+            OptimizationLevel enum
+        """
+        try:
+            from ml_lib.diffusion.intelligent.memory.services.memory_optimizer import (
+                OptimizationLevel,
+            )
+
+            strategy = self.config.memory_settings.offload_strategy.value
+            vram = self.memory_manager.resources.available_vram_gb if self.memory_manager else 12.0
+
+            # Map strategy to optimization level
+            if strategy == "none":
+                return OptimizationLevel.NONE
+            elif strategy == "balanced":
+                return OptimizationLevel.BALANCED
+            elif strategy == "sequential" or strategy == "aggressive":
+                return OptimizationLevel.AGGRESSIVE
+            elif vram < 6:
+                # Auto upgrade to ULTRA for low VRAM
+                return OptimizationLevel.ULTRA
+            else:
+                return OptimizationLevel.BALANCED
+        except ImportError:
+            from ml_lib.diffusion.intelligent.memory.services.memory_optimizer import (
+                OptimizationLevel,
+            )
+            return OptimizationLevel.BALANCED
 
     def _init_ollama(self) -> Optional[Any]:
         """Initialize Ollama client for semantic analysis."""
@@ -498,12 +543,12 @@ class IntelligentGenerationPipeline:
             self._apply_loras(loras)
 
     def _load_base_model(self, model_id: str):
-        """Load base diffusion model with memory management."""
+        """Load base diffusion model with EXTREME memory optimization - OUR MARKET VALUE."""
         try:
             import torch
             from diffusers import DiffusionPipeline
 
-            logger.info(f"Loading {model_id}")
+            logger.info(f"Loading {model_id} with extreme memory optimization...")
             dtype = torch.float16 if self.config.memory_settings.enable_quantization else torch.float32
 
             self.diffusion_pipeline = DiffusionPipeline.from_pretrained(
@@ -511,15 +556,25 @@ class IntelligentGenerationPipeline:
                 variant="fp16" if dtype == torch.float16 else None
             )
 
-            # Offloading
-            if self.config.memory_settings.offload_strategy == "balanced":
-                self.diffusion_pipeline.enable_model_cpu_offload()
-            elif self.config.memory_settings.offload_strategy == "aggressive":
-                self.diffusion_pipeline.enable_sequential_cpu_offload()
+            # APPLY ALL MEMORY OPTIMIZATIONS - OUR MARKET DIFFERENTIATOR
+            if self.memory_optimizer:
+                logger.info("Applying EXTREME memory optimizations (market differentiator)...")
+                self.memory_optimizer.optimize_pipeline(self.diffusion_pipeline)
+                # Cleanup immediately after load
+                self.memory_optimizer.cleanup_after_model_load()
             else:
-                self.diffusion_pipeline = self.diffusion_pipeline.to("cuda")
+                # Fallback to basic optimizations if optimizer not available
+                logger.warning("MemoryOptimizer not available, using basic optimizations")
+                if self.config.memory_settings.offload_strategy.value == "balanced":
+                    self.diffusion_pipeline.enable_model_cpu_offload()
+                elif self.config.memory_settings.offload_strategy.value == "aggressive":
+                    self.diffusion_pipeline.enable_sequential_cpu_offload()
+                else:
+                    self.diffusion_pipeline = self.diffusion_pipeline.to("cuda")
 
             self.current_base_model = model_id
+            logger.info(f"✅ Model loaded and optimized: {model_id}")
+
         except ImportError:
             logger.warning("torch/diffusers not available")
             self.diffusion_pipeline = None
@@ -550,7 +605,7 @@ class IntelligentGenerationPipeline:
         seed: int,
     ) -> Any:
         """
-        Generate image using diffusion pipeline.
+        Generate image using diffusion pipeline with IMMEDIATE memory cleanup.
 
         Args:
             prompt: Text prompt
@@ -579,21 +634,43 @@ class IntelligentGenerationPipeline:
             generator = torch.Generator(device="cuda" if torch.cuda.is_available() else "cpu")
             generator.manual_seed(seed)
 
-            # Generate image
-            result = self.diffusion_pipeline(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                num_inference_steps=params.num_steps,
-                guidance_scale=params.guidance_scale,
-                width=params.width,
-                height=params.height,
-                generator=generator,
-            )
+            # Generate image with memory monitoring (MARKET VALUE)
+            if self.memory_optimizer:
+                from ml_lib.diffusion.intelligent.memory.services.memory_optimizer import (
+                    MemoryMonitor,
+                )
+                with MemoryMonitor(self.memory_optimizer) as monitor:
+                    result = self.diffusion_pipeline(
+                        prompt=prompt,
+                        negative_prompt=negative_prompt,
+                        num_inference_steps=params.num_steps,
+                        guidance_scale=params.guidance_scale,
+                        width=params.width,
+                        height=params.height,
+                        generator=generator,
+                    )
+                    image = result.images[0]
+                # Memory is automatically freed after exiting context (IMMEDIATE CLEANUP)
+                logger.info(f"Peak memory during generation: {monitor.get_peak_memory():.2f}GB")
+            else:
+                result = self.diffusion_pipeline(
+                    prompt=prompt,
+                    negative_prompt=negative_prompt,
+                    num_inference_steps=params.num_steps,
+                    guidance_scale=params.guidance_scale,
+                    width=params.width,
+                    height=params.height,
+                    generator=generator,
+                )
+                image = result.images[0]
 
-            return result.images[0]
+            return image
 
         except Exception as e:
             logger.error(f"Generation failed: {e}")
+            # Cleanup on error
+            if self.memory_optimizer:
+                self.memory_optimizer.cleanup_after_generation()
             from PIL import Image
             return Image.new("RGB", (params.width, params.height), color="red")
 

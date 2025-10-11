@@ -1,0 +1,435 @@
+"""
+Model Orchestrator - Intelligent model selection and orchestration.
+
+Analyzes metadata from ComfyUI-style .metadata.json files to automatically:
+- Select optimal base model for prompt
+- Choose compatible VAE, encoders, LoRAs
+- Configure optimal generation parameters
+- Manage memory constraints
+
+Completely abstracted from user - they only provide prompt + simple options.
+"""
+
+import json
+import logging
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Optional
+
+from ml_lib.diffusion.intelligent.hub_integration.entities import BaseModel, ModelType
+from ml_lib.system.resource_monitor import ResourceMonitor
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ModelMetadataFile:
+    """
+    Parsed metadata from ComfyUI .metadata.json files.
+
+    These files are created by custom_nodes like civitai_comfy_nodes.
+    """
+
+    # Identity
+    file_name: str
+    model_name: str
+    file_path: Path
+
+    # Model info
+    base_model: str  # "SDXL 1.0", "SD 1.5", "Flux", etc.
+    model_type: str  # "LORA", "Checkpoint", etc.
+
+    # Quality indicators
+    download_count: int = 0
+    rating: float = 0.0
+    thumbs_up: int = 0
+
+    # Training info
+    trigger_words: list[str] = field(default_factory=list)
+    trained_words: list[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
+
+    # Optimal generation parameters (from example images)
+    recommended_steps: Optional[int] = None
+    recommended_cfg: Optional[float] = None
+    recommended_sampler: Optional[str] = None
+    recommended_scheduler: Optional[str] = None
+    recommended_clip_skip: Optional[int] = None
+    recommended_lora_weight: float = 1.0
+
+    # Technical
+    size_bytes: int = 0
+    sha256: str = ""
+
+    def __post_init__(self):
+        """Convert path to Path object."""
+        if isinstance(self.file_path, str):
+            self.file_path = Path(self.file_path)
+
+    @property
+    def size_gb(self) -> float:
+        """Size in GB."""
+        return self.size_bytes / (1024**3)
+
+    @property
+    def popularity_score(self) -> float:
+        """
+        Calculate popularity score (0-100).
+
+        Combines downloads, rating, thumbs up.
+        """
+        # Normalize downloads (log scale, max ~100k)
+        import math
+        download_score = min(math.log10(max(self.download_count, 1)) / 5, 1.0) * 50
+
+        # Rating (0-5 scale)
+        rating_score = (self.rating / 5.0) * 30
+
+        # Thumbs up (log scale, max ~1k)
+        thumbs_score = min(math.log10(max(self.thumbs_up, 1)) / 3, 1.0) * 20
+
+        return download_score + rating_score + thumbs_score
+
+    def get_base_model_enum(self) -> BaseModel:
+        """Convert string base_model to enum."""
+        base_lower = self.base_model.lower()
+
+        if "sdxl" in base_lower or "xl" in base_lower:
+            if "pony" in base_lower:
+                return BaseModel.PONY
+            return BaseModel.SDXL
+        elif "sd 3" in base_lower or "sd3" in base_lower:
+            return BaseModel.SD3
+        elif "flux" in base_lower:
+            return BaseModel.FLUX
+        elif "sd 2.1" in base_lower or "sd21" in base_lower:
+            return BaseModel.SD21
+        elif "sd 2" in base_lower or "sd20" in base_lower:
+            return BaseModel.SD20
+        elif "sd 1.5" in base_lower or "sd15" in base_lower or "sd 1" in base_lower:
+            return BaseModel.SD15
+        else:
+            return BaseModel.UNKNOWN
+
+    @classmethod
+    def from_json_file(cls, json_path: Path) -> Optional["ModelMetadataFile"]:
+        """
+        Load metadata from .metadata.json file.
+
+        Args:
+            json_path: Path to .metadata.json file
+
+        Returns:
+            Parsed metadata or None if failed
+        """
+        try:
+            with open(json_path) as f:
+                data = json.load(f)
+
+            # Extract basic info
+            file_name = data.get("file_name", "")
+            model_name = data.get("model_name", "")
+            file_path = Path(data.get("file_path", ""))
+            base_model = data.get("base_model", "unknown")
+            size_bytes = data.get("size", 0)
+            sha256 = data.get("sha256", "")
+
+            # Extract CivitAI info if available
+            civitai = data.get("civitai", {})
+
+            # Stats
+            stats = civitai.get("stats", {})
+            download_count = stats.get("downloadCount", 0)
+            rating = stats.get("rating", 0.0)
+            thumbs_up = stats.get("thumbsUpCount", 0)
+
+            # Trigger words
+            trained_words = civitai.get("trainedWords", [])
+
+            # Tags
+            tags = data.get("tags", [])
+
+            # Model type
+            model_info = civitai.get("model", {})
+            model_type = model_info.get("type", "unknown")
+
+            # Extract recommended parameters from first image metadata
+            images = civitai.get("images", [])
+            recommended_steps = None
+            recommended_cfg = None
+            recommended_sampler = None
+            recommended_scheduler = None
+            recommended_clip_skip = None
+            recommended_lora_weight = 1.0
+
+            if images:
+                meta = images[0].get("meta", {})
+                recommended_steps = meta.get("steps")
+                recommended_cfg = meta.get("cfgScale")
+                recommended_sampler = meta.get("sampler")
+                recommended_scheduler = meta.get("Scheduler")
+                recommended_clip_skip = meta.get("clipSkip")
+
+                # Extract LoRA weight if available
+                lora_weights = meta.get("Lora weights", {})
+                if lora_weights:
+                    # Get first LoRA weight
+                    recommended_lora_weight = float(list(lora_weights.values())[0])
+
+            return cls(
+                file_name=file_name,
+                model_name=model_name,
+                file_path=file_path,
+                base_model=base_model,
+                model_type=model_type,
+                download_count=download_count,
+                rating=rating,
+                thumbs_up=thumbs_up,
+                trigger_words=trained_words,
+                trained_words=trained_words,
+                tags=tags,
+                recommended_steps=recommended_steps,
+                recommended_cfg=recommended_cfg,
+                recommended_sampler=recommended_sampler,
+                recommended_scheduler=recommended_scheduler,
+                recommended_clip_skip=recommended_clip_skip,
+                recommended_lora_weight=recommended_lora_weight,
+                size_bytes=size_bytes,
+                sha256=sha256,
+            )
+
+        except Exception as e:
+            logger.warning(f"Failed to parse {json_path}: {e}")
+            return None
+
+
+@dataclass
+class DiffusionArchitecture:
+    """
+    Information about a diffusion model architecture.
+
+    Defines requirements and compatibility for different architectures.
+    """
+
+    name: BaseModel
+
+    # Components required
+    requires_vae: bool = True
+    requires_text_encoder: bool = True
+    requires_text_encoder_2: bool = False  # SDXL, Flux
+    requires_unet: bool = True
+
+    # Typical sizes (for memory estimation)
+    typical_base_size_gb: float = 2.0
+    typical_vae_size_gb: float = 0.1
+    typical_encoder_size_gb: float = 0.5
+
+    # Compatible VAE types
+    compatible_vae_patterns: list[str] = field(default_factory=list)
+
+    # Default parameters
+    default_steps: int = 30
+    default_cfg: float = 7.0
+    default_sampler: str = "DPM++ 2M"
+    default_scheduler: str = "karras"
+    default_clip_skip: int = 2
+
+    @classmethod
+    def get_architecture(cls, base_model: BaseModel) -> "DiffusionArchitecture":
+        """Get architecture info for base model type."""
+        architectures = {
+            BaseModel.SD15: cls(
+                name=BaseModel.SD15,
+                requires_vae=True,
+                requires_text_encoder=True,
+                requires_text_encoder_2=False,
+                requires_unet=True,
+                typical_base_size_gb=2.0,
+                typical_vae_size_gb=0.1,
+                typical_encoder_size_gb=0.5,
+                compatible_vae_patterns=["sd15", "sd-vae", "kl-f8"],
+                default_steps=25,
+                default_cfg=7.5,
+                default_sampler="DPM++ 2M Karras",
+                default_clip_skip=1,
+            ),
+            BaseModel.SDXL: cls(
+                name=BaseModel.SDXL,
+                requires_vae=True,
+                requires_text_encoder=True,
+                requires_text_encoder_2=True,  # SDXL has dual encoders
+                requires_unet=True,
+                typical_base_size_gb=6.5,
+                typical_vae_size_gb=0.2,
+                typical_encoder_size_gb=1.2,
+                compatible_vae_patterns=["sdxl", "xl-vae"],
+                default_steps=30,
+                default_cfg=7.0,
+                default_sampler="DPM++ 2M SDE Karras",
+                default_scheduler="karras",
+                default_clip_skip=2,
+            ),
+            BaseModel.PONY: cls(
+                name=BaseModel.PONY,
+                requires_vae=True,
+                requires_text_encoder=True,
+                requires_text_encoder_2=True,
+                requires_unet=True,
+                typical_base_size_gb=6.5,
+                typical_vae_size_gb=0.2,
+                typical_encoder_size_gb=1.2,
+                compatible_vae_patterns=["sdxl", "pony", "xl-vae"],
+                default_steps=30,
+                default_cfg=6.0,
+                default_sampler="Euler a",
+                default_clip_skip=2,
+            ),
+            BaseModel.SD3: cls(
+                name=BaseModel.SD3,
+                requires_vae=True,
+                requires_text_encoder=True,
+                requires_text_encoder_2=True,
+                requires_unet=True,
+                typical_base_size_gb=8.0,
+                typical_vae_size_gb=0.3,
+                typical_encoder_size_gb=1.5,
+                compatible_vae_patterns=["sd3"],
+                default_steps=28,
+                default_cfg=5.0,
+                default_sampler="DPM++ 2M",
+            ),
+            BaseModel.FLUX: cls(
+                name=BaseModel.FLUX,
+                requires_vae=True,
+                requires_text_encoder=True,
+                requires_text_encoder_2=True,
+                requires_unet=True,
+                typical_base_size_gb=12.0,
+                typical_vae_size_gb=0.3,
+                typical_encoder_size_gb=2.0,
+                compatible_vae_patterns=["flux"],
+                default_steps=20,
+                default_cfg=3.5,
+                default_sampler="Euler",
+            ),
+        }
+
+        return architectures.get(base_model, architectures[BaseModel.SDXL])
+
+
+class ModelOrchestrator:
+    """
+    Intelligent model orchestrator.
+
+    Automatically selects and configures models based on:
+    - Available models with metadata
+    - User prompt (semantic analysis via Ollama if enabled)
+    - Available system resources
+    - Model compatibility
+
+    User provides: prompt + simple options
+    Orchestrator handles: ALL technical details
+
+    Example:
+        >>> orchestrator = ModelOrchestrator(
+        ...     model_paths=["/path/to/comfyui/models"],
+        ...     enable_ollama=True
+        ... )
+        >>>
+        >>> config = orchestrator.select_models(
+        ...     prompt="a beautiful anime girl with pink hair",
+        ...     style="anime",  # Optional hint
+        ... )
+        >>>
+        >>> print(f"Base: {config.base_model_path}")
+        >>> print(f"LoRAs: {len(config.loras)} selected")
+        >>> print(f"Steps: {config.generation_params['steps']}")
+    """
+
+    def __init__(
+        self,
+        model_paths: list[Path | str],
+        enable_ollama: bool = False,
+        ollama_model: str = "llama3.2",
+        resource_monitor: Optional[ResourceMonitor] = None,
+    ):
+        """
+        Initialize orchestrator.
+
+        Args:
+            model_paths: Paths to scan for models (e.g., ComfyUI models dir)
+            enable_ollama: Enable intelligent selection via Ollama
+            ollama_model: Ollama model to use for analysis
+            resource_monitor: Resource monitor (None = create new)
+        """
+        self.model_paths = [Path(p) for p in model_paths]
+        self.enable_ollama = enable_ollama
+        self.ollama_model = ollama_model
+        self.resource_monitor = resource_monitor or ResourceMonitor()
+
+        # Scan and index models
+        self.metadata_index: dict[ModelType, list[ModelMetadataFile]] = {}
+        self._scan_metadata()
+
+        logger.info(
+            f"ModelOrchestrator initialized: "
+            f"{sum(len(m) for m in self.metadata_index.values())} models indexed"
+        )
+
+    def _scan_metadata(self) -> None:
+        """Scan all model directories for .metadata.json files."""
+        for base_path in self.model_paths:
+            if not base_path.exists():
+                continue
+
+            # Find all .metadata.json files
+            for metadata_file in base_path.rglob("*.metadata.json"):
+                parsed = ModelMetadataFile.from_json_file(metadata_file)
+                if parsed:
+                    # Determine model type
+                    model_type = self._get_model_type_from_path(metadata_file)
+
+                    if model_type not in self.metadata_index:
+                        self.metadata_index[model_type] = []
+
+                    self.metadata_index[model_type].append(parsed)
+
+        # Log stats
+        for model_type, models in self.metadata_index.items():
+            logger.info(f"Found {len(models)} {model_type.value} models with metadata")
+
+    def _get_model_type_from_path(self, path: Path) -> ModelType:
+        """Determine model type from directory structure."""
+        path_str = str(path).lower()
+
+        if "/lora" in path_str:
+            return ModelType.LORA
+        elif "/checkpoint" in path_str:
+            return ModelType.BASE_MODEL
+        elif "/vae" in path_str:
+            return ModelType.VAE
+        elif "/controlnet" in path_str:
+            return ModelType.CONTROLNET
+        elif "/embedding" in path_str:
+            return ModelType.EMBEDDING
+        elif "/clip_vision" in path_str:
+            return ModelType.CLIP_VISION
+        elif "/clip" in path_str:
+            return ModelType.CLIP
+        else:
+            return ModelType.BASE_MODEL
+
+    def get_stats(self) -> dict[str, any]:
+        """Get orchestrator statistics."""
+        return {
+            "total_models": sum(len(m) for m in self.metadata_index.values()),
+            "by_type": {
+                model_type.value: len(models)
+                for model_type, models in self.metadata_index.items()
+            },
+            "ollama_enabled": self.enable_ollama,
+        }
+
+
+# TODO: Next part will be the actual selection logic
+# This is the foundation - metadata parsing and architecture definitions

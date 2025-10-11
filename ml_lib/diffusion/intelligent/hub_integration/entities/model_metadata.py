@@ -21,6 +21,10 @@ class ModelType(Enum):
     VAE = "vae"
     CONTROLNET = "controlnet"
     IPADAPTER = "ipadapter"
+    CLIP = "clip"
+    CLIP_VISION = "clip_vision"
+    TEXT_ENCODER = "text_encoder"
+    UNET = "unet"
 
 
 class BaseModel(Enum):
