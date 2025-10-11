@@ -9,7 +9,7 @@ This example demonstrates:
 """
 
 import logging
-from ml_lib.diffusion.intelligent.prompting.services.character_generator import CharacterGenerator
+from ml_lib.diffusion.intelligent.prompting.services.character_generator import CharacterGenerator, GenerationPreferences
 
 # Setup logging
 logging.basicConfig(
@@ -105,7 +105,8 @@ def example_diversity_batch():
     generator = CharacterGenerator()
 
     # Generate 10 characters with diversity enforcement
-    characters = generator.generate_batch(count=10, enforce_diversity=True)
+    preferences = GenerationPreferences(diversity_target=0.7)
+    characters = generator.generate_batch(count=10, preferences=preferences)
 
     # Count ethnicities and skin tones
     ethnicity_counts = {}
@@ -149,7 +150,7 @@ def example_no_diversity_enforcement():
 
     # Generate 20 without diversity enforcement
     logger.info("\nGenerating 20 characters WITHOUT diversity enforcement...")
-    chars_no_diversity = generator.generate_batch(count=20, enforce_diversity=False)
+    chars_no_diversity = generator.generate_batch(count=20, preferences=GenerationPreferences(diversity_target=0.2))
 
     ethnicity_no_div = {}
     for char in chars_no_diversity:
@@ -157,7 +158,7 @@ def example_no_diversity_enforcement():
 
     # Generate 20 WITH diversity enforcement
     logger.info("Generating 20 characters WITH diversity enforcement...")
-    chars_with_diversity = generator.generate_batch(count=20, enforce_diversity=True)
+    chars_with_diversity = generator.generate_batch(count=20, preferences=GenerationPreferences(diversity_target=0.8))
 
     ethnicity_with_div = {}
     for char in chars_with_diversity:
