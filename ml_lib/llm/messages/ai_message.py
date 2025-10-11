@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from infrastructure.providers.llm.messages.base_message import BaseMessage
+from ml_lib.llm.messages.base_message import BaseMessage
 
 try:
     from langchain_core.messages import AIMessage as LangChainAIMessage

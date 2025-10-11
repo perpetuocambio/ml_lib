@@ -420,6 +420,231 @@ class ModelRegistry:
 
         return report
 
+    def find_or_download(
+        self,
+        query: str,
+        model_type: Optional[ModelType] = None,
+        base_model: Optional[BaseModel] = None,
+        auto_download: bool = True,
+    ) -> Optional[ModelMetadata]:
+        """
+        Find model in registry, or search and download from hubs.
+
+        This is the main entry point for "intelligent model acquisition".
+
+        Workflow:
+        1. Search local registry
+        2. If not found, search HuggingFace
+        3. If not found, search CivitAI
+        4. If auto_download=True, download and register
+        5. Return model metadata
+
+        Args:
+            query: Model name or ID
+            model_type: Filter by model type
+            base_model: Filter by base model
+            auto_download: Automatically download if found remotely
+
+        Returns:
+            Model metadata or None if not found anywhere
+
+        Example:
+            >>> registry = ModelRegistry()
+            >>> # This will search locally, then HF/CivitAI, then download
+            >>> model = registry.find_or_download(
+            ...     "stable-diffusion-xl-base-1.0",
+            ...     model_type=ModelType.BASE_MODEL,
+            ...     base_model=BaseModel.SDXL
+            ... )
+        """
+        logger.info(f"find_or_download: query='{query}', type={model_type}, base={base_model}")
+
+        # Step 1: Search local registry
+        local_results = self.search(
+            query=query,
+            model_type=model_type,
+            base_model=base_model,
+            limit=1,
+        )
+
+        if local_results and local_results[0].is_downloaded:
+            logger.info(f"Found in local registry: {local_results[0].model_id}")
+            return local_results[0]
+
+        # Step 2: Search HuggingFace
+        logger.info("Not found locally, searching HuggingFace...")
+        try:
+            hf_results = self.hf_service.search_models(
+                query=query,
+                model_type=model_type,
+                limit=3,
+            )
+
+            # Filter by base_model if specified
+            if base_model and hf_results:
+                hf_results = [m for m in hf_results if m.base_model == base_model]
+
+            if hf_results:
+                best_match = hf_results[0]  # Take highest ranked
+                logger.info(f"Found on HuggingFace: {best_match.model_id}")
+
+                if auto_download:
+                    logger.info(f"Downloading from HuggingFace: {best_match.model_id}")
+                    result = self.hf_service.download_model(best_match.model_id)
+
+                    if result.success:
+                        best_match.local_path = result.local_path
+                        best_match.sha256 = result.actual_sha256
+                        self.register_model(best_match)
+                        logger.info(f"✅ Downloaded and registered: {best_match.model_id}")
+                        return best_match
+                    else:
+                        logger.warning(f"Download failed: {result.error_message}")
+                else:
+                    # Register without download
+                    self.register_model(best_match)
+                    return best_match
+
+        except Exception as e:
+            logger.warning(f"HuggingFace search failed: {e}")
+
+        # Step 3: Search CivitAI
+        logger.info("Not found on HuggingFace, searching CivitAI...")
+        try:
+            civitai_results = self.civitai_service.search_models(
+                query=query,
+                model_types=[model_type] if model_type else None,
+                base_model=base_model,
+                limit=3,
+            )
+
+            if civitai_results:
+                best_match = max(civitai_results, key=lambda m: m.download_count)
+                logger.info(f"Found on CivitAI: {best_match.model_id}")
+
+                if auto_download:
+                    logger.info(f"Downloading from CivitAI: {best_match.model_id}")
+                    # Extract numeric ID from model_id (format: "civitai:12345")
+                    civitai_id = int(best_match.model_id.split(":")[-1])
+                    result = self.civitai_service.download_model(civitai_id)
+
+                    if result.success:
+                        best_match.local_path = result.local_path
+                        best_match.sha256 = result.actual_sha256
+                        self.register_model(best_match)
+                        logger.info(f"✅ Downloaded and registered: {best_match.model_id}")
+                        return best_match
+                    else:
+                        logger.warning(f"Download failed: {result.error_message}")
+                else:
+                    # Register without download
+                    self.register_model(best_match)
+                    return best_match
+
+        except Exception as e:
+            logger.warning(f"CivitAI search failed: {e}")
+
+        # Not found anywhere
+        logger.warning(f"Model not found anywhere: {query}")
+        return None
+
+    def ensure_downloaded(self, model_id: str) -> bool:
+        """
+        Ensure model is downloaded locally.
+
+        If model is in registry but not downloaded, download it.
+
+        Args:
+            model_id: Model ID
+
+        Returns:
+            True if model is available locally
+
+        Example:
+            >>> registry.ensure_downloaded("stabilityai/sdxl-base-1.0")
+        """
+        model = self.get_model(model_id)
+
+        if not model:
+            logger.warning(f"Model not in registry: {model_id}")
+            return False
+
+        if model.is_downloaded:
+            logger.info(f"Model already downloaded: {model_id}")
+            return True
+
+        # Download based on source
+        logger.info(f"Downloading model: {model_id}")
+
+        try:
+            if model.source == Source.HUGGINGFACE:
+                result = self.hf_service.download_model(model_id)
+            elif model.source == Source.CIVITAI:
+                civitai_id = int(model_id.split(":")[-1])
+                result = self.civitai_service.download_model(civitai_id)
+            else:
+                logger.error(f"Unknown source: {model.source}")
+                return False
+
+            if result.success:
+                model.local_path = result.local_path
+                model.sha256 = result.actual_sha256
+                self.update_model(model)
+                logger.info(f"✅ Downloaded: {model_id}")
+                return True
+            else:
+                logger.error(f"Download failed: {result.error_message}")
+                return False
+
+        except Exception as e:
+            logger.error(f"Download error: {e}")
+            return False
+
+    def get_stats(self) -> dict:
+        """
+        Get registry statistics.
+
+        Returns:
+            Dictionary with registry stats
+        """
+        with sqlite3.connect(str(self.db_path)) as conn:
+            # Total models
+            total = conn.execute("SELECT COUNT(*) FROM models").fetchone()[0]
+
+            # By source
+            by_source = {}
+            cursor = conn.execute(
+                "SELECT source, COUNT(*) FROM models GROUP BY source"
+            )
+            for row in cursor:
+                by_source[row[0]] = row[1]
+
+            # By type
+            by_type = {}
+            cursor = conn.execute(
+                "SELECT type, COUNT(*) FROM models GROUP BY type"
+            )
+            for row in cursor:
+                by_type[row[0]] = row[1]
+
+            # Downloaded
+            downloaded = conn.execute(
+                "SELECT COUNT(*) FROM models WHERE local_path IS NOT NULL"
+            ).fetchone()[0]
+
+            # Total cache size
+            cache_size_bytes = conn.execute(
+                "SELECT SUM(size_bytes) FROM models WHERE local_path IS NOT NULL"
+            ).fetchone()[0] or 0
+
+            return {
+                "total_models": total,
+                "by_source": by_source,
+                "by_type": by_type,
+                "downloaded": downloaded,
+                "cache_size_gb": cache_size_bytes / (1024**3),
+            }
+
     def _row_to_metadata(self, row: sqlite3.Row) -> ModelMetadata:
         """Convert database row to ModelMetadata."""
         return ModelMetadata(

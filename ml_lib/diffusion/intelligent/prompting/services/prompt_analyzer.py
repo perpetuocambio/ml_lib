@@ -9,7 +9,7 @@ from pathlib import Path
 from ml_lib.llm.entities.llm_prompt import LLMPrompt
 from ml_lib.llm.providers.ollama_provider import OllamaProvider
 from ml_lib.llm.entities.llm_provider_type import LLMProviderType
-from infrastructure.config.providers.llm_provider_config import LLMProviderConfig
+from ml_lib.llm.config.llm_provider_config import LLMProviderConfig
 
 from ml_lib.diffusion.intelligent.prompting.entities import (
     PromptAnalysis,
@@ -18,10 +18,7 @@ from ml_lib.diffusion.intelligent.prompting.entities import (
     ContentType,
     QualityLevel,
 )
-from ml_lib.diffusion.intelligent.prompting.config_loader import (
-    ConfigLoader,
-    PrompterConfig,
-)
+from ml_lib.diffusion.intelligent.prompting.handlers.config_loader import ConfigLoader
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +31,7 @@ class PromptAnalyzer:
 
     def __init__(
         self,
-        config: PrompterConfig | None = None,
+        config: ConfigLoader | None = None,
         ollama_url: str = "http://localhost:11434",
         model_name: str = "llama2",
         use_llm: bool = True,
@@ -43,14 +40,14 @@ class PromptAnalyzer:
         Initialize prompt analyzer.
 
         Args:
-            config: PrompterConfig with concept categories (if None, loads default)
+            config: ConfigLoader with concept categories (if None, loads default)
             ollama_url: Ollama server URL
             model_name: Ollama model to use
             use_llm: Whether to use LLM for enhanced analysis
         """
         # Load configuration
         if config is None:
-            from ml_lib.diffusion.intelligent.prompting.config_loader import get_default_config
+            from ml_lib.diffusion.intelligent.prompting.handlers.config_loader import get_default_config
             config = get_default_config()
 
         self.config = config

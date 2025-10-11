@@ -2,9 +2,9 @@
 Factory para crear instancias de OllamaProvider.
 """
 
-from infrastructure.config.providers.llm_provider_config import LLMProviderConfig
-from infrastructure.providers.llm.entities.llm_provider_type import LLMProviderType
-from infrastructure.providers.llm.providers.ollama_provider import OllamaProvider
+from ml_lib.llm.config.llm_provider_config import LLMProviderConfig
+from ml_lib.llm.entities.llm_provider_type import LLMProviderType
+from ml_lib.llm.providers.ollama_provider import OllamaProvider
 
 
 class OllamaFactory:

@@ -4,10 +4,10 @@ Interfaz abstracta para proveedores de LLM.
 
 from abc import ABC, abstractmethod
 
-from infrastructure.config.providers.llm_provider_config import LLMProviderConfig
-from infrastructure.providers.llm.entities.llm_prompt import LLMPrompt
-from infrastructure.providers.llm.entities.llm_provider_type import LLMProviderType
-from infrastructure.providers.llm.entities.llm_response import LLMResponse
+from ml_lib.llm.config.llm_provider_config import LLMProviderConfig
+from ml_lib.llm.entities.llm_prompt import LLMPrompt
+from ml_lib.llm.entities.llm_provider_type import LLMProviderType
+from ml_lib.llm.entities.llm_response import LLMResponse
 
 
 class LLMProvider(ABC):

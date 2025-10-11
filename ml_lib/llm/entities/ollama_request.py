@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from infrastructure.providers.llm.entities.ollama_options import OllamaOptions
-from infrastructure.providers.llm.entities.ollama_request_data import OllamaRequestData
+from ml_lib.llm.entities.ollama_options import OllamaOptions
+from ml_lib.llm.entities.ollama_request_data import OllamaRequestData
 
 
 @dataclass

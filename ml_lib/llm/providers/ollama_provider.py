@@ -6,29 +6,45 @@ import base64
 import json
 import logging
 from pathlib import Path
+from typing import Protocol, Optional
 
-from infrastructure.communication.http.interfaces.http_client_interface import (
-    HttpClientInterface,
-)
-from infrastructure.communication.http.services.services import RequestsHttpClient
-from infrastructure.config.providers.llm_provider_config import LLMProviderConfig
-from infrastructure.persistence.storage.interfaces.storage_interface import (
-    StorageInterface,
-)
-from infrastructure.providers.llm.entities.document_prompt import DocumentPrompt
-from infrastructure.providers.llm.entities.llm_prompt import LLMPrompt
-from infrastructure.providers.llm.entities.llm_response import LLMResponse
-from infrastructure.providers.llm.entities.ollama_request import (
+from ml_lib.llm.config.llm_provider_config import LLMProviderConfig
+from ml_lib.llm.entities.document_prompt import DocumentPrompt
+from ml_lib.llm.entities.llm_prompt import LLMPrompt
+from ml_lib.llm.entities.llm_response import LLMResponse
+from ml_lib.llm.entities.ollama_request import (
     OllamaOptions,
     OllamaRequest,
 )
-from infrastructure.providers.llm.entities.ollama_response import (
+from ml_lib.llm.entities.ollama_response import (
     OllamaResponse,
 )
-from infrastructure.providers.llm.interfaces.llm_provider import LLMProvider
-from infrastructure.providers.llm.services.ollama_response_parser import (
+from ml_lib.llm.interfaces.llm_provider import LLMProvider
+from ml_lib.llm.services.ollama_response_parser import (
     OllamaResponseParser,
 )
+
+
+# Protocol para HTTP client (duck typing) - el cliente puede inyectar su implementación
+class HttpClientInterface(Protocol):
+    """Interface para clientes HTTP."""
+
+    def get(self, url: str, **kwargs):
+        """GET request."""
+        ...
+
+    def post(self, url: str, data: str = None, headers: dict = None, **kwargs):
+        """POST request."""
+        ...
+
+
+# Protocol para storage (duck typing) - el cliente puede inyectar su implementación
+class StorageInterface(Protocol):
+    """Interface para almacenamiento."""
+
+    def read_file(self, path: str) -> bytes:
+        """Lee un archivo."""
+        ...
 
 logger = logging.getLogger(__name__)
 
@@ -54,9 +70,21 @@ class OllamaProvider(LLMProvider):
         """
         super().__init__(configuration)
         self.api_url = configuration.api_endpoint or "http://localhost:11434"
-        # If no http_client provided, lazily import the default RequestsHttpClient
+
+        # If no http_client provided, use default requests implementation
         if http_client is None:
-            self.http_client = RequestsHttpClient()
+            import requests
+
+            class DefaultHttpClient:
+                """Default HTTP client using requests library."""
+
+                def get(self, url: str, **kwargs):
+                    return requests.get(url, **kwargs)
+
+                def post(self, url: str, data: str = None, headers: dict = None, **kwargs):
+                    return requests.post(url, data=data, headers=headers, **kwargs)
+
+            self.http_client = DefaultHttpClient()
         else:
             self.http_client = http_client
 

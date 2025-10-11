@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from infrastructure.providers.llm.entities.ollama_raw_model_data import (
+from ml_lib.llm.entities.ollama_raw_model_data import (
     OllamaRawModelData,
 )
 

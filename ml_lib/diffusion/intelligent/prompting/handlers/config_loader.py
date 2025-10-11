@@ -217,6 +217,16 @@ class ConfigLoader:
         return suggestions
 
 
+def get_default_config() -> ConfigLoader:
+    """
+    Get default configuration loader instance.
+
+    Returns:
+        ConfigLoader instance with default configuration
+    """
+    return ConfigLoader()
+
+
 # Example usage
 if __name__ == "__main__":
     # Create loader

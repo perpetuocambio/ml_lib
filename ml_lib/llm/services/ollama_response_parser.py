@@ -3,17 +3,17 @@
 import json
 from datetime import datetime
 
-from infrastructure.providers.llm.entities.ollama_model_details import (
+from ml_lib.llm.entities.ollama_model_details import (
     OllamaModelDetails,
 )
-from infrastructure.providers.llm.entities.ollama_model_info import OllamaModelInfo
-from infrastructure.providers.llm.entities.ollama_models_response import (
+from ml_lib.llm.entities.ollama_model_info import OllamaModelInfo
+from ml_lib.llm.entities.ollama_models_response import (
     OllamaModelsResponse,
 )
-from infrastructure.providers.llm.entities.ollama_raw_model_data import (
+from ml_lib.llm.entities.ollama_raw_model_data import (
     OllamaRawModelData,
 )
-from infrastructure.providers.llm.entities.ollama_response import OllamaResponse
+from ml_lib.llm.entities.ollama_response import OllamaResponse
 
 
 class OllamaResponseParser:

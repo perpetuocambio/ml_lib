@@ -9,7 +9,7 @@ This example demonstrates:
 """
 
 import logging
-from ml_lib.diffusion.intelligent.prompting.character_generator import CharacterGenerator
+from ml_lib.diffusion.intelligent.prompting.services.character_generator import CharacterGenerator
 
 # Setup logging
 logging.basicConfig(
@@ -29,7 +29,7 @@ def example_single_character():
     generator = CharacterGenerator()
 
     # Generate with diversity enforcement (default)
-    character = generator.generate()
+    character = generator.generate_character()
 
     logger.info("\nGenerated Character:")
     logger.info(f"  Age: {character.age} years old")
@@ -52,10 +52,13 @@ def example_explicit_character():
     logger.info("Example 2: Explicit Pose Character")
     logger.info("=" * 60)
 
+    from ml_lib.diffusion.intelligent.prompting.services.character_generator import GenerationPreferences
+
     generator = CharacterGenerator()
 
-    # Generate with explicit poses only
-    character = generator.generate(explicit_poses_only=True)
+    # Generate with explicit content allowed
+    preferences = GenerationPreferences(explicit_content_allowed=True)
+    character = generator.generate_character(preferences)
 
     logger.info("\nGenerated Character (Explicit):")
     logger.info(f"  Age: {character.age} ({', '.join(character.age_keywords[:2])})")
@@ -74,10 +77,13 @@ def example_age_constrained():
     logger.info("Example 3: Age-Constrained Character (50-60)")
     logger.info("=" * 60)
 
+    from ml_lib.diffusion.intelligent.prompting.services.character_generator import GenerationPreferences
+
     generator = CharacterGenerator()
 
     # Generate mature woman in her 50s
-    character = generator.generate(age_range=(50, 60))
+    preferences = GenerationPreferences(target_age=55)
+    character = generator.generate_character(preferences)
 
     logger.info("\nGenerated Mature Character:")
     logger.info(f"  Age: {character.age} years old")
@@ -190,7 +196,7 @@ def example_json_export():
     logger.info("=" * 60)
 
     generator = CharacterGenerator()
-    character = generator.generate()
+    character = generator.generate_character()
 
     import json
 

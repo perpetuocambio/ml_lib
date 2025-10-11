@@ -4,8 +4,8 @@ Prompt estructurado para integración con LLMs.
 
 from dataclasses import dataclass
 
-from infrastructure.providers.llm.entities.prompt_category import PromptCategory
-from infrastructure.providers.llm.entities.prompt_type import PromptType
+from ml_lib.llm.entities.prompt_category import PromptCategory
+from ml_lib.llm.entities.prompt_type import PromptType
 
 
 @dataclass(frozen=True)

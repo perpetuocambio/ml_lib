@@ -7,10 +7,10 @@ Uses existing infrastructure: TypedYamlLoader.
 # Infrastructure layer cannot import from application layer
 # TypedYamlLoader will be injected as dependency
 from infrastructure.config.prompts.entities.prompts_config import PromptsConfig
-from infrastructure.providers.llm.entities.proposal_template_fields import (
+from ml_lib.llm.entities.proposal_template_fields import (
     ProposalTemplateFields,
 )
-from infrastructure.providers.llm.entities.template_categories import (
+from ml_lib.llm.entities.template_categories import (
     TemplateCategoriesListing,
 )
 

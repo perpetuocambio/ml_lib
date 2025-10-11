@@ -5,8 +5,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections import Counter
 
-from infrastructure.providers.llm.messages.ai_message import AIMessage
-from infrastructure.providers.llm.messages.base_message import BaseMessage
+from ml_lib.llm.messages.ai_message import AIMessage
+from ml_lib.llm.messages.base_message import BaseMessage
 
 # SystemMessage and UserMessage may not exist yet - remove these imports if not found
 

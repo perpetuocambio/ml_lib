@@ -2,7 +2,7 @@
 
 from typing import Dict, List, Set
 import re
-from ml_lib.diffusion.intelligent.prompting.config_loader import get_default_config
+from ml_lib.diffusion.intelligent.prompting.handlers.config_loader import get_default_config
 
 
 class NegativePromptGenerator:

@@ -127,8 +127,9 @@ class IntelligentPipelineBuilder:
         self,
         model_config: ModelPathConfig,
         enable_ollama: bool = False,
-        ollama_model: str = "llama3.2",
+        ollama_model: str = "dolphin3",
         device: Optional[str] = None,
+        enable_auto_download: bool = False,
     ):
         """
         Initialize builder.
@@ -138,16 +139,29 @@ class IntelligentPipelineBuilder:
             enable_ollama: Enable intelligent model selection via Ollama
             ollama_model: Ollama model for semantic analysis
             device: Device to use (None = auto-detect)
+            enable_auto_download: Enable automatic model download from HF/CivitAI
         """
         self.model_config = model_config
         self.enable_ollama = enable_ollama
         self.ollama_model = ollama_model
+        self.enable_auto_download = enable_auto_download
 
         # Initialize resource monitor
         self.resource_monitor = ResourceMonitor()
 
         # Detect device
         self.device = device or self._detect_device()
+
+        # Initialize model registry (for auto-download)
+        if enable_auto_download:
+            from ml_lib.diffusion.intelligent.hub_integration.model_registry import (
+                ModelRegistry,
+            )
+
+            self.registry = ModelRegistry()
+            logger.info("ModelRegistry initialized for auto-download")
+        else:
+            self.registry = None
 
         # Initialize orchestrator
         model_paths = self._collect_model_paths()
@@ -163,7 +177,8 @@ class IntelligentPipelineBuilder:
 
         logger.info(
             f"IntelligentPipelineBuilder initialized: "
-            f"device={self.device}, ollama={enable_ollama}"
+            f"device={self.device}, ollama={enable_ollama}, "
+            f"auto_download={enable_auto_download}"
         )
 
     @classmethod
@@ -171,6 +186,7 @@ class IntelligentPipelineBuilder:
         cls,
         enable_ollama: bool = False,
         search_paths: Optional[list[Path | str]] = None,
+        enable_auto_download: bool = False,
     ) -> "IntelligentPipelineBuilder":
         """
         Create builder with ComfyUI auto-detection.
@@ -178,6 +194,7 @@ class IntelligentPipelineBuilder:
         Args:
             enable_ollama: Enable intelligent model selection
             search_paths: Custom search paths for ComfyUI
+            enable_auto_download: Enable automatic model download
 
         Returns:
             Configured builder ready to generate
@@ -193,7 +210,11 @@ class IntelligentPipelineBuilder:
             )
 
         config = ModelPathConfig.from_root(comfyui_root)
-        return cls(model_config=config, enable_ollama=enable_ollama)
+        return cls(
+            model_config=config,
+            enable_ollama=enable_ollama,
+            enable_auto_download=enable_auto_download,
+        )
 
     @classmethod
     def from_paths(
@@ -342,27 +363,201 @@ class IntelligentPipelineBuilder:
         This is where the magic happens - analyzes prompt, available models,
         resources, and selects best configuration.
         """
-        # TODO: Implement intelligent selection
-        # For now, return a placeholder showing the structure
+        from ml_lib.diffusion.intelligent.pipeline.services.ollama_selector import (
+            OllamaModelSelector,
+            ModelMatcher,
+        )
+        from ml_lib.diffusion.intelligent.hub_integration.entities import ModelType
+
+        logger.info("Starting intelligent model selection...")
 
         # Get available resources
         resources = self.resource_monitor.get_current_stats()
 
-        # Determine optimization level based on quality + resources
+        # Step 1: Analyze prompt with Ollama (if enabled)
+        prompt_analysis = None
+        if self.enable_ollama:
+            try:
+                selector = OllamaModelSelector(ollama_model=self.ollama_model)
+                prompt_analysis = selector.analyze_prompt(config.prompt)
+                if prompt_analysis:
+                    logger.info(
+                        f"Prompt analysis: style={prompt_analysis.style}, "
+                        f"suggested_model={prompt_analysis.suggested_base_model}"
+                    )
+            except Exception as e:
+                logger.warning(f"Ollama analysis failed, using fallback: {e}")
+
+        # Step 2: Get available models from orchestrator
+        base_models = self.orchestrator.metadata_index.get(ModelType.BASE_MODEL, [])
+        loras = self.orchestrator.metadata_index.get(ModelType.LORA, [])
+        vaes = self.orchestrator.metadata_index.get(ModelType.VAE, [])
+
+        logger.info(
+            f"Available: {len(base_models)} base models, "
+            f"{len(loras)} LoRAs, {len(vaes)} VAEs"
+        )
+
+        # Step 3: Select base model
+        selected_base = None
+        base_architecture = BaseModel.SDXL  # Default
+
+        if prompt_analysis and base_models:
+            # Use ModelMatcher with Ollama analysis
+            matcher = ModelMatcher()
+            selected_base = matcher.match_base_model(prompt_analysis, base_models)
+
+        if not selected_base and base_models:
+            # Fallback: Use style hint or highest rated
+            if config.style:
+                for model in sorted(base_models, key=lambda m: m.popularity_score, reverse=True):
+                    if config.style.lower() in model.model_name.lower():
+                        selected_base = model
+                        break
+
+            if not selected_base:
+                # Just use most popular
+                selected_base = max(base_models, key=lambda m: m.popularity_score)
+
+        if selected_base:
+            base_model_path = selected_base.file_path
+            base_architecture = selected_base.get_base_model_enum()
+            logger.info(f"Selected base model: {selected_base.model_name} ({base_architecture.value})")
+        else:
+            # No models with metadata found locally
+            logger.warning("No base models found locally")
+
+            # Try auto-download if enabled
+            if self.enable_auto_download and self.registry:
+                logger.info("Attempting auto-download from HuggingFace/CivitAI...")
+
+                # Determine what to search for based on prompt analysis or style
+                search_query = "stable-diffusion-xl-base"  # Default to SDXL
+
+                if prompt_analysis:
+                    # Use suggested architecture from prompt analysis
+                    arch_map = {
+                        "SD15": "stable-diffusion-v1-5",
+                        "SDXL": "stable-diffusion-xl-base",
+                        "FLUX": "flux-dev",
+                        "SD3": "stable-diffusion-3",
+                    }
+                    search_query = arch_map.get(
+                        prompt_analysis.suggested_base_model, search_query
+                    )
+                elif config.style:
+                    # Use style hint
+                    if "anime" in config.style.lower():
+                        search_query = "anime sdxl"
+                    elif "realistic" in config.style.lower():
+                        search_query = "realistic-vision"
+
+                try:
+                    from ml_lib.diffusion.intelligent.hub_integration.entities import (
+                        ModelType as RegistryModelType,
+                    )
+
+                    downloaded_model = self.registry.find_or_download(
+                        query=search_query,
+                        model_type=RegistryModelType.BASE_MODEL,
+                        base_model=base_architecture,
+                        auto_download=True,
+                    )
+
+                    if downloaded_model and downloaded_model.local_path:
+                        base_model_path = downloaded_model.local_path
+                        logger.info(
+                            f"✅ Auto-downloaded: {downloaded_model.name} "
+                            f"({downloaded_model.size_gb:.1f}GB)"
+                        )
+                    else:
+                        logger.error("Auto-download failed, cannot proceed")
+                        base_model_path = Path("/placeholder/model.safetensors")
+                except Exception as e:
+                    logger.error(f"Auto-download error: {e}")
+                    base_model_path = Path("/placeholder/model.safetensors")
+            else:
+                # No auto-download, use placeholder
+                base_model_path = Path("/placeholder/model.safetensors")
+
+        # Step 4: Select LoRAs
+        selected_loras = []
+        lora_weights = []
+
+        if prompt_analysis and loras and selected_base:
+            try:
+                matcher = ModelMatcher()
+                lora_matches = matcher.match_loras(
+                    analysis=prompt_analysis,
+                    available_loras=loras,
+                    base_model_architecture=base_architecture.value,
+                    max_loras=3,
+                )
+
+                for lora, weight in lora_matches:
+                    selected_loras.append(lora.file_path)
+                    lora_weights.append(weight)
+
+                logger.info(f"Selected {len(selected_loras)} LoRAs")
+            except Exception as e:
+                logger.warning(f"LoRA selection failed: {e}")
+
+        # Step 5: Select VAE (if available)
+        vae_path = None
+        if vaes and selected_base:
+            # Find compatible VAE
+            from ml_lib.diffusion.intelligent.pipeline.services.model_orchestrator import (
+                DiffusionArchitecture,
+            )
+
+            arch_info = DiffusionArchitecture.get_architecture(base_architecture)
+
+            for vae in sorted(vaes, key=lambda v: v.popularity_score, reverse=True):
+                # Check compatibility
+                vae_name_lower = vae.file_name.lower()
+                if any(pattern in vae_name_lower for pattern in arch_info.compatible_vae_patterns):
+                    vae_path = vae.file_path
+                    logger.info(f"Selected VAE: {vae.file_name}")
+                    break
+
+        # Step 6: Determine optimization level
         opt_level = self._determine_optimization_level(
             quality=config.quality, available_memory_gb=resources.available_gpu_memory_gb()
         )
 
         logger.info(
-            f"Selected optimization: {opt_level.value} "
+            f"Optimization: {opt_level.value} "
             f"(GPU: {resources.available_gpu_memory_gb():.1f}GB available)"
         )
 
-        # TODO: Actual model selection logic
-        # This is a placeholder structure
+        # Step 7: Determine generation parameters
+        # Use prompt analysis recommendations if available, else use architecture defaults
+        if prompt_analysis:
+            steps = config.steps or prompt_analysis.suggested_steps
+            cfg_scale = config.cfg_scale or prompt_analysis.suggested_cfg
+            sampler = config.sampler or "DPM++ 2M"
+        else:
+            from ml_lib.diffusion.intelligent.pipeline.services.model_orchestrator import (
+                DiffusionArchitecture,
+            )
+
+            arch_info = DiffusionArchitecture.get_architecture(base_architecture)
+            steps = config.steps or arch_info.default_steps
+            cfg_scale = config.cfg_scale or arch_info.default_cfg
+            sampler = config.sampler or arch_info.default_sampler
+
+        # Return complete selection
         return SelectedModels(
-            base_model_path=Path("/placeholder"),
-            base_model_architecture=BaseModel.SDXL,
+            base_model_path=base_model_path,
+            base_model_architecture=base_architecture,
+            vae_path=vae_path,
+            lora_paths=selected_loras,
+            lora_weights=lora_weights,
+            steps=steps,
+            cfg_scale=cfg_scale,
+            sampler=sampler,
+            scheduler="karras",
+            clip_skip=2,
             optimization_level=opt_level,
         )
 
@@ -391,17 +586,121 @@ class IntelligentPipelineBuilder:
 
     def _load_pipeline(self, selected: SelectedModels):
         """Load diffusion pipeline with selected models."""
-        # TODO: Implement actual pipeline loading
+        from diffusers import (
+            StableDiffusionPipeline,
+            StableDiffusionXLPipeline,
+            AutoPipelineForText2Image,
+        )
+
         logger.info(f"Loading {selected.base_model_architecture.value} pipeline...")
-        return None  # Placeholder
+
+        try:
+            # Determine which pipeline class to use based on architecture
+            architecture = selected.base_model_architecture
+
+            # Check if model file exists
+            if not selected.base_model_path.exists():
+                logger.error(f"Model file not found: {selected.base_model_path}")
+                raise FileNotFoundError(f"Model not found: {selected.base_model_path}")
+
+            # Load base pipeline
+            if architecture in [BaseModel.SD15, BaseModel.SD20, BaseModel.SD21]:
+                # Stable Diffusion 1.x/2.x
+                pipeline = StableDiffusionPipeline.from_single_file(
+                    str(selected.base_model_path),
+                    torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
+                    use_safetensors=True,
+                )
+                logger.info("Loaded SD 1.x/2.x pipeline")
+
+            elif architecture in [BaseModel.SDXL, BaseModel.PONY]:
+                # Stable Diffusion XL
+                pipeline = StableDiffusionXLPipeline.from_single_file(
+                    str(selected.base_model_path),
+                    torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
+                    use_safetensors=True,
+                )
+                logger.info("Loaded SDXL pipeline")
+
+            elif architecture == BaseModel.FLUX:
+                # Flux (try auto pipeline)
+                try:
+                    pipeline = AutoPipelineForText2Image.from_single_file(
+                        str(selected.base_model_path),
+                        torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
+                        use_safetensors=True,
+                    )
+                    logger.info("Loaded Flux pipeline")
+                except Exception as e:
+                    logger.warning(f"Flux pipeline failed, trying SDXL fallback: {e}")
+                    pipeline = StableDiffusionXLPipeline.from_single_file(
+                        str(selected.base_model_path),
+                        torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
+                        use_safetensors=True,
+                    )
+
+            else:
+                # Unknown architecture, try auto
+                logger.warning(f"Unknown architecture {architecture}, using auto pipeline")
+                pipeline = AutoPipelineForText2Image.from_single_file(
+                    str(selected.base_model_path),
+                    torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
+                    use_safetensors=True,
+                )
+
+            # Move to device
+            pipeline = pipeline.to(self.device)
+
+            # Load custom VAE if selected
+            if selected.vae_path and selected.vae_path.exists():
+                try:
+                    from diffusers import AutoencoderKL
+
+                    vae = AutoencoderKL.from_single_file(
+                        str(selected.vae_path),
+                        torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
+                    )
+                    pipeline.vae = vae.to(self.device)
+                    logger.info(f"Loaded custom VAE: {selected.vae_path.name}")
+                except Exception as e:
+                    logger.warning(f"Failed to load VAE, using default: {e}")
+
+            # Load LoRAs if selected
+            if selected.lora_paths:
+                for lora_path, weight in zip(selected.lora_paths, selected.lora_weights):
+                    if lora_path.exists():
+                        try:
+                            pipeline.load_lora_weights(
+                                str(lora_path.parent),
+                                weight_name=lora_path.name,
+                                adapter_name=lora_path.stem,
+                            )
+                            # Set weight
+                            if hasattr(pipeline, 'set_adapters'):
+                                pipeline.set_adapters([lora_path.stem], adapter_weights=[weight])
+
+                            logger.info(f"Loaded LoRA: {lora_path.name} (weight: {weight:.2f})")
+                        except Exception as e:
+                            logger.warning(f"Failed to load LoRA {lora_path.name}: {e}")
+
+            # Set safety checker (disable for speed, re-enable in production)
+            if hasattr(pipeline, 'safety_checker'):
+                pipeline.safety_checker = None
+
+            logger.info("✅ Pipeline loaded successfully")
+            return pipeline
+
+        except Exception as e:
+            logger.error(f"Failed to load pipeline: {e}")
+            raise
 
     def _optimize_memory(self, pipeline, optimization_level: OptimizationLevel):
         """Apply memory optimization to pipeline."""
         from ml_lib.diffusion.intelligent.memory.services import (
-            MemoryOptimizerConfig,
+            MemoryOptimizationConfig,
         )
 
-        config = MemoryOptimizerConfig.from_level(optimization_level)
+        config = MemoryOptimizationConfig.from_level(optimization_level)
         self.memory_optimizer = MemoryOptimizer(config)
 
         if pipeline:
@@ -411,16 +710,82 @@ class IntelligentPipelineBuilder:
         self, pipeline, config: GenerationConfig, selected: SelectedModels
     ) -> list[Image.Image]:
         """Generate images using pipeline."""
-        # TODO: Implement actual generation
+        import time
+        from ml_lib.diffusion.intelligent.memory.services.memory_optimizer import (
+            MemoryMonitor,
+        )
+
         logger.info(
             f"Generating {config.num_images} image(s) at {config.width}x{config.height}..."
         )
-        return []  # Placeholder
+
+        if pipeline is None:
+            logger.error("Pipeline is None, cannot generate")
+            return []
+
+        try:
+            # Start memory monitoring
+            with MemoryMonitor(self.memory_optimizer) as monitor:
+                start_time = time.time()
+
+                # Prepare generation kwargs
+                generation_kwargs = {
+                    "prompt": config.prompt,
+                    "negative_prompt": config.negative_prompt,
+                    "num_inference_steps": selected.steps,
+                    "guidance_scale": selected.cfg_scale,
+                    "width": config.width,
+                    "height": config.height,
+                    "num_images_per_prompt": config.num_images,
+                }
+
+                # Add seed if specified
+                if config.seed is not None:
+                    generator = torch.Generator(device=self.device).manual_seed(config.seed)
+                    generation_kwargs["generator"] = generator
+                    logger.info(f"Using seed: {config.seed}")
+
+                # Add CLIP skip if pipeline supports it
+                if hasattr(pipeline, "text_encoder") and selected.clip_skip > 1:
+                    generation_kwargs["clip_skip"] = selected.clip_skip
+
+                # Generate
+                logger.info(
+                    f"Generation params: steps={selected.steps}, "
+                    f"cfg={selected.cfg_scale:.1f}, "
+                    f"sampler={selected.sampler}"
+                )
+
+                result = pipeline(**generation_kwargs)
+
+                # Extract images
+                if hasattr(result, "images"):
+                    images = result.images
+                else:
+                    # Some pipelines return different format
+                    images = [result] if isinstance(result, Image.Image) else []
+
+                generation_time = time.time() - start_time
+                peak_vram = monitor.get_peak_memory()
+
+                logger.info(
+                    f"✅ Generated {len(images)} image(s) in {generation_time:.1f}s "
+                    f"(peak VRAM: {peak_vram:.2f}GB)"
+                )
+
+                return images
+
+        except Exception as e:
+            logger.error(f"Generation failed: {e}")
+            import traceback
+
+            traceback.print_exc()
+            return []
 
     def _cleanup(self, pipeline):
         """Clean up resources."""
         if self.memory_optimizer:
-            self.memory_optimizer.cleanup()
+            self.memory_optimizer.cleanup_after_generation()
 
         # Offload pipeline
         if pipeline:

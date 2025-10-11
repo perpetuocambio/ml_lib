@@ -13,6 +13,10 @@ from .generation_result import (
     GenerationMetadata,
     LoRAInfo,
 )
+from .metadata_dict import (
+    GenerationMetadataSerializable,
+    LoRASerializable,
+)
 from .generation_explanation import GenerationExplanation
 from .recommendations import Recommendations
 from .batch_config import (
@@ -32,6 +36,9 @@ __all__ = [
     "GenerationResult",
     "GenerationMetadata",
     "LoRAInfo",
+    # Serialization
+    "GenerationMetadataSerializable",
+    "LoRASerializable",
     # Explanation
     "GenerationExplanation",
     # Recommendations

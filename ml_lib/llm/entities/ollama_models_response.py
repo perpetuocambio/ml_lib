@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from infrastructure.providers.llm.entities.ollama_model_info import OllamaModelInfo
+from ml_lib.llm.entities.ollama_model_info import OllamaModelInfo
 
 
 @dataclass
