@@ -296,7 +296,7 @@ These create `.metadata.json` files:
 We also provide **our own metadata fetcher**:
 
 ```python
-from ml_lib.diffusion.intelligent.hub_integration.services import MetadataFetcher
+from ml_lib.diffusion.services import MetadataFetcher
 
 fetcher = MetadataFetcher()
 

@@ -13,6 +13,11 @@ from ml_lib.diffusion.handlers.clip_vision_handler import (
 )
 from ml_lib.diffusion.handlers.ip_adapter_handler import IPAdapterService
 from ml_lib.diffusion.handlers.controlnet_handler import ControlNetHandler
+from ml_lib.diffusion.handlers.adapter_registry import (
+    AdapterRegistry,
+    AdapterType,
+    AdapterRegistration,
+)
 
 __all__ = [
     "AttributeCollection",
@@ -26,4 +31,8 @@ __all__ = [
     "load_clip_vision",
     "IPAdapterService",
     "ControlNetHandler",
+    # Adapter registry
+    "AdapterRegistry",
+    "AdapterType",
+    "AdapterRegistration",
 ]

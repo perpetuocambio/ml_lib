@@ -100,10 +100,8 @@ class ImageGenerator:
         # Import here to avoid circular dependencies and allow usage without
         # full installation (for documentation, testing structure, etc.)
         try:
-            from ml_lib.diffusion.services.intelligent_builder import (
-                IntelligentPipelineBuilder
-            )
-            from ml_lib.diffusion.intelligent.pipeline.entities import (
+            from ml_lib.diffusion.services import IntelligentPipelineBuilder
+            from ml_lib.diffusion.models.pipeline import (
                 PipelineConfig,
                 MemorySettings,
                 OffloadStrategy,
@@ -158,7 +156,7 @@ class ImageGenerator:
             return
 
         try:
-            from ml_lib.diffusion.intelligent.prompting import CharacterGenerator
+            from ml_lib.diffusion.handlers import CharacterGenerator
             self._character_generator = CharacterGenerator()
         except ImportError as e:
             raise RuntimeError(

@@ -42,6 +42,7 @@ from .memory_optimizer import (
     OptimizationLevel,
     MemoryMonitor,
 )
+from .metadata_fetcher import MetadataFetcher, ModelMetadata, FetcherConfig
 
 __all__ = [
     # Pipeline
@@ -86,4 +87,8 @@ __all__ = [
     "MemoryOptimizationConfig",
     "OptimizationLevel",
     "MemoryMonitor",
+    # Metadata fetching
+    "MetadataFetcher",
+    "ModelMetadata",
+    "FetcherConfig",
 ]

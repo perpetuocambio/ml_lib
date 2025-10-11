@@ -73,7 +73,7 @@ class IntelligentGenerationPipeline:
         """Initialize all subsystem services."""
         # Import here to avoid circular dependencies
         try:
-            from ml_lib.diffusion.intelligent.hub_integration.services import (
+            from ml_lib.diffusion.intelligent.hub_integration import (
                 ModelRegistry,
             )
             from ml_lib.diffusion.services import (

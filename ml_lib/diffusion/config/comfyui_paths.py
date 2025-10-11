@@ -275,7 +275,7 @@ class ComfyUIPathResolver:
             >>> registry = resolver.create_registry_from_comfyui()
             >>> print(f"Registered {len(registry.get_all_models())} models")
         """
-        from ml_lib.diffusion.intelligent.hub_integration.services import (
+        from ml_lib.diffusion.intelligent.hub_integration import (
             ModelRegistry,
         )
 

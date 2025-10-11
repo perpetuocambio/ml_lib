@@ -32,9 +32,9 @@ from ml_lib.diffusion.facade import ImageGenerator, Generator, GenerationOptions
 # Note: These are subject to change and may have breaking changes
 # Most users should use the facade instead
 __advanced_api__ = [
-    "intelligent.pipeline.services.intelligent_pipeline",
-    "intelligent.prompting.services.character_generator",
-    "intelligent.memory.memory_manager",
+    "services.intelligent_pipeline",
+    "handlers.character_generator",
+    "handlers.memory_manager",
 ]
 
 __all__ = [
