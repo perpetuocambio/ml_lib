@@ -76,17 +76,17 @@ class IntelligentGenerationPipeline:
             from ml_lib.diffusion.intelligent.hub_integration.services import (
                 ModelRegistry,
             )
-            from ml_lib.diffusion.intelligent.prompting.services import (
+            from ml_lib.diffusion.services import (
                 PromptAnalyzer,
-                LoRARecommender,
                 ParameterOptimizer,
                 LearningEngine,
+                LoRARecommender,
             )
             from ml_lib.diffusion.intelligent.memory import (
                 MemoryManager,
                 ModelOffloader,
             )
-            from ml_lib.diffusion.intelligent.memory.services.memory_optimizer import (
+            from ml_lib.diffusion.services.memory_optimizer import (
                 MemoryOptimizer,
                 MemoryOptimizationConfig,
                 OptimizationLevel,
@@ -157,7 +157,7 @@ class IntelligentGenerationPipeline:
             OptimizationLevel enum
         """
         try:
-            from ml_lib.diffusion.intelligent.memory.services.memory_optimizer import (
+            from ml_lib.diffusion.services.memory_optimizer import (
                 OptimizationLevel,
             )
 
@@ -177,7 +177,7 @@ class IntelligentGenerationPipeline:
             else:
                 return OptimizationLevel.BALANCED
         except ImportError:
-            from ml_lib.diffusion.intelligent.memory.services.memory_optimizer import (
+            from ml_lib.diffusion.services.memory_optimizer import (
                 OptimizationLevel,
             )
             return OptimizationLevel.BALANCED
@@ -501,7 +501,7 @@ class IntelligentGenerationPipeline:
         # Note: In production, we'd retrieve the original generation details
         # For now, this is a simplified interface
 
-        from ml_lib.diffusion.intelligent.prompting.services.learning_engine import (
+        from ml_lib.diffusion.services.learning_engine import (
             GenerationFeedback,
         )
         from datetime import datetime
@@ -636,7 +636,7 @@ class IntelligentGenerationPipeline:
 
             # Generate image with memory monitoring (MARKET VALUE)
             if self.memory_optimizer:
-                from ml_lib.diffusion.intelligent.memory.services.memory_optimizer import (
+                from ml_lib.diffusion.services.memory_optimizer import (
                     MemoryMonitor,
                 )
                 with MemoryMonitor(self.memory_optimizer) as monitor:

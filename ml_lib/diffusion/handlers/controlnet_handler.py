@@ -1,17 +1,21 @@
-"""ControlNet service for spatial control in image generation."""
+"""ControlNet handler for spatial control in image generation."""
 
 import logging
 from typing import Optional, Any
 from pathlib import Path
 
-from ..entities import ControlNetConfig, ControlImage, ControlType
+from ml_lib.diffusion.intelligent.controlnet.entities import (
+    ControlNetConfig,
+    ControlImage,
+    ControlType,
+)
 
 logger = logging.getLogger(__name__)
 
 
-class ControlNetService:
+class ControlNetHandler:
     """
-    Main service for ControlNet functionality.
+    Main handler for ControlNet functionality.
 
     Handles:
     - Loading ControlNet models
@@ -24,14 +28,14 @@ class ControlNetService:
 
     def __init__(self, model_registry: Optional[Any] = None):
         """
-        Initialize ControlNet service.
+        Initialize ControlNet handler.
 
         Args:
             model_registry: ModelRegistry for finding/loading models
         """
         self.model_registry = model_registry
         self.loaded_models: dict[str, Any] = {}
-        logger.info("ControlNetService initialized")
+        logger.info("ControlNetHandler initialized")
 
     def load_controlnet(
         self, config: ControlNetConfig, device: str = "cuda"

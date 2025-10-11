@@ -34,11 +34,11 @@ from PIL import Image
 
 from ml_lib.diffusion.config import detect_comfyui_installation, ModelPathConfig
 from ml_lib.diffusion.intelligent.hub_integration.entities import BaseModel
-from ml_lib.diffusion.intelligent.memory.services import (
+from ml_lib.diffusion.services import (
     MemoryOptimizer,
     OptimizationLevel,
 )
-from ml_lib.diffusion.intelligent.pipeline.services.model_orchestrator import (
+from ml_lib.diffusion.services.model_orchestrator import (
     ModelOrchestrator,
     DiffusionArchitecture,
 )
@@ -363,7 +363,7 @@ class IntelligentPipelineBuilder:
         This is where the magic happens - analyzes prompt, available models,
         resources, and selects best configuration.
         """
-        from ml_lib.diffusion.intelligent.pipeline.services.ollama_selector import (
+        from ml_lib.diffusion.services.ollama_selector import (
             OllamaModelSelector,
             ModelMatcher,
         )
@@ -506,7 +506,7 @@ class IntelligentPipelineBuilder:
         vae_path = None
         if vaes and selected_base:
             # Find compatible VAE
-            from ml_lib.diffusion.intelligent.pipeline.services.model_orchestrator import (
+            from ml_lib.diffusion.services.model_orchestrator import (
                 DiffusionArchitecture,
             )
 
@@ -537,7 +537,7 @@ class IntelligentPipelineBuilder:
             cfg_scale = config.cfg_scale or prompt_analysis.suggested_cfg
             sampler = config.sampler or "DPM++ 2M"
         else:
-            from ml_lib.diffusion.intelligent.pipeline.services.model_orchestrator import (
+            from ml_lib.diffusion.services.model_orchestrator import (
                 DiffusionArchitecture,
             )
 
@@ -696,7 +696,7 @@ class IntelligentPipelineBuilder:
 
     def _optimize_memory(self, pipeline, optimization_level: OptimizationLevel):
         """Apply memory optimization to pipeline."""
-        from ml_lib.diffusion.intelligent.memory.services import (
+        from ml_lib.diffusion.services import (
             MemoryOptimizationConfig,
         )
 
@@ -711,7 +711,7 @@ class IntelligentPipelineBuilder:
     ) -> list[Image.Image]:
         """Generate images using pipeline."""
         import time
-        from ml_lib.diffusion.intelligent.memory.services.memory_optimizer import (
+        from ml_lib.diffusion.services.memory_optimizer import (
             MemoryMonitor,
         )
 

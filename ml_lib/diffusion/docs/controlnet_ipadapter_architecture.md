@@ -196,19 +196,18 @@ graph TB
 ### 3.1 Módulo ControlNet
 
 ```
-ml_library/diffusion/controlnet/
-│
-├── services/
-│   ├── controlnet_service.py
-│   ├── preprocessor_service.py
-│   ├── multi_controlnet_service.py
-│   └── control_weight_service.py
+ml_library/diffusion/
 │
 ├── handlers/
+│   ├── controlnet_handler.py          # Moved from intelligent/controlnet/services/
 │   ├── zero_convolution_handler.py
 │   ├── residual_injection_handler.py
 │   ├── control_scale_handler.py
 │   └── preprocessor_pipeline_handler.py
+│
+├── intelligent/controlnet/
+│   ├── preprocessors/
+│   │   └── preprocessor_service.py
 │
 ├── interfaces/
 │   ├── controlnet_interface.py
@@ -305,8 +304,9 @@ ml_library/diffusion/integration/
 
 ### 4.1 ControlNet Components
 
-#### **controlnet_service.py**
+#### **controlnet_handler.py**
 **Responsabilidad**: Gestión principal del ciclo de vida de ControlNet.
+**Ubicación**: `/ml_lib/diffusion/handlers/controlnet_handler.py`
 
 **Interfaces Clave**:
 - `ControlNetInterface`: Contrato para modelos ControlNet

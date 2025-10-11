@@ -13,11 +13,11 @@ Usuario → Preferencias de personaje → Prompt → LoRAs + Parámetros → Ima
 """
 
 from pathlib import Path
-from ml_lib.diffusion.intelligent.prompting.services.character_generator import (
+from ml_lib.diffusion.services.character_generator import (
     CharacterGenerator,
     GenerationPreferences,
 )
-from ml_lib.diffusion.intelligent.pipeline.services import IntelligentPipelineBuilder
+from ml_lib.diffusion.services import IntelligentPipelineBuilder
 
 # Create output directory
 output_dir = Path("output/character_integration")

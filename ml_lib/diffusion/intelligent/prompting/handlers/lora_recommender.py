@@ -14,7 +14,7 @@ from ml_lib.diffusion.intelligent.prompting.entities import (
     PromptAnalysis,
     LoRARecommendation,
 )
-from ml_lib.diffusion.intelligent.prompting.handlers.config_loader import get_default_config
+from ml_lib.diffusion.handlers.config_loader import get_default_config
 
 logger = logging.getLogger(__name__)
 
@@ -35,12 +35,12 @@ class LoRARecommender:
             config: PrompterConfig with configuration (if None, loads default)
         """
         self.registry = registry
-        
+
         # Load configuration
         if config is None:
             config = get_default_config()
         self.config = config
-        
+
         # Set up configurable values
         self.BLOCKED_TAGS = set(config.blocked_tags)
         self.PRIORITY_TAGS = set(config.priority_tags)
@@ -51,7 +51,7 @@ class LoRARecommender:
         self.TAG_WEIGHT = config.scoring_weights.get("tag_score_weight", 0.20)
         self.POPULARITY_WEIGHT = config.scoring_weights.get("popularity_score_weight", 0.10)
         self.LORA_LIMITS = config.lora_limits
-        
+
         logger.info("LoRARecommender initialized with configuration")
 
     def recommend(
@@ -86,7 +86,7 @@ class LoRARecommender:
             max_loras = self.LORA_LIMITS.get("max_loras", 3)
         if min_confidence is None:
             min_confidence = self.LORA_LIMITS.get("min_confidence", 0.5)
-            
+
         # 1. Get compatible LoRAs
         base_model_enum = self._parse_base_model(base_model)
         candidates = self.registry.list_models(
@@ -436,7 +436,7 @@ class LoRARecommender:
 
         # Use configurable max total weight
         max_total_weight = self.LORA_LIMITS.get("max_total_weight", 3.0)
-        
+
         # If total exceeds threshold, scale down
         if total_weight > max_total_weight:
             scale_factor = max_total_weight / total_weight

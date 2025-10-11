@@ -15,7 +15,7 @@ Example:
     python examples/quickstart_generation.py
 """
 
-from ml_lib.diffusion.intelligent.pipeline.services import IntelligentPipelineBuilder
+from ml_lib.diffusion.services import IntelligentPipelineBuilder
 
 # Step 1: Create builder (auto-detects ComfyUI models)
 builder = IntelligentPipelineBuilder.from_comfyui_auto(

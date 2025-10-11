@@ -13,7 +13,7 @@ from ml_lib.diffusion.intelligent.prompting import (
     LoRARecommender,
     ParameterOptimizer,
 )
-from ml_lib.diffusion.intelligent.prompting.services.parameter_optimizer import (
+from ml_lib.diffusion.services.parameter_optimizer import (
     GenerationConstraints,
 )
 from ml_lib.diffusion.intelligent.prompting.entities.optimized_parameters import Priority

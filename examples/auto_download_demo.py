@@ -21,7 +21,7 @@ Example:
 """
 
 from pathlib import Path
-from ml_lib.diffusion.intelligent.pipeline.services import IntelligentPipelineBuilder
+from ml_lib.diffusion.services import IntelligentPipelineBuilder
 
 # Create output directory
 output_dir = Path("output/auto_download")

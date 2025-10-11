@@ -1,9 +1,7 @@
-"""IP-Adapter services."""
+"""IP-Adapter services - Re-exports from handlers for backward compatibility."""
 
-from ml_lib.diffusion.intelligent.ip_adapter.services.ip_adapter_service import (
-    IPAdapterService,
-)
-from ml_lib.diffusion.intelligent.ip_adapter.services.clip_vision_encoder import (
+from ml_lib.diffusion.handlers.ip_adapter_handler import IPAdapterService
+from ml_lib.diffusion.handlers.clip_vision_handler import (
     CLIPVisionEncoder,
     CLIPVisionModelType,
     load_clip_vision,

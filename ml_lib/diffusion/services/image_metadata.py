@@ -27,7 +27,7 @@ from PIL import Image
 from PIL.ExifTags import TAGS
 from PIL.PngImagePlugin import PngInfo
 
-from ml_lib.diffusion.intelligent.pipeline.services.image_naming import ImageNamingConfig
+from ml_lib.diffusion.services.image_naming import ImageNamingConfig
 
 
 @dataclass

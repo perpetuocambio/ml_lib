@@ -10,7 +10,7 @@ from ml_lib.diffusion.intelligent.prompting.entities import (
     Priority,
     ArtisticStyle,
 )
-from ml_lib.diffusion.intelligent.prompting.handlers.config_loader import get_default_config
+from ml_lib.diffusion.handlers.config_loader import get_default_config
 
 logger = logging.getLogger(__name__)
 

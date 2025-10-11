@@ -18,7 +18,7 @@ from ml_lib.diffusion.intelligent.prompting.entities import (
     ContentType,
     QualityLevel,
 )
-from ml_lib.diffusion.intelligent.prompting.handlers.config_loader import ConfigLoader
+from ml_lib.diffusion.handlers.config_loader import ConfigLoader
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ class PromptAnalyzer:
         """
         # Load configuration
         if config is None:
-            from ml_lib.diffusion.intelligent.prompting.handlers.config_loader import get_default_config
+            from ml_lib.diffusion.handlers.config_loader import get_default_config
             config = get_default_config()
 
         self.config = config

@@ -100,7 +100,7 @@ class ImageGenerator:
         # Import here to avoid circular dependencies and allow usage without
         # full installation (for documentation, testing structure, etc.)
         try:
-            from ml_lib.diffusion.intelligent.pipeline.services.intelligent_builder import (
+            from ml_lib.diffusion.services.intelligent_builder import (
                 IntelligentPipelineBuilder
             )
             from ml_lib.diffusion.intelligent.pipeline.entities import (

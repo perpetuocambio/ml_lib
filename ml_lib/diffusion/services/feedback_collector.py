@@ -241,7 +241,7 @@ class FeedbackCollector:
             feedback: User feedback
             session: Generation session
         """
-        from ml_lib.diffusion.intelligent.prompting.services.learning_engine import (
+        from ml_lib.diffusion.services.learning_engine import (
             GenerationFeedback,
         )
 

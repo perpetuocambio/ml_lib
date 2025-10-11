@@ -1,6 +1,7 @@
-"""Memory optimization services."""
+"""Memory optimization services - DEPRECATED: Use ml_lib.diffusion.services instead."""
 
-from ml_lib.diffusion.intelligent.memory.services.memory_optimizer import (
+# Re-export from new location for backward compatibility
+from ml_lib.diffusion.services.memory_optimizer import (
     MemoryOptimizer,
     MemoryOptimizationConfig,
     OptimizationLevel,

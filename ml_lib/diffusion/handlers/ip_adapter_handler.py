@@ -6,7 +6,11 @@ from typing import Optional, Any, Union
 import numpy as np
 from PIL import Image
 
-from ..entities import IPAdapterConfig, ReferenceImage, ImageFeatures
+from ml_lib.diffusion.intelligent.ip_adapter.entities import (
+    IPAdapterConfig,
+    ReferenceImage,
+    ImageFeatures,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +65,7 @@ class IPAdapterService:
             >>> service.load_clip_vision("/path/to/clip_vision_g.safetensors")
         """
         try:
-            from .clip_vision_encoder import load_clip_vision
+            from ml_lib.diffusion.handlers.clip_vision_handler import load_clip_vision
 
             path_to_use = model_path or self.clip_vision_path
 

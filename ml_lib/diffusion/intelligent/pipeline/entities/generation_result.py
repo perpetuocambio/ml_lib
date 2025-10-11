@@ -98,7 +98,7 @@ class GenerationMetadata:
             ImageMetadataEmbedding with complete metadata
         """
         # Import here to avoid circular import
-        from ml_lib.diffusion.intelligent.pipeline.services.image_metadata import (
+        from ml_lib.diffusion.services.image_metadata import (
             ImageMetadataEmbedding,
             create_generation_id,
             create_timestamp,
@@ -177,7 +177,7 @@ class GenerationResult:
             >>> # Result: /outputs/20250111_143022_a3f2e9d4.png
             >>>
             >>> # Save with descriptive auto-naming
-            >>> from ml_lib.diffusion.intelligent.pipeline.services.image_naming import ImageNamingConfig
+            >>> from ml_lib.diffusion.services.image_naming import ImageNamingConfig
             >>> result.save(
             ...     "/outputs",
             ...     use_auto_naming=True,
@@ -186,10 +186,10 @@ class GenerationResult:
             >>> # Result: /outputs/20250111_143022_beautiful-sunset_a3f2e9d4.png
         """
         # Import here to avoid circular import
-        from ml_lib.diffusion.intelligent.pipeline.services.image_metadata import (
+        from ml_lib.diffusion.services.image_metadata import (
             ImageMetadataWriter,
         )
-        from ml_lib.diffusion.intelligent.pipeline.services.image_naming import (
+        from ml_lib.diffusion.services.image_naming import (
             ImageNamingConfig,
         )
 

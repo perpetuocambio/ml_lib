@@ -13,7 +13,7 @@ import numpy as np
 import torch
 from PIL import Image
 
-from ..entities import ImageFeatures
+from ml_lib.diffusion.intelligent.ip_adapter.entities import ImageFeatures
 
 logger = logging.getLogger(__name__)
 

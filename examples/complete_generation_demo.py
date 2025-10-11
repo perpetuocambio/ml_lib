@@ -15,7 +15,7 @@ Requirements:
 """
 
 from pathlib import Path
-from ml_lib.diffusion.intelligent.pipeline.services import (
+from ml_lib.diffusion.services import (
     IntelligentPipelineBuilder,
     ImageNamingConfig,
 )

@@ -125,13 +125,12 @@ recommender = LoRARecommender(registry=registry)
 
 **Nuestro soporte:**
 ```python
-from ml_lib.diffusion.intelligent.controlnet.services import (
-    ControlNetService,
-    PreprocessorService,
-)
+from ml_lib.diffusion.handlers import ControlNetHandler
+from ml_lib.diffusion.intelligent.controlnet.preprocessors import PreprocessorService
 
 # 8 tipos soportados:
-controlnet_service.apply_control(
+controlnet_handler = ControlNetHandler()
+controlnet_handler.apply_control(
     control_type=ControlType.OPENPOSE,  # ✅ Tienes este
     control_image=image,
     strength=0.8

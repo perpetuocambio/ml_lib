@@ -29,7 +29,7 @@ from ml_lib.diffusion.intelligent.prompting import (
     ParameterOptimizer,
 )
 from ml_lib.diffusion.intelligent.prompting.models.generated_character import GeneratedCharacter
-from ml_lib.diffusion.intelligent.prompting.services.parameter_optimizer import GenerationConstraints
+from ml_lib.diffusion.services.parameter_optimizer import GenerationConstraints
 from ml_lib.diffusion.intelligent.prompting.entities import Priority
 from ml_lib.diffusion.intelligent.hub_integration import ModelRegistry
 
