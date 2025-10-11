@@ -13,10 +13,10 @@ from ml_lib.diffusion.intelligent.prompting import (
     LoRARecommender,
     ParameterOptimizer,
 )
-from ml_lib.diffusion.intelligent.prompting.parameter_optimizer import (
+from ml_lib.diffusion.intelligent.prompting.services.parameter_optimizer import (
     GenerationConstraints,
 )
-from ml_lib.diffusion.intelligent.prompting.entities import Priority
+from ml_lib.diffusion.intelligent.prompting.entities.optimized_parameters import Priority
 from ml_lib.diffusion.intelligent.hub_integration import ModelRegistry
 
 # Setup logging
@@ -38,7 +38,7 @@ def example_prompt_analysis():
     analyzer = PromptAnalyzer(
         ollama_url="http://localhost:11434",
         model_name="llama2",
-        use_llm=True,  # Set to False for rule-based only
+        use_llm=False,  # Set to False for rule-based only
     )
 
     # Analyze a complex prompt

@@ -2,7 +2,7 @@
 
 import yaml
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import List, Optional, Tuple
 
 from ml_lib.diffusion.intelligent.prompting.core.attribute_type import AttributeType
 from ml_lib.diffusion.intelligent.prompting.core.attribute_definition import AttributeDefinition
@@ -13,7 +13,7 @@ class CharacterAttributeSet:
     
     def __init__(self):
         """Initialize character attribute set."""
-        self.collections: Dict[AttributeType, AttributeCollection] = {}
+        self.collections: dict[AttributeType, AttributeCollection] = {}
         
         # Create collections for each attribute type
         for attr_type in AttributeType:
@@ -90,8 +90,12 @@ class CharacterAttributeSet:
                 attribute = self._create_attribute_from_yaml(attr_name, attr_type, attr_data)
                 self.add_attribute(attribute)
     
-    def _create_attribute_from_yaml(self, name: str, attr_type: AttributeType, 
-                                   data: Dict[str, Any]) -> AttributeDefinition:
+    def _create_attribute_from_yaml(
+        self,
+        name: str,
+        attr_type: AttributeType,
+        data: dict
+    ) -> AttributeDefinition:
         """
         Create an attribute definition from YAML data.
         

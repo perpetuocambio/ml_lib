@@ -31,6 +31,21 @@ class ConfigLoader:
         self.config_dir = config_dir
         self.attribute_set = CharacterAttributeSet()
         
+        # Initialize all the configuration attributes that other modules expect
+        self.concept_categories = {}
+        self.blocked_tags = []
+        self.priority_tags = []
+        self.anatomy_tags = []
+        self.scoring_weights = {}
+        self.lora_limits = {}
+        self.model_strategies = {}
+        self.default_ranges = {}
+        self.vram_presets = {}
+        self.activity_profiles = {}
+        self.age_profiles = {}
+        self.detail_presets = {}
+        self.group_profiles = {}
+        
         # Load configuration
         self._load_all_configurations()
     
@@ -41,8 +56,76 @@ class ConfigLoader:
         if character_config_path.exists():
             self.attribute_set.load_from_yaml(character_config_path)
         
-        # Load other configuration files if they exist
-        # (This could be expanded to load concept categories, etc.)
+        # Load concept categories
+        concept_categories_path = self.config_dir / "concept_categories.yaml"
+        if concept_categories_path.exists():
+            self._load_concept_categories(concept_categories_path)
+        
+        # Load LoRA filtering configuration
+        lora_filters_path = self.config_dir / "lora_filters.yaml"
+        if lora_filters_path.exists():
+            self._load_lora_filters(lora_filters_path)
+        
+        # Load prompting strategies configuration
+        prompting_strategies_path = self.config_dir / "prompting_strategies.yaml"
+        if prompting_strategies_path.exists():
+            self._load_prompting_strategies(prompting_strategies_path)
+        
+        # Load generation profiles configuration
+        generation_profiles_path = self.config_dir / "generation_profiles.yaml"
+        if generation_profiles_path.exists():
+            self._load_generation_profiles(generation_profiles_path)
+    
+    def _load_concept_categories(self, config_path: Path):
+        """Load concept categories from YAML file."""
+        with open(config_path, 'r') as f:
+            data = yaml.safe_load(f)
+        
+        # Extract concept categories, handling both the old format (in 'concept_categories' key)
+        # and new format (at root level)
+        if 'concept_categories' in data:
+            self.concept_categories = data['concept_categories']
+        else:
+            # If there's no 'concept_categories' root key, use the whole data dict
+            # but exclude keys that are not concept categories
+            exclude_keys = ['BLOCKED_TERMS']  # Add other non-category keys if needed
+            self.concept_categories = {
+                key: value for key, value in data.items()
+                if key not in exclude_keys and isinstance(value, list)
+            }
+    
+    def _load_lora_filters(self, config_path: Path):
+        """Load LoRA filtering configuration from YAML file."""
+        with open(config_path, 'r') as f:
+            data = yaml.safe_load(f)
+        
+        # Load the various configuration sections
+        self.blocked_tags = data.get('blocked_tags', [])
+        self.priority_tags = data.get('priority_tags', [])
+        self.anatomy_tags = data.get('anatomy_tags', [])
+        self.scoring_weights = data.get('scoring_weights', {})
+        self.lora_limits = data.get('lora_limits', {})
+    
+    def _load_prompting_strategies(self, config_path: Path):
+        """Load prompting strategies configuration from YAML file."""
+        with open(config_path, 'r') as f:
+            data = yaml.safe_load(f)
+        
+        # Load the various configuration sections
+        self.model_strategies = data.get('model_strategies', {})
+    
+    def _load_generation_profiles(self, config_path: Path):
+        """Load generation profiles configuration from YAML file."""
+        with open(config_path, 'r') as f:
+            data = yaml.safe_load(f)
+        
+        # Load the various configuration sections
+        self.default_ranges = data.get('default_ranges', {})
+        self.vram_presets = data.get('vram_presets', {})
+        self.activity_profiles = data.get('activity_profiles', {})
+        self.age_profiles = data.get('age_profiles', {})
+        self.detail_presets = data.get('detail_presets', {})
+        self.group_profiles = data.get('group_profiles', {})
     
     def get_attribute_set(self) -> CharacterAttributeSet:
         """
