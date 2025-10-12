@@ -35,7 +35,7 @@ class BasePromptEnum(Enum):
         Returns:
             Prompt-friendly string with underscores replaced by spaces.
         """
-        return self.value.replace("_", " ")
+        return self.value.replace["_", " "]
 
 
 class Accessory(BasePromptEnum):
@@ -62,28 +62,28 @@ class Accessory(BasePromptEnum):
     """Fetish accessories/leather gloves/collar."""
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        _keywords: dict[Accessory, tuple[str, ...]] = {
-            Accessory.JEWELRY: ("jewelry", "necklace", "earrings", "bracelet", "rings", "jewels", "gold jewelry", "diamond jewelry", "silver accessories"),
-            Accessory.HEADWEAR: ("hat", "cap", "crown", "tiara", "hair accessory", "headband", "hair clip", "headpiece", "hair decoration"),
-            Accessory.EYEWEAR: ("glasses", "sunglasses", "eyeglasses", "designer glasses", "aviators", "frames", "specs"),
-            Accessory.BAGS: ("handbag", "purse", "backpack", "clutch", "shoulder bag", "crossbody bag", "tote bag"),
-            Accessory.FETISH_ACCESSORIES: ("fetish accessories", "leather gloves", "choker", "collar", "knee-high socks", "stockings", "garter belt", "feather boa"),
-        }
-        return _keywords[self]
+        if self == Accessory.JEWELRY:
+            return ["jewelry", "necklace", "earrings", "bracelet", "rings", "jewels", "gold jewelry", "diamond jewelry", "silver accessories"]
+        elif self == Accessory.HEADWEAR:
+            return ["hat", "cap", "crown", "tiara", "hair accessory", "headband", "hair clip", "headpiece", "hair decoration"]
+        elif self == Accessory.EYEWEAR:
+            return ["glasses", "sunglasses", "eyeglasses", "designer glasses", "aviators", "frames", "specs"]
+        elif self == Accessory.BAGS:
+            return ["handbag", "purse", "backpack", "clutch", "shoulder bag", "crossbody bag", "tote bag"]
+        elif self == Accessory.FETISH_ACCESSORIES:
+            return ["fetish accessories", "leather gloves", "choker", "collar", "knee-high socks", "stockings", "garter belt", "feather boa"]
+        else:
+            return []
 
     @property
     def min_age(self) -> int:
         """Minimum age for this attribute."""
-        _min_ages: dict[Accessory, int] = {
-            Accessory.JEWELRY: 16,
-            Accessory.HEADWEAR: 16,
-            Accessory.EYEWEAR: 16,
-            Accessory.BAGS: 16,
-            Accessory.FETISH_ACCESSORIES: 18,
-        }
-        return _min_ages[self]
+        if self == Accessory.FETISH_ACCESSORIES:
+            return 18
+        else:
+            return 16
 
     @property
     def max_age(self) -> int:
@@ -115,16 +115,20 @@ class ClothingCondition(BasePromptEnum):
     """Stained/wet/dirty clothes."""
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        _keywords: dict[ClothingCondition, tuple[str, ...]] = {
-            ClothingCondition.INTACT: ("intact clothes", "perfect clothes", "undamaged", "pristine condition", "well-maintained", "good condition", "tidy clothes"),
-            ClothingCondition.TORN: ("torn clothes", "ripped clothes", "torn fabric", "torn dress", "ripped dress", "torn shirt", "torn outfit", "torn clothing", "torn panties", "ripped panties", "torn bra"),
-            ClothingCondition.LOWERED: ("pulled down clothes", "lowered pants", "pulled down panties", "pants pulled down", "panties pulled down", "skirt lowered", "clothes lowered", "pulled to side", "pulled to one side", "bunched up", "clothes pulled down"),
-            ClothingCondition.OPENED: ("unzipped", "unbuttoned", "open clothes", "unfastened", "undone", "open shirt", "open dress", "open blouse", "unbuckled", "undressed", "partially undressed", "open jacket", "open coat"),
-            ClothingCondition.STAINED: ("stained clothes", "stained panties", "wet clothes", "wet panties", "cum stained", "cum on clothes", "cum on panties", "cum on dress", "soiled", "dirty clothes", "marked clothes", "sweaty clothes", "sweat stained", "bodily fluids", "urine", "wet look", "damp clothes"),
-        }
-        return _keywords[self]
+        if self == ClothingCondition.INTACT:
+            return ["intact clothes", "perfect clothes", "undamaged", "pristine condition", "well-maintained", "good condition", "tidy clothes"]
+        elif self == ClothingCondition.TORN:
+            return ["torn clothes", "ripped clothes", "torn fabric", "torn dress", "ripped dress", "torn shirt", "torn outfit", "torn clothing", "torn panties", "ripped panties", "torn bra"]
+        elif self == ClothingCondition.LOWERED:
+            return ["pulled down clothes", "lowered pants", "pulled down panties", "pants pulled down", "panties pulled down", "skirt lowered", "clothes lowered", "pulled to side", "pulled to one side", "bunched up", "clothes pulled down"]
+        elif self == ClothingCondition.OPENED:
+            return ["unzipped", "unbuttoned", "open clothes", "unfastened", "undone", "open shirt", "open dress", "open blouse", "unbuckled", "undressed", "partially undressed", "open jacket", "open coat"]
+        elif self == ClothingCondition.STAINED:
+            return ["stained clothes", "stained panties", "wet clothes", "wet panties", "cum stained", "cum on clothes", "cum on panties", "cum on dress", "soiled", "dirty clothes", "marked clothes", "sweaty clothes", "sweat stained", "bodily fluids", "urine", "wet look", "damp clothes"]
+        else:
+            return []
 
     @property
     def min_age(self) -> int:
@@ -155,14 +159,16 @@ class ClothingDetail(BasePromptEnum):
     """Loose/baggy/oversized."""
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        _keywords: dict[ClothingDetail, tuple[str, ...]] = {
-            ClothingDetail.EXPOSED: ("exposed", "revealing", "see-through", "transparent", "mesh", "fishnet", "sheer", "revealing outfit", "seductive", "provocative"),
-            ClothingDetail.TIGHT: ("tight clothes", "tight dress", "tight panties", "tight bra", "form-fitting", "bodycon", "skin-tight", "clingy", "revealing fit", "fitted"),
-            ClothingDetail.LOOSE: ("loose clothes", "baggy", "oversized", "loose fitting", "comfortable fit", "flowing", "drapey", "airy clothes"),
-        }
-        return _keywords[self]
+        if self == ClothingDetail.EXPOSED:
+            return ["exposed", "revealing", "see-through", "transparent", "mesh", "fishnet", "sheer", "revealing outfit", "seductive", "provocative"]
+        elif self == ClothingDetail.TIGHT:
+            return ["tight clothes", "tight dress", "tight panties", "tight bra", "form-fitting", "bodycon", "skin-tight", "clingy", "revealing fit", "fitted"]
+        elif self == ClothingDetail.LOOSE:
+            return ["loose clothes", "baggy", "oversized", "loose fitting", "comfortable fit", "flowing", "drapey", "airy clothes"]
+        else:
+            return []
 
     @property
     def min_age(self) -> int:
@@ -199,16 +205,20 @@ class ClothingStyle(BasePromptEnum):
     """Fetish wear/bondage gear/latex/leather."""
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        _keywords: dict[ClothingStyle, tuple[str, ...]] = {
-            ClothingStyle.NUDE: ("nude", "naked", "completely nude", "fully nude", "nudity", "bare", "unclothed", "in the altogether", "in state of nature"),
-            ClothingStyle.LINGERIE: ("lingerie", "underwear", "panties", "bra", "thong", "g-string", "bikini", "sexy lingerie", "seductive underwear"),
-            ClothingStyle.CASUAL: ("casual wear", "everyday clothes", "t-shirt", "jeans", "casual outfit", "comfortable clothes", "daily wear"),
-            ClothingStyle.FORMAL: ("formal wear", "evening dress", "cocktail dress", "gown", "suits", "formal attire", "elegant outfit"),
-            ClothingStyle.FETISH: ("fetish wear", "bondage gear", "latex", "leather", "corset", "fishnet", "fetish outfit", "dominatrix outfit"),
-        }
-        return _keywords[self]
+        if self == ClothingStyle.NUDE:
+            return ["nude", "naked", "completely nude", "fully nude", "nudity", "bare", "unclothed", "in the altogether", "in state of nature"]
+        elif self == ClothingStyle.LINGERIE:
+            return ["lingerie", "underwear", "panties", "bra", "thong", "g-string", "bikini", "sexy lingerie", "seductive underwear"]
+        elif self == ClothingStyle.CASUAL:
+            return ["casual wear", "everyday clothes", "t-shirt", "jeans", "casual outfit", "comfortable clothes", "daily wear"]
+        elif self == ClothingStyle.FORMAL:
+            return ["formal wear", "evening dress", "cocktail dress", "gown", "suits", "formal attire", "elegant outfit"]
+        elif self == ClothingStyle.FETISH:
+            return ["fetish wear", "bondage gear", "latex", "leather", "corset", "fishnet", "fetish outfit", "dominatrix outfit"]
+        else:
+            return []
 
     @property
     def min_age(self) -> int:
@@ -254,19 +264,26 @@ class CosplayStyle(BasePromptEnum):
     """Original character/OC costume."""
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        _keywords: dict[CosplayStyle, tuple[str, ...]] = {
-            CosplayStyle.ANIME: ("anime character costume", "anime cosplay", "manga character", "japanese animation style", "otaku costume", "anime outfit", "manga outfit"),
-            CosplayStyle.CARTOON: ("cartoon character costume", "cartoon cosplay", "animated character", "disney character", "cartoon outfit", "animated style"),
-            CosplayStyle.VIDEO_GAME: ("video game character", "gaming cosplay", "game character costume", "gamer outfit", "game character", "video game costume"),
-            CosplayStyle.FANTASY: ("fantasy character", "fantasy cosplay", "elf costume", "dwarf costume", "fantasy outfit", "magical character", "mythical character"),
-            CosplayStyle.SUPERHERO: ("superhero costume", "comic book character", "superhero cosplay", "comic character", "superhero outfit", "cape and costume"),
-            CosplayStyle.HISTORICAL: ("historical costume", "historical cosplay", "period costume", "historical outfit", "vintage costume", "period dress", "historical reenactment"),
-            CosplayStyle.MOVIE_TV: ("movie character", "tv character", "film costume", "tv show character", "movie cosplay", "tv cosplay", "cinema character"),
-            CosplayStyle.ORIGINAL_CHARACTER: ("original character", "oc costume", "custom costume", "original design", "unique character", "personal creation"),
-        }
-        return _keywords[self]
+        if self == CosplayStyle.ANIME:
+            return ["anime character costume", "anime cosplay", "manga character", "japanese animation style", "otaku costume", "anime outfit", "manga outfit"]
+        elif self == CosplayStyle.CARTOON:
+            return ["cartoon character costume", "cartoon cosplay", "animated character", "disney character", "cartoon outfit", "animated style"]
+        elif self == CosplayStyle.VIDEO_GAME:
+            return ["video game character", "gaming cosplay", "game character costume", "gamer outfit", "game character", "video game costume"]
+        elif self == CosplayStyle.FANTASY:
+            return ["fantasy character", "fantasy cosplay", "elf costume", "dwarf costume", "fantasy outfit", "magical character", "mythical character"]
+        elif self == CosplayStyle.SUPERHERO:
+            return ["superhero costume", "comic book character", "superhero cosplay", "comic character", "superhero outfit", "cape and costume"]
+        elif self == CosplayStyle.HISTORICAL:
+            return ["historical costume", "historical cosplay", "period costume", "historical outfit", "vintage costume", "period dress", "historical reenactment"]
+        elif self == CosplayStyle.MOVIE_TV:
+            return ["movie character", "tv character", "film costume", "tv show character", "movie cosplay", "tv cosplay", "cinema character"]
+        elif self == CosplayStyle.ORIGINAL_CHARACTER:
+            return ["original character", "oc costume", "custom costume", "original design", "unique character", "personal creation"]
+        else:
+            return []
 
     @property
     def min_age(self) -> int:

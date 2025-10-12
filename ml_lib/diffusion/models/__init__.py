@@ -48,14 +48,12 @@ from ml_lib.diffusion.models.prompt import (
     QualityLevel,
     OptimizedParameters,
     Priority,
-    AttributeConfig,
-    CharacterAttributeSet,
-    GeneratedCharacter,
     LoRARecommendation,
 )
 
 # Character models
 from ml_lib.diffusion.models.character import (
+    GeneratedCharacter,
     SelectedAttributes,
     ValidationResult,
     CompatibilityMap,
@@ -116,11 +114,9 @@ __all__ = [
     "QualityLevel",
     "OptimizedParameters",
     "Priority",
-    "AttributeConfig",
-    "CharacterAttributeSet",
-    "GeneratedCharacter",
     "LoRARecommendation",
     # Character
+    "GeneratedCharacter",
     "SelectedAttributes",
     "ValidationResult",
     "CompatibilityMap",

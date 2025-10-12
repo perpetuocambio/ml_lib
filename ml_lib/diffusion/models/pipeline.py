@@ -10,6 +10,16 @@ from typing import Optional
 from PIL import Image
 import json
 
+from ml_lib.diffusion.services.image_metadata import (
+    ImageMetadataEmbedding,
+    ImageMetadataWriter,
+    create_generation_id,
+    create_timestamp,
+)
+from ml_lib.diffusion.services.image_naming import ImageNamingConfig
+from ml_lib.diffusion.models.prompt import PromptAnalysis, OptimizedParameters
+from ml_lib.diffusion.interfaces.recommender_protocol import LoRARecommendation
+
 # METADATA STRUCTURES (from metadata_dict.py)
 
 @dataclass
@@ -329,8 +339,8 @@ class Recommendations:
         if self.suggested_loras:
             for rec in self.suggested_loras:
                 lines.append(
-                    f"  • {rec.lora_name} (confidence: {rec.confidence_score:.2f}, "
-                    f"alpha: {rec.suggested_alpha:.2f})"
+                    f"  • {rec.metadata.model_id} (confidence: {rec.confidence:.2f}, "
+                    f"weight: {rec.weight:.2f})"
                 )
         else:
             lines.append("  (none)")
@@ -437,13 +447,6 @@ class GenerationMetadata:
         Returns:
             ImageMetadataEmbedding with complete metadata
         """
-        # Import here to avoid circular import
-        from ml_lib.diffusion.services.image_metadata import (
-            ImageMetadataEmbedding,
-            create_generation_id,
-            create_timestamp,
-        )
-
         return ImageMetadataEmbedding(
             generation_id=generation_id or create_generation_id(),
             generation_timestamp=create_timestamp(),
@@ -525,14 +528,6 @@ class GenerationResult:
             ... )
             >>> # Result: /outputs/20250111_143022_beautiful-sunset_a3f2e9d4.png
         """
-        # Import here to avoid circular import
-        from ml_lib.diffusion.services.image_metadata import (
-            ImageMetadataWriter,
-        )
-        from ml_lib.diffusion.services.image_naming import (
-            ImageNamingConfig,
-        )
-
         path = Path(path)
 
         if use_auto_naming:

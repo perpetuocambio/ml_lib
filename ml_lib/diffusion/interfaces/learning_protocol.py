@@ -2,12 +2,14 @@
 
 from typing import Protocol, runtime_checkable
 
+from ml_lib.diffusion.services.learning_engine import GenerationFeedback
+
 
 @runtime_checkable
 class LearningEngineProtocol(Protocol):
     """Protocol for learning engine implementations."""
 
-    def record_feedback(self, feedback):
+    def record_feedback(self, feedback: GenerationFeedback) -> None:
         """
         Record user feedback.
 

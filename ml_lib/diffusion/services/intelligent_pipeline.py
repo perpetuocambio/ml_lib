@@ -4,11 +4,13 @@ import logging
 import random
 import time
 import uuid
+from datetime import datetime
 from pathlib import Path
 from typing import Optional, Any
 
-# Note: Actual torch/diffusers imports would be here in production
-# For now, using type hints to show the structure
+import torch
+from PIL import Image
+from diffusers import DiffusionPipeline
 
 from ..entities import (
     PipelineConfig,
@@ -19,6 +21,24 @@ from ..entities import (
     Recommendations,
     OperationMode,
 )
+from ml_lib.diffusion.services import (
+    ModelRegistry,
+    PromptAnalyzer,
+    ParameterOptimizer,
+    LearningEngine,
+    LoRARecommender,
+    ModelOffloader,
+)
+from ml_lib.diffusion.handlers.memory_manager import MemoryManager
+from ml_lib.diffusion.services.memory_optimizer import (
+    MemoryOptimizer,
+    MemoryOptimizationConfig,
+    OptimizationLevel,
+    MemoryMonitor,
+)
+from ml_lib.diffusion.services.learning_engine import GenerationFeedback
+from ml_lib.llm.providers import OllamaProvider
+from ml_lib.llm.client import LLMClient
 
 # Import from other intelligent modules
 # Note: These would need to be properly implemented/available
@@ -71,137 +91,82 @@ class IntelligentGenerationPipeline:
 
     def _init_subsystems(self, model_registry: Optional[Any]):
         """Initialize all subsystem services."""
-        # Import here to avoid circular dependencies
-        try:
-            from ml_lib.diffusion.services import (
-                ModelRegistry,
-            )
-            from ml_lib.diffusion.services import (
-                PromptAnalyzer,
-                ParameterOptimizer,
-                LearningEngine,
-                LoRARecommender,
-            )
-            from ml_lib.diffusion.handlers.memory_manager import MemoryManager
-            from ml_lib.diffusion.services import ModelOffloader
-            from ml_lib.diffusion.services.memory_optimizer import (
-                MemoryOptimizer,
-                MemoryOptimizationConfig,
-                OptimizationLevel,
-            )
+        # Model Registry (US 14.1)
+        self.registry = model_registry or ModelRegistry()
 
-            # Model Registry (US 14.1)
-            self.registry = model_registry or ModelRegistry()
+        # Prompt Analysis (US 14.2)
+        ollama_client = (
+            self._init_ollama() if self.config.ollama_config else None
+        )
+        self.prompt_analyzer = PromptAnalyzer(ollama_client=ollama_client)
 
-            # Prompt Analysis (US 14.2)
-            ollama_client = (
-                self._init_ollama() if self.config.ollama_config else None
-            )
-            self.prompt_analyzer = PromptAnalyzer(ollama_client=ollama_client)
+        # LoRA Recommendation (US 14.2)
+        self.lora_recommender = LoRARecommender(registry=self.registry)
 
-            # LoRA Recommendation (US 14.2)
-            self.lora_recommender = LoRARecommender(registry=self.registry)
+        # Parameter Optimization (US 14.2)
+        self.param_optimizer = ParameterOptimizer()
 
-            # Parameter Optimization (US 14.2)
-            self.param_optimizer = ParameterOptimizer()
+        # Memory Management (US 14.3) - OUR MARKET VALUE DIFFERENTIATOR
+        self.memory_manager = MemoryManager()
+        self.model_offloader = ModelOffloader(
+            strategy=self.config.memory_settings.offload_strategy,
+            max_vram_gb=self.config.memory_settings.max_vram_gb,
+            memory_manager=self.memory_manager,
+        )
 
-            # Memory Management (US 14.3) - OUR MARKET VALUE DIFFERENTIATOR
-            self.memory_manager = MemoryManager()
-            self.model_offloader = ModelOffloader(
-                strategy=self.config.memory_settings.offload_strategy,
-                max_vram_gb=self.config.memory_settings.max_vram_gb,
-                memory_manager=self.memory_manager,
-            )
+        # Memory Optimizer (EXTREME OPTIMIZATION - MARKET VALUE)
+        opt_level = self._get_optimization_level()
+        opt_config = MemoryOptimizationConfig.from_level(opt_level)
+        self.memory_optimizer = MemoryOptimizer(opt_config)
 
-            # Memory Optimizer (EXTREME OPTIMIZATION - MARKET VALUE)
-            opt_level = self._get_optimization_level()
-            opt_config = MemoryOptimizationConfig.from_level(opt_level)
-            self.memory_optimizer = MemoryOptimizer(opt_config)
+        logger.info(f"Memory optimizer enabled: {opt_level.value} mode")
 
-            logger.info(f"Memory optimizer enabled: {opt_level.value} mode")
-
-            # Learning Engine (US 14.2)
-            if self.config.enable_learning:
-                db_path = None
-                if self.config.cache_dir:
-                    db_path = Path(self.config.cache_dir) / "learning.db"
-                self.learning_engine = LearningEngine(db_path=db_path)
-            else:
-                self.learning_engine = None
-
-            logger.info("All subsystems initialized successfully")
-
-        except ImportError as e:
-            logger.error(f"Failed to import required modules: {e}")
-            logger.warning(
-                "Running in limited mode - some features may not be available"
-            )
-
-            # Create mock subsystems for testing/development
-            self.registry = None
-            self.prompt_analyzer = None
-            self.lora_recommender = None
-            self.param_optimizer = None
-            self.memory_manager = None
-            self.model_offloader = None
-            self.memory_optimizer = None
+        # Learning Engine (US 14.2)
+        if self.config.enable_learning:
+            db_path = None
+            if self.config.cache_dir:
+                db_path = Path(self.config.cache_dir) / "learning.db"
+            self.learning_engine = LearningEngine(db_path=db_path)
+        else:
             self.learning_engine = None
 
-    def _get_optimization_level(self) -> "OptimizationLevel":
+        logger.info("All subsystems initialized successfully")
+
+    def _get_optimization_level(self) -> OptimizationLevel:
         """
         Determine memory optimization level from config.
 
         Returns:
             OptimizationLevel enum
         """
-        try:
-            from ml_lib.diffusion.services.memory_optimizer import (
-                OptimizationLevel,
-            )
+        strategy = self.config.memory_settings.offload_strategy.value
+        vram = self.memory_manager.resources.available_vram_gb if self.memory_manager else 12.0
 
-            strategy = self.config.memory_settings.offload_strategy.value
-            vram = self.memory_manager.resources.available_vram_gb if self.memory_manager else 12.0
-
-            # Map strategy to optimization level
-            if strategy == "none":
-                return OptimizationLevel.NONE
-            elif strategy == "balanced":
-                return OptimizationLevel.BALANCED
-            elif strategy == "sequential" or strategy == "aggressive":
-                return OptimizationLevel.AGGRESSIVE
-            elif vram < 6:
-                # Auto upgrade to ULTRA for low VRAM
-                return OptimizationLevel.ULTRA
-            else:
-                return OptimizationLevel.BALANCED
-        except ImportError:
-            from ml_lib.diffusion.services.memory_optimizer import (
-                OptimizationLevel,
-            )
+        # Map strategy to optimization level
+        if strategy == "none":
+            return OptimizationLevel.NONE
+        elif strategy == "balanced":
+            return OptimizationLevel.BALANCED
+        elif strategy == "sequential" or strategy == "aggressive":
+            return OptimizationLevel.AGGRESSIVE
+        elif vram < 6:
+            # Auto upgrade to ULTRA for low VRAM
+            return OptimizationLevel.ULTRA
+        else:
             return OptimizationLevel.BALANCED
 
     def _init_ollama(self) -> Optional[Any]:
         """Initialize Ollama client for semantic analysis."""
-        try:
-            from ml_lib.llm.providers import OllamaProvider
-            from ml_lib.llm.client import LLMClient
-
-            if self.config.ollama_config is None:
-                return None
-
-            provider = OllamaProvider(
-                base_url=self.config.ollama_config.base_url,
-                model=self.config.ollama_config.model,
-                timeout=self.config.ollama_config.timeout,
-            )
-
-            return LLMClient(provider=provider)
-
-        except ImportError:
-            logger.warning(
-                "Ollama provider not available - using rule-based fallback"
-            )
+        if self.config.ollama_config is None:
             return None
+
+        provider = OllamaProvider(
+            base_url=self.config.ollama_config.base_url,
+            model=self.config.ollama_config.model,
+            timeout=self.config.ollama_config.timeout,
+        )
+
+        return LLMClient(provider=provider)
 
     def generate(
         self,
@@ -499,11 +464,6 @@ class IntelligentGenerationPipeline:
         # Note: In production, we'd retrieve the original generation details
         # For now, this is a simplified interface
 
-        from ml_lib.diffusion.services.learning_engine import (
-            GenerationFeedback,
-        )
-        from datetime import datetime
-
         feedback = GenerationFeedback(
             feedback_id=generation_id,
             timestamp=datetime.now().isoformat(),
@@ -542,41 +502,32 @@ class IntelligentGenerationPipeline:
 
     def _load_base_model(self, model_id: str):
         """Load base diffusion model with EXTREME memory optimization - OUR MARKET VALUE."""
-        try:
-            import torch
-            from diffusers import DiffusionPipeline
+        logger.info(f"Loading {model_id} with extreme memory optimization...")
+        dtype = torch.float16 if self.config.memory_settings.enable_quantization else torch.float32
 
-            logger.info(f"Loading {model_id} with extreme memory optimization...")
-            dtype = torch.float16 if self.config.memory_settings.enable_quantization else torch.float32
+        self.diffusion_pipeline = DiffusionPipeline.from_pretrained(
+            model_id, torch_dtype=dtype, use_safetensors=True,
+            variant="fp16" if dtype == torch.float16 else None
+        )
 
-            self.diffusion_pipeline = DiffusionPipeline.from_pretrained(
-                model_id, torch_dtype=dtype, use_safetensors=True,
-                variant="fp16" if dtype == torch.float16 else None
-            )
-
-            # APPLY ALL MEMORY OPTIMIZATIONS - OUR MARKET DIFFERENTIATOR
-            if self.memory_optimizer:
-                logger.info("Applying EXTREME memory optimizations (market differentiator)...")
-                self.memory_optimizer.optimize_pipeline(self.diffusion_pipeline)
-                # Cleanup immediately after load
-                self.memory_optimizer.cleanup_after_model_load()
+        # APPLY ALL MEMORY OPTIMIZATIONS - OUR MARKET DIFFERENTIATOR
+        if self.memory_optimizer:
+            logger.info("Applying EXTREME memory optimizations (market differentiator)...")
+            self.memory_optimizer.optimize_pipeline(self.diffusion_pipeline)
+            # Cleanup immediately after load
+            self.memory_optimizer.cleanup_after_model_load()
+        else:
+            # Fallback to basic optimizations if optimizer not available
+            logger.warning("MemoryOptimizer not available, using basic optimizations")
+            if self.config.memory_settings.offload_strategy.value == "balanced":
+                self.diffusion_pipeline.enable_model_cpu_offload()
+            elif self.config.memory_settings.offload_strategy.value == "aggressive":
+                self.diffusion_pipeline.enable_sequential_cpu_offload()
             else:
-                # Fallback to basic optimizations if optimizer not available
-                logger.warning("MemoryOptimizer not available, using basic optimizations")
-                if self.config.memory_settings.offload_strategy.value == "balanced":
-                    self.diffusion_pipeline.enable_model_cpu_offload()
-                elif self.config.memory_settings.offload_strategy.value == "aggressive":
-                    self.diffusion_pipeline.enable_sequential_cpu_offload()
-                else:
-                    self.diffusion_pipeline = self.diffusion_pipeline.to("cuda")
+                self.diffusion_pipeline = self.diffusion_pipeline.to("cuda")
 
-            self.current_base_model = model_id
-            logger.info(f"✅ Model loaded and optimized: {model_id}")
-
-        except ImportError:
-            logger.warning("torch/diffusers not available")
-            self.diffusion_pipeline = None
-            self.current_base_model = model_id
+        self.current_base_model = model_id
+        logger.info(f"✅ Model loaded and optimized: {model_id}")
 
     def _apply_loras(self, lora_recs: list[Any]):
         """
@@ -617,12 +568,9 @@ class IntelligentGenerationPipeline:
         if self.diffusion_pipeline is None:
             # Fallback to placeholder if no real pipeline
             logger.warning("No real pipeline loaded - returning placeholder")
-            from PIL import Image
             return Image.new("RGB", (params.width, params.height), color="gray")
 
         try:
-            import torch
-
             logger.debug(
                 f"Generating with: steps={params.num_steps}, cfg={params.guidance_scale}, "
                 f"size={params.width}x{params.height}, seed={seed}"
@@ -634,9 +582,6 @@ class IntelligentGenerationPipeline:
 
             # Generate image with memory monitoring (MARKET VALUE)
             if self.memory_optimizer:
-                from ml_lib.diffusion.services.memory_optimizer import (
-                    MemoryMonitor,
-                )
                 with MemoryMonitor(self.memory_optimizer) as monitor:
                     result = self.diffusion_pipeline(
                         prompt=prompt,
@@ -669,7 +614,6 @@ class IntelligentGenerationPipeline:
             # Cleanup on error
             if self.memory_optimizer:
                 self.memory_optimizer.cleanup_after_generation()
-            from PIL import Image
             return Image.new("RGB", (params.width, params.height), color="red")
 
     def _build_explanation(

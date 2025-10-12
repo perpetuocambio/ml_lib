@@ -35,7 +35,7 @@ class BasePromptEnum(Enum):
         Returns:
             Prompt-friendly string with underscores replaced by spaces.
         """
-        return self.value.replace("_", " ")
+        return self.value.replace["_", " "]
 
 
 # ============================================================================
@@ -61,14 +61,16 @@ class SpecialEffect(BasePromptEnum):
     """Sticky/slimy/coated skin."""
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        _keywords: dict[SpecialEffect, tuple[str, ...]] = {
-            SpecialEffect.WET: ("wet", "wet skin", "damp", "moist", "wet look", "wet clothes", "sweaty", "drenched", "sopping wet"),
-            SpecialEffect.CUM: ("cum", "semen", "bodily fluids", "cum on skin", "cum on face", "cum on body", "ejaculation", "body fluids"),
-            SpecialEffect.STICKY: ("sticky", "sticky skin", "sticky body", "gooey", "slimy", "coated", "covered in substance", "oily", "greasy"),
-        }
-        return _keywords[self]
+        if self == SpecialEffect.WET:
+            return ["wet", "wet skin", "damp", "moist", "wet look", "wet clothes", "sweaty", "drenched", "sopping wet"]
+        elif self == SpecialEffect.CUM:
+            return ["cum", "semen", "bodily fluids", "cum on skin", "cum on face", "cum on body", "ejaculation", "body fluids"]
+        elif self == SpecialEffect.STICKY:
+            return ["sticky", "sticky skin", "sticky body", "gooey", "slimy", "coated", "covered in substance", "oily", "greasy"]
+        else:
+            raise ValueError(f"Unexpected SpecialEffect: {self}")
 
     @property
     def min_age(self) -> int:
@@ -99,14 +101,16 @@ class FantasyRace(BasePromptEnum):
     """Monster girl/supernatural creature."""
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        _keywords: dict[FantasyRace, tuple[str, ...]] = {
-            FantasyRace.ELF: ("elf", "elven", "elf ears", "pointed ears", "elven features", "elven beauty", "elvish", "elven woman"),
-            FantasyRace.DEMON: ("demon", "demonic", "demon horns", "demon tail", "demon features", "demoness", "devil", "supernatural being", "evil being"),
-            FantasyRace.MONSTER_GIRL: ("monster girl", "monster girl features", "supernatural girl", "fantasy creature", "non-human", "creature girl", "beast girl", "monster woman"),
-        }
-        return _keywords[self]
+        if self == FantasyRace.ELF:
+            return ["elf", "elven", "elf ears", "pointed ears", "elven features", "elven beauty", "elvish", "elven woman"]
+        elif self == FantasyRace.DEMON:
+            return ["demon", "demonic", "demon horns", "demon tail", "demon features", "demoness", "devil", "supernatural being", "evil being"]
+        elif self == FantasyRace.MONSTER_GIRL:
+            return ["monster girl", "monster girl features", "supernatural girl", "fantasy creature", "non-human", "creature girl", "beast girl", "monster woman"]
+        else:
+            raise ValueError(f"Unexpected FantasyRace: {self}")
 
     @property
     def min_age(self) -> int:
@@ -146,17 +150,22 @@ class ArtisticStyle(BasePromptEnum):
     """Gothic/dark aesthetic."""
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        _keywords: dict[ArtisticStyle, tuple[str, ...]] = {
-            ArtisticStyle.PHOTOREALISTIC: ("photorealistic", "hyperrealistic", "ultra realistic", "lifelike", "realistic", "photo", "photography", "professional photography", "film photography", "cinematic", "cinematic lighting", "studio photography"),
-            ArtisticStyle.ANIME: ("anime style", "manga style", "japanese animation", "otaku art", "anime aesthetic", "chibi", "kawaii"),
-            ArtisticStyle.CARTOON: ("cartoon style", "illustration", "comic book style", "hand-drawn", "animated", "disney style", "western cartoon", "comic art"),
-            ArtisticStyle.FANTASY: ("fantasy art", "concept art", "fantasy illustration", "mythical art", "magical art style", "enchanted art", "fairy tale art"),
-            ArtisticStyle.VINTAGE: ("vintage photo", "retro style", "vintage aesthetic", "1950s style", "1960s style", "1970s style", "vintage fashion", "retro photography", "old photo", "aged photo"),
-            ArtisticStyle.GOTHIC: ("gothic style", "dark aesthetic", "goth", "dark fantasy", "macabre art", "dark romanticism", "victorian gothic"),
-        }
-        return _keywords[self]
+        if self == ArtisticStyle.PHOTOREALISTIC:
+            return ["photorealistic", "hyperrealistic", "ultra realistic", "lifelike", "realistic", "photo", "photography", "professional photography", "film photography", "cinematic", "cinematic lighting", "studio photography"]
+        elif self == ArtisticStyle.ANIME:
+            return ["anime style", "manga style", "japanese animation", "otaku art", "anime aesthetic", "chibi", "kawaii"]
+        elif self == ArtisticStyle.CARTOON:
+            return ["cartoon style", "illustration", "comic book style", "hand-drawn", "animated", "disney style", "western cartoon", "comic art"]
+        elif self == ArtisticStyle.FANTASY:
+            return ["fantasy art", "concept art", "fantasy illustration", "mythical art", "magical art style", "enchanted art", "fairy tale art"]
+        elif self == ArtisticStyle.VINTAGE:
+            return ["vintage photo", "retro style", "vintage aesthetic", "1950s style", "1960s style", "1970s style", "vintage fashion", "retro photography", "old photo", "aged photo"]
+        elif self == ArtisticStyle.GOTHIC:
+            return ["gothic style", "dark aesthetic", "goth", "dark fantasy", "macabre art", "dark romanticism", "victorian gothic"]
+        else:
+            raise ValueError(f"Unexpected ArtisticStyle: {self}")
 
     @property
     def min_age(self) -> int:
@@ -193,16 +202,20 @@ class AestheticStyle(BasePromptEnum):
     """Nun/religious costume."""
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        _keywords: dict[AestheticStyle, tuple[str, ...]] = {
-            AestheticStyle.GOTH: ("goth", "gothic", "dark makeup", "dark clothing", "black clothing", "goth style", "dark aesthetic", "dark fashion", "black makeup"),
-            AestheticStyle.PUNK: ("punk", "punk style", "punk fashion", "punk look", "leather jacket", "punk clothes", "punk makeup", "punk hair", "rebellious style"),
-            AestheticStyle.NURSE: ("nurse", "nurse outfit", "medical costume", "nurse uniform", "hospital uniform", "nurse hat", "nurse shoes", "medical attire", "hospital costume"),
-            AestheticStyle.WITCH: ("witch", "witch costume", "witch outfit", "witch hat", "witch aesthetic", "magical costume", "wizard", "sorceress", "spellcaster"),
-            AestheticStyle.NUN: ("nun", "nun outfit", "religious costume", "nun habit", "convent clothing", "catholic costume", "religious attire", "ascetic clothing"),
-        }
-        return _keywords[self]
+        if self == AestheticStyle.GOTH:
+            return ["goth", "gothic", "dark makeup", "dark clothing", "black clothing", "goth style", "dark aesthetic", "dark fashion", "black makeup"]
+        elif self == AestheticStyle.PUNK:
+            return ["punk", "punk style", "punk fashion", "punk look", "leather jacket", "punk clothes", "punk makeup", "punk hair", "rebellious style"]
+        elif self == AestheticStyle.NURSE:
+            return ["nurse", "nurse outfit", "medical costume", "nurse uniform", "hospital uniform", "nurse hat", "nurse shoes", "medical attire", "hospital costume"]
+        elif self == AestheticStyle.WITCH:
+            return ["witch", "witch costume", "witch outfit", "witch hat", "witch aesthetic", "magical costume", "wizard", "sorceress", "spellcaster"]
+        elif self == AestheticStyle.NUN:
+            return ["nun", "nun outfit", "religious costume", "nun habit", "convent clothing", "catholic costume", "religious attire", "ascetic clothing"]
+        else:
+            raise ValueError(f"Unexpected AestheticStyle: {self}")
 
     @property
     def min_age(self) -> int:
@@ -244,16 +257,20 @@ class EroticToy(BasePromptEnum):
     """Sex toys/erotic accessories/pleasure toys."""
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        _keywords: dict[EroticToy, tuple[str, ...]] = {
-            EroticToy.DILDOS: ("dildo", "penetrative toy", "anal dildo", "vaginal dildo", "realistic dildo", "non-realistic dildo", "glass dildo", "silicone dildo"),
-            EroticToy.VIBRATORS: ("vibrator", "clitoral vibrator", "rabbit vibrator", "bullet vibrator", "wand vibrator", "couples vibrator", "g-spot vibrator"),
-            EroticToy.ANAL_TOYS: ("anal plug", "anal beads", "prostate massager", "anal dildo", "butt plug", "anal vibrator", "prostate toy"),
-            EroticToy.BDSM: ("bondage", "handcuffs", "blindfold", "gags", "restraints", "ropes", "collars", "spreader bar", "paddles"),
-            EroticToy.OTHER: ("sex toys", "erotic accessories", "kinky items", "adult toys", "pleasure toys", "sensual items"),
-        }
-        return _keywords[self]
+        if self == EroticToy.DILDOS:
+            return ["dildo", "penetrative toy", "anal dildo", "vaginal dildo", "realistic dildo", "non-realistic dildo", "glass dildo", "silicone dildo"]
+        elif self == EroticToy.VIBRATORS:
+            return ["vibrator", "clitoral vibrator", "rabbit vibrator", "bullet vibrator", "wand vibrator", "couples vibrator", "g-spot vibrator"]
+        elif self == EroticToy.ANAL_TOYS:
+            return ["anal plug", "anal beads", "prostate massager", "anal dildo", "butt plug", "anal vibrator", "prostate toy"]
+        elif self == EroticToy.BDSM:
+            return ["bondage", "handcuffs", "blindfold", "gags", "restraints", "ropes", "collars", "spreader bar", "paddles"]
+        elif self == EroticToy.OTHER:
+            return ["sex toys", "erotic accessories", "kinky items", "adult toys", "pleasure toys", "sensual items"]
+        else:
+            raise ValueError(f"Unexpected EroticToy: {self}")
 
     @property
     def min_age(self) -> int:
@@ -293,17 +310,22 @@ class EmotionalState(BasePromptEnum):
     """Surprised/shocked expression."""
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        _keywords: dict[EmotionalState, tuple[str, ...]] = {
-            EmotionalState.NEUTRAL: ("neutral expression", "calm expression", "normal expression", "relaxed face", "calm face"),
-            EmotionalState.HAPPY: ("happy expression", "smiling", "joyful", "smile", "joy", "content", "pleased expression"),
-            EmotionalState.SENSUAL: ("sensual expression", "seductive look", "sultry expression", "come hither look", "seductive gaze", "alluring look"),
-            EmotionalState.ORGASM: ("orgasm face", "orgasm expression", "orgasmic look", "face of pleasure", "ecstasy expression", "pleasure face", "ecstatic expression"),
-            EmotionalState.INTENSE: ("intense expression", "focused look", "intense gaze", "passionate look", "intense expression", "focused eyes"),
-            EmotionalState.SURPRISED: ("surprised expression", "surprised look", "shocked look", "surprised face", "wide eyes", "shocked expression"),
-        }
-        return _keywords[self]
+        if self == EmotionalState.NEUTRAL:
+            return ["neutral expression", "calm expression", "normal expression", "relaxed face", "calm face"]
+        elif self == EmotionalState.HAPPY:
+            return ["happy expression", "smiling", "joyful", "smile", "joy", "content", "pleased expression"]
+        elif self == EmotionalState.SENSUAL:
+            return ["sensual expression", "seductive look", "sultry expression", "come hither look", "seductive gaze", "alluring look"]
+        elif self == EmotionalState.ORGASM:
+            return ["orgasm face", "orgasm expression", "orgasmic look", "face of pleasure", "ecstasy expression", "pleasure face", "ecstatic expression"]
+        elif self == EmotionalState.INTENSE:
+            return ["intense expression", "focused look", "intense gaze", "passionate look", "intense expression", "focused eyes"]
+        elif self == EmotionalState.SURPRISED:
+            return ["surprised expression", "surprised look", "shocked look", "surprised face", "wide eyes", "shocked expression"]
+        else:
+            raise ValueError(f"Unexpected EmotionalState: {self}")
 
     @property
     def min_age(self) -> int:
@@ -339,32 +361,38 @@ class SafetyLevel(BasePromptEnum):
     @property
     def description(self) -> str:
         """Get detailed description of this safety level."""
-        _descriptions: dict[SafetyLevel, str] = {
-            SafetyLevel.STRICT: "Strict content filtering with maximum safety restrictions",
-            SafetyLevel.MODERATE: "Balanced filtering allowing mature content with age verification",
-            SafetyLevel.RELAXED: "Minimal filtering for adult audiences with content awareness",
-        }
-        return _descriptions[self]
+        if self == SafetyLevel.STRICT:
+            return "Strict content filtering with maximum safety restrictions"
+        elif self == SafetyLevel.MODERATE:
+            return "Balanced filtering allowing mature content with age verification"
+        elif self == SafetyLevel.RELAXED:
+            return "Minimal filtering for adult audiences with content awareness"
+        else:
+            raise ValueError(f"Unexpected SafetyLevel: {self}")
 
     @property
     def filter_strength(self) -> int:
         """Get numeric filter strength (0-10, higher = stricter)."""
-        _strengths: dict[SafetyLevel, int] = {
-            SafetyLevel.STRICT: 10,
-            SafetyLevel.MODERATE: 5,
-            SafetyLevel.RELAXED: 2,
-        }
-        return _strengths[self]
+        if self == SafetyLevel.STRICT:
+            return 10
+        elif self == SafetyLevel.MODERATE:
+            return 5
+        elif self == SafetyLevel.RELAXED:
+            return 2
+        else:
+            raise ValueError(f"Unexpected SafetyLevel: {self}")
 
     @property
     def blocks_explicit(self) -> bool:
         """Check if this level blocks explicit content."""
-        _blocks: dict[SafetyLevel, bool] = {
-            SafetyLevel.STRICT: True,
-            SafetyLevel.MODERATE: False,
-            SafetyLevel.RELAXED: False,
-        }
-        return _blocks[self]
+        if self == SafetyLevel.STRICT:
+            return True
+        elif self == SafetyLevel.MODERATE:
+            return False
+        elif self == SafetyLevel.RELAXED:
+            return False
+        else:
+            raise ValueError(f"Unexpected SafetyLevel: {self}")
 
 
 class CharacterFocus(BasePromptEnum):
@@ -385,32 +413,38 @@ class CharacterFocus(BasePromptEnum):
     @property
     def description(self) -> str:
         """Get detailed description of this focus type."""
-        _descriptions: dict[CharacterFocus, str] = {
-            CharacterFocus.PORTRAIT: "Close-up portrait showing head and shoulders with detailed facial features",
-            CharacterFocus.FULL_BODY: "Complete character view from head to toe showing full body proportions",
-            CharacterFocus.SCENE: "Character integrated into environment with contextual scene elements",
-        }
-        return _descriptions[self]
+        if self == CharacterFocus.PORTRAIT:
+            return "Close-up portrait showing head and shoulders with detailed facial features"
+        elif self == CharacterFocus.FULL_BODY:
+            return "Complete character view from head to toe showing full body proportions"
+        elif self == CharacterFocus.SCENE:
+            return "Character integrated into environment with contextual scene elements"
+        else:
+            raise ValueError(f"Unexpected CharacterFocus: {self}")
 
     @property
-    def crop_ratio(self) -> tuple[int, int]:
+    def crop_ratio(self) -> list[int]:
         """Get recommended aspect ratio (width, height) for this focus."""
-        _ratios: dict[CharacterFocus, tuple[int, int]] = {
-            CharacterFocus.PORTRAIT: (3, 4),  # Vertical portrait
-            CharacterFocus.FULL_BODY: (2, 3),  # Slightly vertical
-            CharacterFocus.SCENE: (16, 9),  # Cinematic landscape
-        }
-        return _ratios[self]
+        if self == CharacterFocus.PORTRAIT:
+            return (3, 4)  # Vertical portrait
+        elif self == CharacterFocus.FULL_BODY:
+            return (2, 3)  # Slightly vertical
+        elif self == CharacterFocus.SCENE:
+            return (16, 9)  # Cinematic landscape
+        else:
+            raise ValueError(f"Unexpected CharacterFocus: {self}")
 
     @property
     def detail_level(self) -> int:
         """Get detail focus level (1-10, higher = more character detail)."""
-        _levels: dict[CharacterFocus, int] = {
-            CharacterFocus.PORTRAIT: 10,  # Maximum facial detail
-            CharacterFocus.FULL_BODY: 7,  # Balanced body detail
-            CharacterFocus.SCENE: 5,  # Context over character detail
-        }
-        return _levels[self]
+        if self == CharacterFocus.PORTRAIT:
+            return 10  # Maximum facial detail
+        elif self == CharacterFocus.FULL_BODY:
+            return 7  # Balanced body detail
+        elif self == CharacterFocus.SCENE:
+            return 5  # Context over character detail
+        else:
+            raise ValueError(f"Unexpected CharacterFocus: {self}")
 
 
 class QualityTarget(BasePromptEnum):
@@ -434,35 +468,44 @@ class QualityTarget(BasePromptEnum):
     @property
     def description(self) -> str:
         """Get detailed description of this quality level."""
-        _descriptions: dict[QualityTarget, str] = {
-            QualityTarget.LOW: "Fast generation with basic quality suitable for testing and previews",
-            QualityTarget.MEDIUM: "Balanced quality with good detail and reasonable generation time",
-            QualityTarget.HIGH: "High-quality output with excellent detail and fine rendering",
-            QualityTarget.MASTERPIECE: "Ultimate quality with maximum detail, refinement, and artistic excellence",
-        }
-        return _descriptions[self]
+        if self == QualityTarget.LOW:
+            return "Fast generation with basic quality suitable for testing and previews"
+        elif self == QualityTarget.MEDIUM:
+            return "Balanced quality with good detail and reasonable generation time"
+        elif self == QualityTarget.HIGH:
+            return "High-quality output with excellent detail and fine rendering"
+        elif self == QualityTarget.MASTERPIECE:
+            return "Ultimate quality with maximum detail, refinement, and artistic excellence"
+        else:
+            raise ValueError(f"Unexpected QualityTarget: {self}")
 
     @property
     def steps_multiplier(self) -> float:
         """Get generation steps multiplier (1.0 = baseline)."""
-        _multipliers: dict[QualityTarget, float] = {
-            QualityTarget.LOW: 0.5,  # 50% of baseline steps
-            QualityTarget.MEDIUM: 1.0,  # Baseline
-            QualityTarget.HIGH: 1.5,  # 150% of baseline
-            QualityTarget.MASTERPIECE: 2.0,  # 200% of baseline
-        }
-        return _multipliers[self]
+        if self == QualityTarget.LOW:
+            return 0.5  # 50% of baseline steps
+        elif self == QualityTarget.MEDIUM:
+            return 1.0  # Baseline
+        elif self == QualityTarget.HIGH:
+            return 1.5  # 150% of baseline
+        elif self == QualityTarget.MASTERPIECE:
+            return 2.0  # 200% of baseline
+        else:
+            raise ValueError(f"Unexpected QualityTarget: {self}")
 
     @property
     def quality_score(self) -> int:
         """Get numeric quality score (1-10)."""
-        _scores: dict[QualityTarget, int] = {
-            QualityTarget.LOW: 3,
-            QualityTarget.MEDIUM: 6,
-            QualityTarget.HIGH: 8,
-            QualityTarget.MASTERPIECE: 10,
-        }
-        return _scores[self]
+        if self == QualityTarget.LOW:
+            return 3
+        elif self == QualityTarget.MEDIUM:
+            return 6
+        elif self == QualityTarget.HIGH:
+            return 8
+        elif self == QualityTarget.MASTERPIECE:
+            return 10
+        else:
+            raise ValueError(f"Unexpected QualityTarget: {self}")
 
 
 class ComplexityLevel(BasePromptEnum):
@@ -483,29 +526,35 @@ class ComplexityLevel(BasePromptEnum):
     @property
     def description(self) -> str:
         """Get detailed description of this complexity level."""
-        _descriptions: dict[ComplexityLevel, str] = {
-            ComplexityLevel.LOW: "Simple and straightforward with minimal intricacy or special features",
-            ComplexityLevel.MEDIUM: "Moderate complexity with balanced detail and some intricate elements",
-            ComplexityLevel.HIGH: "Highly detailed and intricate with complex patterns and features",
-        }
-        return _descriptions[self]
+        if self == ComplexityLevel.LOW:
+            return "Simple and straightforward with minimal intricacy or special features"
+        elif self == ComplexityLevel.MEDIUM:
+            return "Moderate complexity with balanced detail and some intricate elements"
+        elif self == ComplexityLevel.HIGH:
+            return "Highly detailed and intricate with complex patterns and features"
+        else:
+            raise ValueError(f"Unexpected ComplexityLevel: {self}")
 
     @property
     def complexity_score(self) -> int:
         """Get numeric complexity score (1-10)."""
-        _scores: dict[ComplexityLevel, int] = {
-            ComplexityLevel.LOW: 3,
-            ComplexityLevel.MEDIUM: 6,
-            ComplexityLevel.HIGH: 9,
-        }
-        return _scores[self]
+        if self == ComplexityLevel.LOW:
+            return 3
+        elif self == ComplexityLevel.MEDIUM:
+            return 6
+        elif self == ComplexityLevel.HIGH:
+            return 9
+        else:
+            raise ValueError(f"Unexpected ComplexityLevel: {self}")
 
     @property
     def token_weight(self) -> float:
         """Get prompt token weight multiplier for this complexity."""
-        _weights: dict[ComplexityLevel, float] = {
-            ComplexityLevel.LOW: 0.8,  # Less emphasis in prompt
-            ComplexityLevel.MEDIUM: 1.0,  # Normal weight
-            ComplexityLevel.HIGH: 1.3,  # Stronger emphasis
-        }
-        return _weights[self]
+        if self == ComplexityLevel.LOW:
+            return 0.8  # Less emphasis in prompt
+        elif self == ComplexityLevel.MEDIUM:
+            return 1.0  # Normal weight
+        elif self == ComplexityLevel.HIGH:
+            return 1.3  # Stronger emphasis
+        else:
+            raise ValueError(f"Unexpected ComplexityLevel: {self}")

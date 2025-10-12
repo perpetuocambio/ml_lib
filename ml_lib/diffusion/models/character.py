@@ -1,81 +1,14 @@
 """Character models - consolidated from prompting package."""
 
 from dataclasses import dataclass, asdict, field
-from typing import TYPE_CHECKING, Dict, List, Any, Optional
+from typing import Dict, List, Optional
 
-if TYPE_CHECKING:
-    from ml_lib.diffusion.intelligent.prompting.enhanced_attributes import (
-        AttributeDefinition,
-        AttributeType,
-    )
-
+from ml_lib.diffusion.models.core import AttributeDefinition, AttributeType
 from ml_lib.diffusion.models.enums import (
     SafetyLevel,
     CharacterFocus,
     QualityTarget,
 )
-
-
-@dataclass
-class AttributeConfig:
-    """Configuration for a character attribute."""
-
-    keywords: List[str]
-    probability: float = 1.0
-    prompt_weight: float = 1.0
-    ethnicity_associations: Optional[List[str]] = None
-    min_age: int = 18
-    max_age: int = 80
-    ethnicity_fit: Optional[List[str]] = None
-    age_features: Optional[List[str]] = None
-    lighting_suggestions: Optional[List[str]] = None
-    complexity: str = "medium"
-    explicit: bool = False
-    age_min: Optional[int] = None
-    age_max: Optional[int] = None
-
-    def __post_init__(self):
-        if self.ethnicity_associations is None:
-            self.ethnicity_associations = []
-        if self.ethnicity_fit is None:
-            self.ethnicity_fit = []
-        if self.age_features is None:
-            self.age_features = []
-        if self.lighting_suggestions is None:
-            self.lighting_suggestions = []
-
-
-@dataclass
-class CharacterAttributeSet:
-    """A set of all character attributes that can be configured."""
-
-    skin_tones: Dict[str, AttributeConfig]
-    ethnicities: Dict[str, AttributeConfig]
-    eye_colors: Dict[str, AttributeConfig]
-    hair_colors: Dict[str, AttributeConfig]
-    hair_textures: Dict[str, AttributeConfig]
-    body_types: Dict[str, AttributeConfig]
-    breast_sizes: Dict[str, AttributeConfig]
-    age_ranges: Dict[str, AttributeConfig]
-    settings: Dict[str, AttributeConfig]
-    poses: Dict[str, AttributeConfig]
-    clothing_styles: Dict[str, AttributeConfig]
-    clothing_conditions: Dict[str, AttributeConfig]
-    clothing_details: Dict[str, AttributeConfig]
-    cosplay_styles: Dict[str, AttributeConfig]
-    accessories: Dict[str, AttributeConfig]
-    erotic_toys: Dict[str, AttributeConfig]
-    activities: Dict[str, AttributeConfig]
-    weather_conditions: Dict[str, AttributeConfig]
-    emotional_states: Dict[str, AttributeConfig]
-    environment_details: Dict[str, AttributeConfig]
-    artistic_styles: Dict[str, AttributeConfig]
-    physical_features: Dict[str, AttributeConfig]
-    body_sizes: Dict[str, AttributeConfig]
-    aesthetic_styles: Dict[str, AttributeConfig]
-    fantasy_races: Dict[str, AttributeConfig]
-    special_effects: Dict[str, AttributeConfig]
-    randomization_rules: dict  # Specific typed rules, not Any
 
 
 @dataclass
@@ -365,50 +298,50 @@ class SelectedAttributes:
     """
 
     # Core identity
-    age_range: "AttributeDefinition | None" = None
-    ethnicity: "AttributeDefinition | None" = None
-    skin_tone: "AttributeDefinition | None" = None
+    age_range: AttributeDefinition | None = None
+    ethnicity: AttributeDefinition | None = None
+    skin_tone: AttributeDefinition | None = None
 
     # Hair
-    hair_color: "AttributeDefinition | None" = None
-    hair_texture: "AttributeDefinition | None" = None
+    hair_color: AttributeDefinition | None = None
+    hair_texture: AttributeDefinition | None = None
 
     # Eyes
-    eye_color: "AttributeDefinition | None" = None
+    eye_color: AttributeDefinition | None = None
 
     # Body
-    body_type: "AttributeDefinition | None" = None
-    body_size: "AttributeDefinition | None" = None
-    breast_size: "AttributeDefinition | None" = None
-    physical_features: "AttributeDefinition | None" = None
+    body_type: AttributeDefinition | None = None
+    body_size: AttributeDefinition | None = None
+    breast_size: AttributeDefinition | None = None
+    physical_features: AttributeDefinition | None = None
 
     # Style
-    clothing_style: "AttributeDefinition | None" = None
-    clothing_condition: "AttributeDefinition | None" = None
-    clothing_details: "AttributeDefinition | None" = None
-    aesthetic_style: "AttributeDefinition | None" = None
-    artistic_style: "AttributeDefinition | None" = None
+    clothing_style: AttributeDefinition | None = None
+    clothing_condition: AttributeDefinition | None = None
+    clothing_details: AttributeDefinition | None = None
+    aesthetic_style: AttributeDefinition | None = None
+    artistic_style: AttributeDefinition | None = None
 
     # Fantasy
-    fantasy_race: "AttributeDefinition | None" = None
-    cosplay_style: "AttributeDefinition | None" = None
+    fantasy_race: AttributeDefinition | None = None
+    cosplay_style: AttributeDefinition | None = None
 
     # Accessories
-    accessories: "AttributeDefinition | None" = None
-    erotic_toys: "AttributeDefinition | None" = None
+    accessories: AttributeDefinition | None = None
+    erotic_toys: AttributeDefinition | None = None
 
     # Scene
-    activity: "AttributeDefinition | None" = None
-    pose: "AttributeDefinition | None" = None
-    setting: "AttributeDefinition | None" = None
-    environment: "AttributeDefinition | None" = None
-    weather: "AttributeDefinition | None" = None
-    emotional_state: "AttributeDefinition | None" = None
+    activity: AttributeDefinition | None = None
+    pose: AttributeDefinition | None = None
+    setting: AttributeDefinition | None = None
+    environment: AttributeDefinition | None = None
+    weather: AttributeDefinition | None = None
+    emotional_state: AttributeDefinition | None = None
 
     # Effects
-    special_effects: "AttributeDefinition | None" = None
+    special_effects: AttributeDefinition | None = None
 
-    def to_list(self) -> list["AttributeDefinition"]:
+    def to_list(self) -> list[AttributeDefinition]:
         """Convert to list of non-None attributes."""
         return [
             attr
@@ -508,25 +441,25 @@ class CompatibilityMap:
     Uses a list of tuples internally for type safety, with helper methods for access.
     """
 
-    _entries: list[tuple["AttributeType", "AttributeDefinition"]] = field(default_factory=list)
+    _entries: list[tuple[AttributeType, AttributeDefinition]] = field(default_factory=list)
 
-    def add(self, attr_type: "AttributeType", attribute: "AttributeDefinition") -> None:
+    def add(self, attr_type: AttributeType, attribute: AttributeDefinition) -> None:
         """Add a compatible attribute for a specific type."""
         self._entries.append((attr_type, attribute))
 
-    def get_by_type(self, attr_type: "AttributeType") -> list["AttributeDefinition"]:
+    def get_by_type(self, attr_type: AttributeType) -> list[AttributeDefinition]:
         """Get all compatible attributes for a specific type."""
         return [attr for t, attr in self._entries if t == attr_type]
 
-    def has_type(self, attr_type: "AttributeType") -> bool:
+    def has_type(self, attr_type: AttributeType) -> bool:
         """Check if there are any compatible attributes for a specific type."""
         return any(t == attr_type for t, _ in self._entries)
 
-    def all_types(self) -> set["AttributeType"]:
+    def all_types(self) -> set[AttributeType]:
         """Get all attribute types that have compatible attributes."""
         return {t for t, _ in self._entries}
 
-    def all_attributes(self) -> list["AttributeDefinition"]:
+    def all_attributes(self) -> list[AttributeDefinition]:
         """Get all compatible attributes across all types."""
         return [attr for _, attr in self._entries]
 

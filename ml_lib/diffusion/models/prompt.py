@@ -147,74 +147,12 @@ class PromptAnalysis:
 
 
 # ============================================================================
-# Character Attribute Entities (from intelligent/prompting/entities/character_attribute.py)
+# LoRA Recommendation Entities (from intelligent/prompting/entities/lora_recommendation.py)
 # ============================================================================
 
 
 @dataclass
-class AttributeConfig:
-    """Configuration for a character attribute."""
-
-    keywords: list[str]
-    probability: float = 1.0
-    prompt_weight: float = 1.0
-    ethnicity_associations: list[str] | None = None
-    min_age: int = 18
-    max_age: int = 80
-    ethnicity_fit: list[str] | None = None
-    age_features: list[str] | None = None
-    lighting_suggestions: list[str] | None = None
-    complexity: str = "medium"
-    explicit: bool = False
-    age_min: int | None = None
-    age_max: int | None = None
-
-    def __post_init__(self):
-        if self.ethnicity_associations is None:
-            self.ethnicity_associations = []
-        if self.ethnicity_fit is None:
-            self.ethnicity_fit = []
-        if self.age_features is None:
-            self.age_features = []
-        if self.lighting_suggestions is None:
-            self.lighting_suggestions = []
-
-
-@dataclass
-class CharacterAttributeSet:
-    """A set of all character attributes that can be configured."""
-
-    skin_tones: dict[str, AttributeConfig]
-    ethnicities: dict[str, AttributeConfig]
-    eye_colors: dict[str, AttributeConfig]
-    hair_colors: dict[str, AttributeConfig]
-    hair_textures: dict[str, AttributeConfig]
-    body_types: dict[str, AttributeConfig]
-    breast_sizes: dict[str, AttributeConfig]
-    age_ranges: dict[str, AttributeConfig]
-    settings: dict[str, AttributeConfig]
-    poses: dict[str, AttributeConfig]
-    clothing_styles: dict[str, AttributeConfig]
-    clothing_conditions: dict[str, AttributeConfig]
-    clothing_details: dict[str, AttributeConfig]
-    cosplay_styles: dict[str, AttributeConfig]
-    accessories: dict[str, AttributeConfig]
-    erotic_toys: dict[str, AttributeConfig]
-    activities: dict[str, AttributeConfig]
-    weather_conditions: dict[str, AttributeConfig]
-    emotional_states: dict[str, AttributeConfig]
-    environment_details: dict[str, AttributeConfig]
-    artistic_styles: dict[str, AttributeConfig]
-    physical_features: dict[str, AttributeConfig]
-    body_sizes: dict[str, AttributeConfig]
-    aesthetic_styles: dict[str, AttributeConfig]
-    fantasy_races: dict[str, AttributeConfig]
-    special_effects: dict[str, AttributeConfig]
-    randomization_rules: dict  # Specific typed rules
-
-
-@dataclass
-class GeneratedCharacter:
+class LoRARecommendation:
     """A generated character with all attributes."""
 
     # Core identity

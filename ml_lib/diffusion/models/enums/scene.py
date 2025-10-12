@@ -30,17 +30,22 @@ class WeatherCondition(BasePromptEnum):
     """Fog/foggy/misty."""
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        _keywords: dict[WeatherCondition, tuple[str, ...]] = {
-            WeatherCondition.SUNNY: ("sunny day", "bright day", "sunlight", "clear sky", "sunny weather", "bright sunlight"),
-            WeatherCondition.CLOUDY: ("cloudy", "overcast", "cloudy sky", "gloomy", "cloud covered", "gray sky"),
-            WeatherCondition.RAINY: ("rainy day", "rain", "raining", "wet weather", "rain drops", "stormy rain", "heavy rain"),
-            WeatherCondition.STORMY: ("storm", "stormy weather", "thunder", "lightning", "stormy day", "thunder storm", "electric storm"),
-            WeatherCondition.SNOWY: ("snow", "snowy", "snowy day", "snow covered", "winter scene", "snow flakes"),
-            WeatherCondition.FOGGY: ("fog", "foggy", "misty", "foggy day", "mist", "hazy", "covered in fog"),
-        }
-        return _keywords[self]
+        if self == WeatherCondition.SUNNY:
+            return ["sunny day", "bright day", "sunlight", "clear sky", "sunny weather", "bright sunlight"]
+        elif self == WeatherCondition.CLOUDY:
+            return ["cloudy", "overcast", "cloudy sky", "gloomy", "cloud covered", "gray sky"]
+        elif self == WeatherCondition.RAINY:
+            return ["rainy day", "rain", "raining", "wet weather", "rain drops", "stormy rain", "heavy rain"]
+        elif self == WeatherCondition.STORMY:
+            return ["storm", "stormy weather", "thunder", "lightning", "stormy day", "thunder storm", "electric storm"]
+        elif self == WeatherCondition.SNOWY:
+            return ["snow", "snowy", "snowy day", "snow covered", "winter scene", "snow flakes"]
+        elif self == WeatherCondition.FOGGY:
+            return ["fog", "foggy", "misty", "foggy day", "mist", "hazy", "covered in fog"]
+        else:
+            raise ValueError(f"Unexpected WeatherCondition: {self}")
 
     @property
     def min_age(self) -> int:
@@ -80,17 +85,22 @@ class Environment(BasePromptEnum):
     """Natural/nature setting."""
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        _keywords: dict[Environment, tuple[str, ...]] = {
-            Environment.FOREST: ("forest", "woods", "wooded area", "trees", "dense forest", "woodland", "timberland", "leafy environment", "natural forest"),
-            Environment.INDOOR: ("indoor", "inside", "interior", "room", "house", "apartment", "home", "indoor setting", "indoor location"),
-            Environment.BEDROOM: ("bedroom", "bed", "bedroom setting", "private room", "bedroom scene", "sleeping area", "bedroom environment"),
-            Environment.OUTDOOR: ("outdoor", "outside", "outdoor setting", "exterior", "open air", "outdoor location", "exterior location"),
-            Environment.LUXURY: ("luxury setting", "upscale environment", "luxurious", "expensive", "premium location", "high-end", "elegant setting"),
-            Environment.NATURAL: ("natural setting", "nature", "natural environment", "organic", "nature scene", "natural location", "outdoor nature"),
-        }
-        return _keywords[self]
+        if self == Environment.FOREST:
+            return ["forest", "woods", "wooded area", "trees", "dense forest", "woodland", "timberland", "leafy environment", "natural forest"]
+        elif self == Environment.INDOOR:
+            return ["indoor", "inside", "interior", "room", "house", "apartment", "home", "indoor setting", "indoor location"]
+        elif self == Environment.BEDROOM:
+            return ["bedroom", "bed", "bedroom setting", "private room", "bedroom scene", "sleeping area", "bedroom environment"]
+        elif self == Environment.OUTDOOR:
+            return ["outdoor", "outside", "outdoor setting", "exterior", "open air", "outdoor location", "exterior location"]
+        elif self == Environment.LUXURY:
+            return ["luxury setting", "upscale environment", "luxurious", "expensive", "premium location", "high-end", "elegant setting"]
+        elif self == Environment.NATURAL:
+            return ["natural setting", "nature", "natural environment", "organic", "nature scene", "natural location", "outdoor nature"]
+        else:
+            raise ValueError(f"Unexpected Environment: {self}")
 
     @property
     def min_age(self) -> int:
@@ -124,15 +134,18 @@ class Activity(BasePromptEnum):
     """BDSM/domination/spanking (explicit)."""
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        _keywords: dict[Activity, tuple[str, ...]] = {
-            Activity.INTIMATE: ("intimate position", "erotic pose", "sensual activity", "romantic setting", "intimate moment", "erotic scene"),
-            Activity.SEXUAL: ("sex", "intercourse", "penetration", "oral", "anal", "position", "erotic act", "sexual activity", "lovemaking"),
-            Activity.FOREPLAY: ("foreplay", "caressing", "touching", "kissing", "sensual massage", "erotic massage", "passionate kissing", "making out"),
-            Activity.BDSM: ("bdsm", "domination", "submissive", "spanking", "impact play", "bondage scene", "role play"),
-        }
-        return _keywords[self]
+        if self == Activity.INTIMATE:
+            return ["intimate position", "erotic pose", "sensual activity", "romantic setting", "intimate moment", "erotic scene"]
+        elif self == Activity.SEXUAL:
+            return ["sex", "intercourse", "penetration", "oral", "anal", "position", "erotic act", "sexual activity", "lovemaking"]
+        elif self == Activity.FOREPLAY:
+            return ["foreplay", "caressing", "touching", "kissing", "sensual massage", "erotic massage", "passionate kissing", "making out"]
+        elif self == Activity.BDSM:
+            return ["bdsm", "domination", "submissive", "spanking", "impact play", "bondage scene", "role play"]
+        else:
+            raise ValueError(f"Unexpected Activity: {self}")
 
     @property
     def min_age(self) -> int:
@@ -172,17 +185,22 @@ class Pose(BasePromptEnum):
     """Explicit sexual position/act (explicit)."""
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        _keywords: dict[Pose, tuple[str, ...]] = {
-            Pose.SITTING: ("sitting", "seated", "lounging", "reclining", "relaxed pose"),
-            Pose.STANDING: ("standing", "erect", "upright", "posed", "straight posture"),
-            Pose.KNEELING: ("kneeling", "kneeling position", "on knees", "bent position"),
-            Pose.LYING: ("lying down", "reclining", "laying", "horizontal position"),
-            Pose.INTIMATE_CLOSE: ("intimate pose", "close up", "erotic pose", "sensual position"),
-            Pose.EXPLICIT_SEXUAL: ("sexual position", "sexual act", "intimate act", "erotic activity"),
-        }
-        return _keywords[self]
+        if self == Pose.SITTING:
+            return ["sitting", "seated", "lounging", "reclining", "relaxed pose"]
+        elif self == Pose.STANDING:
+            return ["standing", "erect", "upright", "posed", "straight posture"]
+        elif self == Pose.KNEELING:
+            return ["kneeling", "kneeling position", "on knees", "bent position"]
+        elif self == Pose.LYING:
+            return ["lying down", "reclining", "laying", "horizontal position"]
+        elif self == Pose.INTIMATE_CLOSE:
+            return ["intimate pose", "close up", "erotic pose", "sensual position"]
+        elif self == Pose.EXPLICIT_SEXUAL:
+            return ["sexual position", "sexual act", "intimate act", "erotic activity"]
+        else:
+            raise ValueError(f"Unexpected Pose: {self}")
 
     @property
     def min_age(self) -> int:
@@ -225,18 +243,24 @@ class Setting(BasePromptEnum):
     """Luxury/upscale/high-end setting."""
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        _keywords: dict[Setting, tuple[str, ...]] = {
-            Setting.BEDROOM: ("bedroom", "bed", "bed sheets", "intimate setting", "private room"),
-            Setting.BATHROOM: ("bathroom", "bathtub", "shower", "mirror", "marble", "luxury bathroom"),
-            Setting.LIVING_ROOM: ("living room", "couch", "sofa", "modern living", "cozy room"),
-            Setting.OUTDOOR: ("outdoor", "garden", "terrace", "patio", "nature", "outdoor setting"),
-            Setting.STUDIO: ("photo studio", "professional studio", "studio setting", "controlled lighting"),
-            Setting.BEACH: ("beach", "ocean", "seashore", "coast", "sandy beach", "tropical setting"),
-            Setting.PRIVATE_LUXURY: ("luxury setting", "upscale", "high-end", "elegant room", "premium location"),
-        }
-        return _keywords[self]
+        if self == Setting.BEDROOM:
+            return ["bedroom", "bed", "bed sheets", "intimate setting", "private room"]
+        elif self == Setting.BATHROOM:
+            return ["bathroom", "bathtub", "shower", "mirror", "marble", "luxury bathroom"]
+        elif self == Setting.LIVING_ROOM:
+            return ["living room", "couch", "sofa", "modern living", "cozy room"]
+        elif self == Setting.OUTDOOR:
+            return ["outdoor", "garden", "terrace", "patio", "nature", "outdoor setting"]
+        elif self == Setting.STUDIO:
+            return ["photo studio", "professional studio", "studio setting", "controlled lighting"]
+        elif self == Setting.BEACH:
+            return ["beach", "ocean", "seashore", "coast", "sandy beach", "tropical setting"]
+        elif self == Setting.PRIVATE_LUXURY:
+            return ["luxury setting", "upscale", "high-end", "elegant room", "premium location"]
+        else:
+            raise ValueError(f"Unexpected Setting: {self}")
 
     @property
     def min_age(self) -> int:

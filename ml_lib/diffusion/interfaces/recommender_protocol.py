@@ -1,6 +1,19 @@
 """Protocol for LoRA recommender."""
 
-from typing import Protocol, Optional, runtime_checkable
+from dataclasses import dataclass
+from typing import Protocol, runtime_checkable
+
+from ml_lib.diffusion.models.prompt import PromptAnalysis
+from ml_lib.diffusion.models.registry import ModelMetadata
+
+
+@dataclass
+class LoRARecommendation:
+    """A single LoRA recommendation with confidence score."""
+
+    metadata: ModelMetadata
+    confidence: float
+    weight: float = 1.0
 
 
 @runtime_checkable
@@ -9,11 +22,11 @@ class LoRARecommenderProtocol(Protocol):
 
     def recommend(
         self,
-        prompt_analysis,
+        prompt_analysis: PromptAnalysis,
         base_model: str,
         max_loras: int = 5,
         min_confidence: float = 0.7
-    ) -> list:
+    ) -> list[LoRARecommendation]:
         """
         Recommend LoRAs based on prompt analysis.
 

@@ -24,23 +24,39 @@ Example:
     >>> # Automatically selects best base model + LoRAs based on prompt
 """
 
+import gc
 import logging
+import time
+import traceback
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 import torch
+from diffusers import (
+    AutoencoderKL,
+    StableDiffusionPipeline,
+    StableDiffusionXLPipeline,
+    AutoPipelineForText2Image,
+)
 from PIL import Image
 
 from ml_lib.diffusion.config import detect_comfyui_installation, ModelPathConfig
-from ml_lib.diffusion.models import BaseModel
+from ml_lib.diffusion.models import BaseModel, ModelType
 from ml_lib.diffusion.services import (
     MemoryOptimizer,
+    MemoryOptimizationConfig,
     OptimizationLevel,
 )
+from ml_lib.diffusion.services.memory_optimizer import MemoryMonitor
 from ml_lib.diffusion.services.model_orchestrator import (
     ModelOrchestrator,
     DiffusionArchitecture,
+)
+from ml_lib.diffusion.services.model_registry import ModelRegistry
+from ml_lib.diffusion.services.ollama_selector import (
+    OllamaModelSelector,
+    ModelMatcher,
 )
 from ml_lib.system.resource_monitor import ResourceMonitor
 
@@ -154,10 +170,6 @@ class IntelligentPipelineBuilder:
 
         # Initialize model registry (for auto-download)
         if enable_auto_download:
-            from ml_lib.diffusion.services.model_registry import (
-                ModelRegistry,
-            )
-
             self.registry = ModelRegistry()
             logger.info("ModelRegistry initialized for auto-download")
         else:
@@ -363,12 +375,6 @@ class IntelligentPipelineBuilder:
         This is where the magic happens - analyzes prompt, available models,
         resources, and selects best configuration.
         """
-        from ml_lib.diffusion.services.ollama_selector import (
-            OllamaModelSelector,
-            ModelMatcher,
-        )
-        from ml_lib.diffusion.models import ModelType
-
         logger.info("Starting intelligent model selection...")
 
         # Get available resources
@@ -453,13 +459,9 @@ class IntelligentPipelineBuilder:
                         search_query = "realistic-vision"
 
                 try:
-                    from ml_lib.diffusion.models import (
-                        ModelType as RegistryModelType,
-                    )
-
                     downloaded_model = self.registry.find_or_download(
                         query=search_query,
-                        model_type=RegistryModelType.BASE_MODEL,
+                        model_type=ModelType.BASE_MODEL,
                         base_model=base_architecture,
                         auto_download=True,
                     )
@@ -506,10 +508,6 @@ class IntelligentPipelineBuilder:
         vae_path = None
         if vaes and selected_base:
             # Find compatible VAE
-            from ml_lib.diffusion.services.model_orchestrator import (
-                DiffusionArchitecture,
-            )
-
             arch_info = DiffusionArchitecture.get_architecture(base_architecture)
 
             for vae in sorted(vaes, key=lambda v: v.popularity_score, reverse=True):
@@ -537,10 +535,6 @@ class IntelligentPipelineBuilder:
             cfg_scale = config.cfg_scale or prompt_analysis.suggested_cfg
             sampler = config.sampler or "DPM++ 2M"
         else:
-            from ml_lib.diffusion.services.model_orchestrator import (
-                DiffusionArchitecture,
-            )
-
             arch_info = DiffusionArchitecture.get_architecture(base_architecture)
             steps = config.steps or arch_info.default_steps
             cfg_scale = config.cfg_scale or arch_info.default_cfg
@@ -586,12 +580,6 @@ class IntelligentPipelineBuilder:
 
     def _load_pipeline(self, selected: SelectedModels):
         """Load diffusion pipeline with selected models."""
-        from diffusers import (
-            StableDiffusionPipeline,
-            StableDiffusionXLPipeline,
-            AutoPipelineForText2Image,
-        )
-
         logger.info(f"Loading {selected.base_model_architecture.value} pipeline...")
 
         try:
@@ -654,8 +642,6 @@ class IntelligentPipelineBuilder:
             # Load custom VAE if selected
             if selected.vae_path and selected.vae_path.exists():
                 try:
-                    from diffusers import AutoencoderKL
-
                     vae = AutoencoderKL.from_single_file(
                         str(selected.vae_path),
                         torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
@@ -696,10 +682,6 @@ class IntelligentPipelineBuilder:
 
     def _optimize_memory(self, pipeline, optimization_level: OptimizationLevel):
         """Apply memory optimization to pipeline."""
-        from ml_lib.diffusion.services import (
-            MemoryOptimizationConfig,
-        )
-
         config = MemoryOptimizationConfig.from_level(optimization_level)
         self.memory_optimizer = MemoryOptimizer(config)
 
@@ -710,11 +692,6 @@ class IntelligentPipelineBuilder:
         self, pipeline, config: GenerationConfig, selected: SelectedModels
     ) -> list[Image.Image]:
         """Generate images using pipeline."""
-        import time
-        from ml_lib.diffusion.services.memory_optimizer import (
-            MemoryMonitor,
-        )
-
         logger.info(
             f"Generating {config.num_images} image(s) at {config.width}x{config.height}..."
         )
@@ -777,8 +754,6 @@ class IntelligentPipelineBuilder:
 
         except Exception as e:
             logger.error(f"Generation failed: {e}")
-            import traceback
-
             traceback.print_exc()
             return []
 
@@ -796,8 +771,6 @@ class IntelligentPipelineBuilder:
                 pass
 
         # Force garbage collection
-        import gc
-
         gc.collect()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()

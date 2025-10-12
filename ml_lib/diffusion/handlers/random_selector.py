@@ -8,11 +8,9 @@ real-world statistical distributions.
 """
 
 import random
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from ml_lib.diffusion.handlers.attribute_collection import AttributeCollection
-    from ml_lib.diffusion.intelligent.prompting.core.attribute_definition import AttributeDefinition
+from ml_lib.diffusion.handlers.attribute_collection import AttributeCollection
+from ml_lib.diffusion.models import AttributeDefinition
 
 
 class RandomAttributeSelector:
@@ -30,7 +28,7 @@ class RandomAttributeSelector:
     """
 
     @staticmethod
-    def select_random(collection: "AttributeCollection") -> "AttributeDefinition | None":
+    def select_random(collection: AttributeCollection) -> AttributeDefinition | None:
         """Select a random attribute with uniform probability.
 
         Args:
@@ -59,9 +57,9 @@ class RandomAttributeSelector:
 
     @staticmethod
     def select_compatible(
-        collection: "AttributeCollection",
-        existing_attributes: list["AttributeDefinition"],
-    ) -> "AttributeDefinition | None":
+        collection: AttributeCollection,
+        existing_attributes: list[AttributeDefinition],
+    ) -> AttributeDefinition | None:
         """Select a random compatible attribute with uniform probability.
 
         Args:
@@ -87,9 +85,9 @@ class RandomAttributeSelector:
 
     @staticmethod
     def select_multiple(
-        collection: "AttributeCollection",
+        collection: AttributeCollection,
         count: int,
-    ) -> list["AttributeDefinition"]:
+    ) -> list[AttributeDefinition]:
         """Select multiple random attributes without replacement.
 
         Args:

@@ -29,4 +29,4 @@ class BasePromptEnum(Enum):
         Returns:
             Prompt-friendly string with underscores replaced by spaces.
         """
-        return self.value.replace("_", " ")
+        return self.value.replace["_", " "]

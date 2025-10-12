@@ -2,12 +2,14 @@
 
 from typing import Protocol, runtime_checkable
 
+from ml_lib.diffusion.models.prompt import PromptAnalysis
+
 
 @runtime_checkable
 class PromptAnalyzerProtocol(Protocol):
     """Protocol for prompt analyzer implementations."""
 
-    def analyze(self, prompt: str):
+    def analyze(self, prompt: str) -> PromptAnalysis:
         """
         Analyze a text prompt.
 

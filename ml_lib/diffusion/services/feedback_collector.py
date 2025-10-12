@@ -7,6 +7,8 @@ from typing import Optional, Any
 from dataclasses import dataclass, field
 import json
 
+from ml_lib.diffusion.services.learning_engine import GenerationFeedback
+
 logger = logging.getLogger(__name__)
 
 
@@ -241,10 +243,6 @@ class FeedbackCollector:
             feedback: User feedback
             session: Generation session
         """
-        from ml_lib.diffusion.services.learning_engine import (
-            GenerationFeedback,
-        )
-
         # Convert to learning engine format
         learning_feedback = GenerationFeedback(
             feedback_id=feedback.generation_id,

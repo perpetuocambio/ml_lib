@@ -13,54 +13,65 @@ class SkinTone(BasePromptEnum):
     DARK = "dark"
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        from .physical import Ethnicity
-
-        return {
-            SkinTone.FAIR: ("fair skin", "light skin", "pale skin"),
-            SkinTone.LIGHT: ("light skin", "light-medium skin", "medium-fair skin"),
-            SkinTone.MEDIUM: ("medium skin", "olive skin", "tan skin"),
-            SkinTone.MEDIUM_DARK: (
+        if self == SkinTone.FAIR:
+            return ["fair skin", "light skin", "pale skin"]
+        elif self == SkinTone.LIGHT:
+            return ["light skin", "light-medium skin", "medium-fair skin"]
+        elif self == SkinTone.MEDIUM:
+            return ["medium skin", "olive skin", "tan skin"]
+        elif self == SkinTone.MEDIUM_DARK:
+            return [
                 "medium-dark skin",
                 "dark olive",
                 "olive-brown skin",
-            ),
-            SkinTone.DARK: ("dark skin", "deep skin", "rich skin", "ebony skin"),
-        }[self]
+            ]
+        elif self == SkinTone.DARK:
+            return ["dark skin", "deep skin", "rich skin", "ebony skin"]
+        else:
+            return []
 
     @property
     def prompt_weight(self) -> float:
         """Weight/emphasis for this attribute in prompts."""
-        return {
-            SkinTone.FAIR: 1.1,
-            SkinTone.LIGHT: 1.1,
-            SkinTone.MEDIUM: 1.2,
-            SkinTone.MEDIUM_DARK: 1.2,
-            SkinTone.DARK: 1.2,
-        }[self]
+        if self == SkinTone.FAIR:
+            return 1.1
+        elif self == SkinTone.LIGHT:
+            return 1.1
+        elif self == SkinTone.MEDIUM:
+            return 1.2
+        elif self == SkinTone.MEDIUM_DARK:
+            return 1.2
+        elif self == SkinTone.DARK:
+            return 1.2
+        else:
+            return 0.0
 
     @property
-    def ethnicity_associations(self) -> tuple["Ethnicity", ...]:
+    def ethnicity_associations(self) -> list["Ethnicity"]:
         """Ethnicities commonly associated with this skin tone."""
-        from .physical import Ethnicity
-
-        return {
-            SkinTone.FAIR: (Ethnicity.CAUCASIAN,),
-            SkinTone.LIGHT: (Ethnicity.CAUCASIAN, Ethnicity.MIDDLE_EASTERN),
-            SkinTone.MEDIUM: (
+        if self == SkinTone.FAIR:
+            return [Ethnicity.CAUCASIAN]
+        elif self == SkinTone.LIGHT:
+            return [Ethnicity.CAUCASIAN, Ethnicity.MIDDLE_EASTERN]
+        elif self == SkinTone.MEDIUM:
+            return [
                 Ethnicity.MIDDLE_EASTERN,
                 Ethnicity.SOUTH_ASIAN,
                 Ethnicity.HISPANIC_LATINX,
-            ),
-            SkinTone.MEDIUM_DARK: (
+            ]
+        elif self == SkinTone.MEDIUM_DARK:
+            return [
                 Ethnicity.SOUTH_ASIAN,
                 Ethnicity.MIDDLE_EASTERN,
                 Ethnicity.AFRICAN_AMERICAN,
                 Ethnicity.HISPANIC_LATINX,
-            ),
-            SkinTone.DARK: (Ethnicity.AFRICAN_AMERICAN,),
-        }[self]
+            ]
+        elif self == SkinTone.DARK:
+            return [Ethnicity.AFRICAN_AMERICAN]
+        else:
+            return []
 
     @property
     def min_age(self) -> int:
@@ -70,7 +81,7 @@ class SkinTone(BasePromptEnum):
     def max_age(self) -> int:
         return 80
 
-    def get_ethnicity_prompts(self) -> tuple[str, ...]:
+    def get_ethnicity_prompts(self) -> list[str]:
         """Get all ethnicity associations as prompt-ready strings."""
         return tuple(str(eth) for eth in self.ethnicity_associations)
 
@@ -86,16 +97,22 @@ class EyeColor(BasePromptEnum):
     HAZEL = "hazel"
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        return {
-            EyeColor.BROWN: ("brown eyes", "dark brown eyes", "brown irises"),
-            EyeColor.BLACK: ("black eyes", "dark eyes", "black irises"),
-            EyeColor.BLUE: ("blue eyes", "sapphire eyes", "blue irises"),
-            EyeColor.GREEN: ("green eyes", "emerald eyes", "green irises"),
-            EyeColor.GRAY: ("gray eyes", "grey eyes", "steel eyes", "gray irises"),
-            EyeColor.HAZEL: ("hazel eyes", "hazel irises"),
-        }[self]
+        if self == EyeColor.BROWN:
+            return ["brown eyes", "dark brown eyes", "brown irises"]
+        elif self == EyeColor.BLACK:
+            return ["black eyes", "dark eyes", "black irises"]
+        elif self == EyeColor.BLUE:
+            return ["blue eyes", "sapphire eyes", "blue irises"]
+        elif self == EyeColor.GREEN:
+            return ["green eyes", "emerald eyes", "green irises"]
+        elif self == EyeColor.GRAY:
+            return ["gray eyes", "grey eyes", "steel eyes", "gray irises"]
+        elif self == EyeColor.HAZEL:
+            return ["hazel eyes", "hazel irises"]
+        else:
+            return []
 
     @property
     def min_age(self) -> int:
@@ -116,15 +133,20 @@ class HairTexture(BasePromptEnum):
     TEXTURED = "textured"
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        return {
-            HairTexture.STRAIGHT: ("straight hair", "smooth hair", "sleek hair"),
-            HairTexture.WAVY: ("wavy hair", "flowing hair", "loose waves"),
-            HairTexture.CURLY: ("curly hair", "curled hair", "ringlets"),
-            HairTexture.COILY: ("coily hair", "kinky hair", "tight coils"),
-            HairTexture.TEXTURED: ("textured hair", "natural hair", "afro"),
-        }[self]
+        if self == HairTexture.STRAIGHT:
+            return ["straight hair", "smooth hair", "sleek hair"]
+        elif self == HairTexture.WAVY:
+            return ["wavy hair", "flowing hair", "loose waves"]
+        elif self == HairTexture.CURLY:
+            return ["curly hair", "curled hair", "ringlets"]
+        elif self == HairTexture.COILY:
+            return ["coily hair", "kinky hair", "tight coils"]
+        elif self == HairTexture.TEXTURED:
+            return ["textured hair", "natural hair", "afro"]
+        else:
+            return []
 
     @property
     def prompt_weight(self) -> float:
@@ -143,54 +165,68 @@ class HairColor(BasePromptEnum):
     WHITE = "white"
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        return {
-            HairColor.BLACK: ("black hair", "raven hair", "ebony hair"),
-            HairColor.DARK_BROWN: (
+        if self == HairColor.BLACK:
+            return ["black hair", "raven hair", "ebony hair"]
+        elif self == HairColor.DARK_BROWN:
+            return [
                 "dark brown hair",
                 "black-brown hair",
                 "rich brown hair",
-            ),
-            HairColor.BROWN: (
+            ]
+        elif self == HairColor.BROWN:
+            return [
                 "brown hair",
                 "light brown hair",
                 "chestnut hair",
                 "auburn",
-            ),
-            HairColor.BLONDE: (
+            ]
+        elif self == HairColor.BLONDE:
+            return [
                 "blonde hair",
                 "blond hair",
                 "golden hair",
                 "honey hair",
-            ),
-            HairColor.RED: (
+            ]
+        elif self == HairColor.RED:
+            return [
                 "red hair",
                 "ginger hair",
                 "auburn hair",
                 "strawberry blonde",
-            ),
-            HairColor.GREY_SILVER: (
+            ]
+        elif self == HairColor.GREY_SILVER:
+            return [
                 "grey hair",
                 "gray hair",
                 "silver hair",
                 "salt and pepper",
-            ),
-            HairColor.WHITE: ("white hair", "pure white hair", "snow white hair"),
-        }[self]
+            ]
+        elif self == HairColor.WHITE:
+            return ["white hair", "pure white hair", "snow white hair"]
+        else:
+            return []
 
     @property
     def min_age(self) -> int:
         """Minimum age for this attribute."""
-        return {
-            HairColor.BLACK: 18,
-            HairColor.DARK_BROWN: 18,
-            HairColor.BROWN: 18,
-            HairColor.BLONDE: 18,
-            HairColor.RED: 18,
-            HairColor.GREY_SILVER: 45,
-            HairColor.WHITE: 60,
-        }[self]
+        if self == HairColor.BLACK:
+            return 18
+        elif self == HairColor.DARK_BROWN:
+            return 18
+        elif self == HairColor.BROWN:
+            return 18
+        elif self == HairColor.BLONDE:
+            return 18
+        elif self == HairColor.RED:
+            return 18
+        elif self == HairColor.GREY_SILVER:
+            return 45
+        elif self == HairColor.WHITE:
+            return 60
+        else:
+            return 18
 
     @property
     def max_age(self) -> int:
@@ -208,176 +244,206 @@ class Ethnicity(BasePromptEnum):
     MIDDLE_EASTERN = "middle_eastern"
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        return {
-            Ethnicity.CAUCASIAN: ("caucasian", "european", "white"),
-            Ethnicity.EAST_ASIAN: (
+        if self == Ethnicity.CAUCASIAN:
+            return ["caucasian", "european", "white"]
+        elif self == Ethnicity.EAST_ASIAN:
+            return [
                 "east asian",
                 "chinese",
                 "japanese",
                 "korean",
                 "mongolian",
-            ),
-            Ethnicity.SOUTH_ASIAN: (
+            ]
+        elif self == Ethnicity.SOUTH_ASIAN:
+            return [
                 "south asian",
                 "indian",
                 "pakistan",
                 "bangladesh",
                 "sri lankan",
                 "nepalese",
-            ),
-            Ethnicity.HISPANIC_LATINX: (
+            ]
+        elif self == Ethnicity.HISPANIC_LATINX:
+            return [
                 "hispanic",
                 "latinx",
                 "mexican",
                 "central american",
                 "south american",
                 "caribbean",
-            ),
-            Ethnicity.AFRICAN_AMERICAN: ("african american", "black", "afro-american"),
-            Ethnicity.MIDDLE_EASTERN: (
+            ]
+        elif self == Ethnicity.AFRICAN_AMERICAN:
+            return ["african american", "black", "afro-american"]
+        elif self == Ethnicity.MIDDLE_EASTERN:
+            return [
                 "middle eastern",
                 "arab",
                 "persian",
                 "turkish",
                 "israeli",
-            ),
-        }[self]
+            ]
+        else:
+            return []
 
     @property
     def prompt_weight(self) -> float:
         return 1.0
 
     @property
-    def hair_colors(self) -> tuple["HairColor", ...]:
+    def hair_colors(self) -> list["HairColor"]:
         """Hair colors commonly associated with this ethnicity."""
-        return {
-            Ethnicity.CAUCASIAN: (
+        if self == Ethnicity.CAUCASIAN:
+            return [
                 HairColor.BLONDE,
                 HairColor.BROWN,
                 HairColor.BLACK,
                 HairColor.RED,
                 HairColor.GREY_SILVER,
                 HairColor.WHITE,
-            ),
-            Ethnicity.EAST_ASIAN: (
+            ]
+        elif self == Ethnicity.EAST_ASIAN:
+            return [
                 HairColor.BLACK,
                 HairColor.DARK_BROWN,
                 HairColor.BROWN,
-            ),
-            Ethnicity.SOUTH_ASIAN: (
+            ]
+        elif self == Ethnicity.SOUTH_ASIAN:
+            return [
                 HairColor.BLACK,
                 HairColor.DARK_BROWN,
                 HairColor.BROWN,
-            ),
-            Ethnicity.HISPANIC_LATINX: (
+            ]
+        elif self == Ethnicity.HISPANIC_LATINX:
+            return [
                 HairColor.BLACK,
                 HairColor.DARK_BROWN,
                 HairColor.BROWN,
                 HairColor.BLONDE,
                 HairColor.RED,
-            ),
-            Ethnicity.AFRICAN_AMERICAN: (
+            ]
+        elif self == Ethnicity.AFRICAN_AMERICAN:
+            return [
                 HairColor.BLACK,
                 HairColor.DARK_BROWN,
                 HairColor.BROWN,
-            ),
-            Ethnicity.MIDDLE_EASTERN: (
+            ]
+        elif self == Ethnicity.MIDDLE_EASTERN:
+            return [
                 HairColor.BLACK,
                 HairColor.DARK_BROWN,
                 HairColor.BROWN,
                 HairColor.BLONDE,
-            ),
-        }[self]
+            ]
+        else:
+            return []
 
     @property
-    def hair_textures(self) -> tuple["HairTexture", ...]:
+    def hair_textures(self) -> list["HairTexture"]:
         """Hair textures commonly associated with this ethnicity."""
-        return {
-            Ethnicity.CAUCASIAN: (
+        if self == Ethnicity.CAUCASIAN:
+            return [
                 HairTexture.STRAIGHT,
                 HairTexture.WAVY,
                 HairTexture.CURLY,
-            ),
-            Ethnicity.EAST_ASIAN: (HairTexture.STRAIGHT, HairTexture.WAVY),
-            Ethnicity.SOUTH_ASIAN: (
+            ]
+        elif self == Ethnicity.EAST_ASIAN:
+            return [HairTexture.STRAIGHT, HairTexture.WAVY]
+        elif self == Ethnicity.SOUTH_ASIAN:
+            return [
                 HairTexture.STRAIGHT,
                 HairTexture.WAVY,
                 HairTexture.CURLY,
-            ),
-            Ethnicity.HISPANIC_LATINX: (
+            ]
+        elif self == Ethnicity.HISPANIC_LATINX:
+            return [
                 HairTexture.STRAIGHT,
                 HairTexture.WAVY,
                 HairTexture.CURLY,
-            ),
-            Ethnicity.AFRICAN_AMERICAN: (
+            ]
+        elif self == Ethnicity.AFRICAN_AMERICAN:
+            return [
                 HairTexture.CURLY,
                 HairTexture.COILY,
                 HairTexture.TEXTURED,
-            ),
-            Ethnicity.MIDDLE_EASTERN: (
+            ]
+        elif self == Ethnicity.MIDDLE_EASTERN:
+            return [
                 HairTexture.WAVY,
                 HairTexture.CURLY,
                 HairTexture.STRAIGHT,
-            ),
-        }[self]
+            ]
+        else:
+            return []
 
     @property
-    def eye_colors(self) -> tuple["EyeColor", ...]:
+    def eye_colors(self) -> list["EyeColor"]:
         """Eye colors commonly associated with this ethnicity."""
-        return {
-            Ethnicity.CAUCASIAN: (
+        if self == Ethnicity.CAUCASIAN:
+            return [
                 EyeColor.BLUE,
                 EyeColor.GREEN,
                 EyeColor.HAZEL,
                 EyeColor.BROWN,
                 EyeColor.GRAY,
-            ),
-            Ethnicity.EAST_ASIAN: (EyeColor.BROWN, EyeColor.BLACK, EyeColor.HAZEL),
-            Ethnicity.SOUTH_ASIAN: (EyeColor.BROWN, EyeColor.HAZEL, EyeColor.BLACK),
-            Ethnicity.HISPANIC_LATINX: (
+            ]
+        elif self == Ethnicity.EAST_ASIAN:
+            return [EyeColor.BROWN, EyeColor.BLACK, EyeColor.HAZEL]
+        elif self == Ethnicity.SOUTH_ASIAN:
+            return [EyeColor.BROWN, EyeColor.HAZEL, EyeColor.BLACK]
+        elif self == Ethnicity.HISPANIC_LATINX:
+            return [
                 EyeColor.BROWN,
                 EyeColor.HAZEL,
                 EyeColor.GREEN,
                 EyeColor.BLACK,
-            ),
-            Ethnicity.AFRICAN_AMERICAN: (
+            ]
+        elif self == Ethnicity.AFRICAN_AMERICAN:
+            return [
                 EyeColor.BROWN,
                 EyeColor.BLACK,
                 EyeColor.HAZEL,
-            ),
-            Ethnicity.MIDDLE_EASTERN: (
+            ]
+        elif self == Ethnicity.MIDDLE_EASTERN:
+            return [
                 EyeColor.BROWN,
                 EyeColor.HAZEL,
                 EyeColor.GREEN,
                 EyeColor.BLACK,
-            ),
-        }[self]
+            ]
+        else:
+            return []
 
     @property
-    def skin_tones(self) -> tuple["SkinTone", ...]:
+    def skin_tones(self) -> list["SkinTone"]:
         """Skin tones commonly associated with this ethnicity."""
-        return {
-            Ethnicity.CAUCASIAN: (SkinTone.FAIR, SkinTone.LIGHT, SkinTone.MEDIUM),
-            Ethnicity.EAST_ASIAN: (SkinTone.FAIR, SkinTone.LIGHT, SkinTone.MEDIUM),
-            Ethnicity.SOUTH_ASIAN: (
+        if self == Ethnicity.CAUCASIAN:
+            return [SkinTone.FAIR, SkinTone.LIGHT, SkinTone.MEDIUM]
+        elif self == Ethnicity.EAST_ASIAN:
+            return [SkinTone.FAIR, SkinTone.LIGHT, SkinTone.MEDIUM]
+        elif self == Ethnicity.SOUTH_ASIAN:
+            return [
                 SkinTone.LIGHT,
                 SkinTone.MEDIUM,
                 SkinTone.MEDIUM_DARK,
-            ),
-            Ethnicity.HISPANIC_LATINX: (
+            ]
+        elif self == Ethnicity.HISPANIC_LATINX:
+            return [
                 SkinTone.LIGHT,
                 SkinTone.MEDIUM,
                 SkinTone.MEDIUM_DARK,
-            ),
-            Ethnicity.AFRICAN_AMERICAN: (SkinTone.MEDIUM_DARK, SkinTone.DARK),
-            Ethnicity.MIDDLE_EASTERN: (
+            ]
+        elif self == Ethnicity.AFRICAN_AMERICAN:
+            return [SkinTone.MEDIUM_DARK, SkinTone.DARK]
+        elif self == Ethnicity.MIDDLE_EASTERN:
+            return [
                 SkinTone.LIGHT,
                 SkinTone.MEDIUM,
                 SkinTone.MEDIUM_DARK,
-            ),
-        }[self]
+            ]
+        else:
+            return []
 
 
 class PhysicalFeature(BasePromptEnum):
@@ -390,10 +456,10 @@ class PhysicalFeature(BasePromptEnum):
     UNIQUE_FEATURES = "unique_features"
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        return {
-            PhysicalFeature.FRECKLES: (
+        if self == PhysicalFeature.FRECKLES:
+            return [
                 "freckles",
                 "freckled skin",
                 "dotted skin",
@@ -402,8 +468,9 @@ class PhysicalFeature(BasePromptEnum):
                 "freckle pattern",
                 "freckled face",
                 "freckled shoulders",
-            ),
-            PhysicalFeature.TATTOOS: (
+            ]
+        elif self == PhysicalFeature.TATTOOS:
+            return [
                 "tattoos",
                 "body tattoo",
                 "sleeve tattoo",
@@ -413,8 +480,9 @@ class PhysicalFeature(BasePromptEnum):
                 "tattooed",
                 "tribal tattoo",
                 "realistic tattoo",
-            ),
-            PhysicalFeature.PIERCINGS: (
+            ]
+        elif self == PhysicalFeature.PIERCINGS:
+            return [
                 "piercings",
                 "body piercing",
                 "ear piercing",
@@ -425,8 +493,9 @@ class PhysicalFeature(BasePromptEnum):
                 "body jewelry",
                 "pierced",
                 "piercing jewelry",
-            ),
-            PhysicalFeature.LARGE_FEATURES: (
+            ]
+        elif self == PhysicalFeature.LARGE_FEATURES:
+            return [
                 "large breasts",
                 "big breasts",
                 "large nipples",
@@ -437,8 +506,9 @@ class PhysicalFeature(BasePromptEnum):
                 "big areolas",
                 "large body parts",
                 "enhanced features",
-            ),
-            PhysicalFeature.UNIQUE_FEATURES: (
+            ]
+        elif self == PhysicalFeature.UNIQUE_FEATURES:
+            return [
                 "unique eyes",
                 "red eyes",
                 "colored eyes",
@@ -447,8 +517,9 @@ class PhysicalFeature(BasePromptEnum):
                 "notable features",
                 "remarkable features",
                 "special features",
-            ),
-        }[self]
+            ]
+        else:
+            return []
 
     @property
     def min_age(self) -> int:
@@ -469,31 +540,41 @@ class BodyType(BasePromptEnum):
     MATURE = "mature"
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        return {
-            BodyType.SLIM: ("slim body", "thin body", "petite", "slender"),
-            BodyType.ATHLETIC: ("athletic body", "toned body", "fit body", "muscular"),
-            BodyType.CURVY: ("curvy body", "hourglass", "curvaceous", "rounded"),
-            BodyType.FULL_FIGURED: ("full-figured", "voluptuous", "ample", "plus-size"),
-            BodyType.MATURE: (
+        if self == BodyType.SLIM:
+            return ["slim body", "thin body", "petite", "slender"]
+        elif self == BodyType.ATHLETIC:
+            return ["athletic body", "toned body", "fit body", "muscular"]
+        elif self == BodyType.CURVY:
+            return ["curvy body", "hourglass", "curvaceous", "rounded"]
+        elif self == BodyType.FULL_FIGURED:
+            return ["full-figured", "voluptuous", "ample", "plus-size"]
+        elif self == BodyType.MATURE:
+            return [
                 "mature body",
                 "older body",
                 "aged body",
                 "natural aging",
-            ),
-        }[self]
+            ]
+        else:
+            return []
 
     @property
     def min_age(self) -> int:
         """Minimum age for this attribute."""
-        return {
-            BodyType.SLIM: 18,
-            BodyType.ATHLETIC: 18,
-            BodyType.CURVY: 18,
-            BodyType.FULL_FIGURED: 18,
-            BodyType.MATURE: 50,
-        }[self]
+        if self == BodyType.SLIM:
+            return 18
+        elif self == BodyType.ATHLETIC:
+            return 18
+        elif self == BodyType.CURVY:
+            return 18
+        elif self == BodyType.FULL_FIGURED:
+            return 18
+        elif self == BodyType.MATURE:
+            return 50
+        else:
+            return 18
 
     @property
     def max_age(self) -> int:
@@ -509,29 +590,33 @@ class BreastSize(BasePromptEnum):
     EXTRA_LARGE = "extra_large"
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        return {
-            BreastSize.SMALL: (
+        if self == BreastSize.SMALL:
+            return [
                 "small breasts",
                 "petite chest",
                 "A cup",
                 "modest chest",
-            ),
-            BreastSize.MEDIUM: (
+            ]
+        elif self == BreastSize.MEDIUM:
+            return [
                 "medium breasts",
                 "B cup",
                 "average chest",
                 "natural size",
-            ),
-            BreastSize.LARGE: ("large breasts", "C cup", "full chest", "voluptuous"),
-            BreastSize.EXTRA_LARGE: (
+            ]
+        elif self == BreastSize.LARGE:
+            return ["large breasts", "C cup", "full chest", "voluptuous"]
+        elif self == BreastSize.EXTRA_LARGE:
+            return [
                 "extra large breasts",
                 "D cup",
                 "E cup",
                 "ample chest",
-            ),
-        }[self]
+            ]
+        else:
+            return []
 
     @property
     def min_age(self) -> int:
@@ -551,14 +636,18 @@ class AgeRange(BasePromptEnum):
     MATURE = "mature"
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        return {
-            AgeRange.YOUNG_ADULT: ("young adult", "early twenties", "youthful"),
-            AgeRange.ADULT: ("adult", "thirties", "mature adult"),
-            AgeRange.MILF: ("milf", "mature woman", "older woman", "experienced"),
-            AgeRange.MATURE: ("mature", "older", "senior"),
-        }[self]
+        if self == AgeRange.YOUNG_ADULT:
+            return ["young adult", "early twenties", "youthful"]
+        elif self == AgeRange.ADULT:
+            return ["adult", "thirties", "mature adult"]
+        elif self == AgeRange.MILF:
+            return ["milf", "mature woman", "older woman", "experienced"]
+        elif self == AgeRange.MATURE:
+            return ["mature", "older", "senior"]
+        else:
+            return []
 
 
 class BodySize(BasePromptEnum):
@@ -570,10 +659,10 @@ class BodySize(BasePromptEnum):
     PREGNANT = "pregnant"
 
     @property
-    def keywords(self) -> tuple[str, ...]:
+    def keywords(self) -> list[str]:
         """Keywords used in prompt generation."""
-        return {
-            BodySize.BBW: (
+        if self == BodySize.BBW:
+            return [
                 "bbw",
                 "curvy",
                 "curvaceous",
@@ -584,8 +673,9 @@ class BodySize(BasePromptEnum):
                 "big ass",
                 "curvy figure",
                 "ample curves",
-            ),
-            BodySize.SLIM: (
+            ]
+        elif self == BodySize.SLIM:
+            return [
                 "slim",
                 "thin",
                 "petite",
@@ -596,8 +686,9 @@ class BodySize(BasePromptEnum):
                 "petite build",
                 "thin body",
                 "narrow frame",
-            ),
-            BodySize.MUSCULAR: (
+            ]
+        elif self == BodySize.MUSCULAR:
+            return [
                 "muscular",
                 "toned",
                 "fit",
@@ -608,8 +699,9 @@ class BodySize(BasePromptEnum):
                 "athletic build",
                 "defined muscles",
                 "well-toned",
-            ),
-            BodySize.PREGNANT: (
+            ]
+        elif self == BodySize.PREGNANT:
+            return [
                 "pregnant",
                 "pregnant body",
                 "pregnant belly",
@@ -618,8 +710,9 @@ class BodySize(BasePromptEnum):
                 "pregnant silhouette",
                 "pregnant woman",
                 "pregnant curves",
-            ),
-        }[self]
+            ]
+        else:
+            return []
 
     @property
     def min_age(self) -> int:

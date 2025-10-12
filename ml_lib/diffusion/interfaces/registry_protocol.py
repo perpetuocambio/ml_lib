@@ -2,6 +2,8 @@
 
 from typing import Protocol, Optional, runtime_checkable
 
+from ml_lib.diffusion.models.registry import ModelMetadata
+
 
 @runtime_checkable
 class ModelRegistryProtocol(Protocol):
@@ -12,7 +14,7 @@ class ModelRegistryProtocol(Protocol):
         query: str,
         model_type: Optional[str] = None,
         limit: int = 10
-    ) -> list:
+    ) -> list[ModelMetadata]:
         """
         Search for models matching query.
 
@@ -26,7 +28,7 @@ class ModelRegistryProtocol(Protocol):
         """
         ...
 
-    def get_model_metadata(self, model_id: str):
+    def get_model_metadata(self, model_id: str) -> ModelMetadata:
         """
         Get metadata for a specific model.
 

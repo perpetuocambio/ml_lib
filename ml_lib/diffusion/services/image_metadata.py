@@ -323,9 +323,7 @@ class ImageMetadataWriter:
         - Software: Pipeline info
         - DateTime: Generation timestamp
         """
-        from PIL import Image as PILImage
-
-        exif = PILImage.Exif()
+        exif = Image.Exif()
 
         # Standard tags (using tag IDs directly for compatibility)
         # 0x010e = ImageDescription

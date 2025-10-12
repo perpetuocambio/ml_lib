@@ -1,6 +1,33 @@
 """Protocols for memory management."""
 
-from typing import Protocol, Optional, runtime_checkable
+from typing import Protocol, runtime_checkable
+
+from PIL.Image import Image as PILImage
+
+from ml_lib.system.resource_monitor import SystemResources
+
+
+@runtime_checkable
+class PipelineOutputProtocol(Protocol):
+    """Protocol for pipeline output objects."""
+
+    @property
+    def images(self) -> list[PILImage]:
+        """List of generated PIL Images."""
+        ...
+
+
+@runtime_checkable
+class DiffusionPipelineProtocol(Protocol):
+    """Protocol for diffusion pipeline objects (from diffusers library)."""
+
+    def to(self, device: str) -> "DiffusionPipelineProtocol":
+        """Move pipeline to device."""
+        ...
+
+    def __call__(self, **kwargs) -> PipelineOutputProtocol:
+        """Generate images."""
+        ...
 
 
 @runtime_checkable
@@ -17,7 +44,7 @@ class MemoryManagerProtocol(Protocol):
         ...
 
     @property
-    def resources(self):
+    def resources(self) -> SystemResources:
         """Get system resources information."""
         ...
 
@@ -26,7 +53,7 @@ class MemoryManagerProtocol(Protocol):
 class ModelOffloaderProtocol(Protocol):
     """Protocol for model offloader implementations."""
 
-    def offload_model(self, model_id: str):
+    def offload_model(self, model_id: str) -> None:
         """
         Offload a model from VRAM.
 
@@ -35,7 +62,7 @@ class ModelOffloaderProtocol(Protocol):
         """
         ...
 
-    def load_model(self, model_id: str):
+    def load_model(self, model_id: str) -> None:
         """
         Load a model to VRAM.
 
@@ -49,7 +76,7 @@ class ModelOffloaderProtocol(Protocol):
 class MemoryOptimizerProtocol(Protocol):
     """Protocol for memory optimizer implementations."""
 
-    def optimize_pipeline(self, pipeline):
+    def optimize_pipeline(self, pipeline: DiffusionPipelineProtocol) -> None:
         """
         Apply memory optimizations to a pipeline.
 
@@ -58,10 +85,10 @@ class MemoryOptimizerProtocol(Protocol):
         """
         ...
 
-    def cleanup_after_model_load(self):
+    def cleanup_after_model_load(self) -> None:
         """Cleanup memory after loading a model."""
         ...
 
-    def cleanup_after_generation(self):
+    def cleanup_after_generation(self) -> None:
         """Cleanup memory after image generation."""
         ...

@@ -11,9 +11,13 @@ from typing import Optional, Union, Any
 
 import numpy as np
 import torch
+import torchvision.transforms as T
 from PIL import Image
+from safetensors.torch import load_file
+from transformers import CLIPVisionModel, CLIPImageProcessor
 
 from ml_lib.diffusion.models import ImageFeatures
+from ml_lib.diffusion.config import detect_comfyui_installation
 
 logger = logging.getLogger(__name__)
 
@@ -90,9 +94,6 @@ class CLIPVisionEncoder:
             ...     torch_dtype=torch.float16
             ... )
         """
-        from safetensors.torch import load_file
-        from transformers import CLIPVisionModel, CLIPImageProcessor
-
         model_path = Path(model_path)
 
         if not model_path.exists():
@@ -175,8 +176,6 @@ class CLIPVisionEncoder:
             pixel_values = inputs["pixel_values"].to(self.device)
         else:
             # Fallback: manual preprocessing
-            import torchvision.transforms as T
-
             transform = T.Compose(
                 [
                     T.Resize(224, interpolation=T.InterpolationMode.BICUBIC),
@@ -346,8 +345,6 @@ def load_clip_vision(
     """
     if model_path is None and auto_detect_comfyui:
         # Auto-detect from ComfyUI
-        from ml_lib.diffusion.config import detect_comfyui_installation
-
         comfyui_root = detect_comfyui_installation(search_paths)
         if comfyui_root:
             # Prefer CLIP-G for SDXL

@@ -7,7 +7,20 @@ generation and prompting systems.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Tuple
+from typing import List
+
+
+@dataclass
+class AttributeRelation:
+    """Represents a relationship between attributes (compatibility, requirement, etc.)."""
+
+    attribute_type: "AttributeType"
+    attribute_name: str
+
+    def matches(self, attr_type: "AttributeType", attr_name: str) -> bool:
+        """Check if this relation matches the given attribute."""
+        return (self.attribute_type == attr_type and
+                (self.attribute_name == attr_name or self.attribute_name is None))
 
 
 class AttributeType(Enum):
@@ -68,9 +81,9 @@ class AttributeDefinition:
     max_age: int = 80
 
     # Compatibility and relationships
-    compatible_with: List[Tuple[AttributeType, str]] = field(default_factory=list)
-    incompatible_with: List[Tuple[AttributeType, str]] = field(default_factory=list)
-    requires: List[Tuple[AttributeType, str]] = field(default_factory=list)
+    compatible_with: List[AttributeRelation] = field(default_factory=list)
+    incompatible_with: List[AttributeRelation] = field(default_factory=list)
+    requires: List[AttributeRelation] = field(default_factory=list)
 
     # Special properties for different attribute types
     ethnicity_associations: List[str] = field(default_factory=list)
@@ -104,14 +117,12 @@ class AttributeDefinition:
     def is_compatible_with(self, other: 'AttributeDefinition') -> bool:
         """Check if this attribute is compatible with another."""
         # Check explicit incompatibilities
-        for incompatible_type, incompatible_name in self.incompatible_with:
-            if (other.attribute_type == incompatible_type and
-                (incompatible_name is None or other.name == incompatible_name)):
+        for relation in self.incompatible_with:
+            if relation.matches(other.attribute_type, other.name):
                 return False
 
-        for incompatible_type, incompatible_name in other.incompatible_with:
-            if (self.attribute_type == incompatible_type and
-                (incompatible_name is None or self.name == incompatible_name)):
+        for relation in other.incompatible_with:
+            if relation.matches(self.attribute_type, self.name):
                 return False
 
         return True
