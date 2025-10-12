@@ -84,7 +84,7 @@
 
 **Nuestro soporte:**
 ```python
-from ml_lib.diffusion.intelligent.hub_integration import ModelRegistry
+from ml_lib.diffusion.services import ModelRegistry
 
 registry = ModelRegistry()
 # Detecta automáticamente checkpoints en cualquier path
@@ -152,7 +152,7 @@ controlnet_handler.apply_control(
 
 **Nuestro soporte:**
 ```python
-from ml_lib.diffusion.intelligent.hub_integration.entities import ModelType
+from ml_lib.diffusion.models import ModelType
 
 registry.register_model(
     model_type=ModelType.VAE,
@@ -174,7 +174,7 @@ registry.register_model(
 
 **Nuestro soporte:**
 ```python
-from ml_lib.diffusion.intelligent.hub_integration.entities import ModelType
+from ml_lib.diffusion.models import ModelType
 
 registry.register_model(
     model_type=ModelType.EMBEDDING,

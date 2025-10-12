@@ -8,7 +8,7 @@ from typing import Optional
 import requests
 from tqdm import tqdm
 
-from ml_lib.diffusion.intelligent.hub_integration.entities import (
+from ml_lib.diffusion.models import (
     ModelMetadata,
     ModelFilter,
     DownloadResult,

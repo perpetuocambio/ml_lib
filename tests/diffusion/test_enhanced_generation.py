@@ -5,9 +5,11 @@ import unittest
 import logging
 from pathlib import Path
 
-from ml_lib.diffusion.intelligent.prompting import (
+from ml_lib.diffusion.services import (
     EnhancedCharacterGenerator,
     EnhancedConfigLoader,
+)
+from ml_lib.diffusion.models import (
     GenerationPreferences,
     CharacterAttributeSet,
     AttributeDefinition,

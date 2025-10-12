@@ -1,5 +1,6 @@
 """Consolidated enums for diffusion models."""
 
+from .base import BasePromptEnum
 from .physical import (
     SkinTone,
     EyeColor,
@@ -12,8 +13,14 @@ from .physical import (
     AgeRange,
     BodySize,
 )
+from .style_and_meta import (
+    SafetyLevel,
+    CharacterFocus,
+    QualityTarget,
+)
 
 __all__ = [
+    "BasePromptEnum",
     "SkinTone",
     "EyeColor",
     "HairTexture",
@@ -24,4 +31,7 @@ __all__ = [
     "BreastSize",
     "AgeRange",
     "BodySize",
+    "SafetyLevel",
+    "CharacterFocus",
+    "QualityTarget",
 ]

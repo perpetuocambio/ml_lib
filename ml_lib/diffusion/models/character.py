@@ -9,7 +9,7 @@ if TYPE_CHECKING:
         AttributeType,
     )
 
-from ml_lib.diffusion.intelligent.prompting.enums import (
+from ml_lib.diffusion.models.enums import (
     SafetyLevel,
     CharacterFocus,
     QualityTarget,

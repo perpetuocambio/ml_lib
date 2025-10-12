@@ -4,7 +4,7 @@ import logging
 import numpy as np
 from dataclasses import dataclass
 
-from ml_lib.diffusion.intelligent.prompting.entities import (
+from ml_lib.diffusion.models import (
     PromptAnalysis,
     OptimizedParameters,
     Priority,

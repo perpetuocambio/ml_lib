@@ -73,7 +73,7 @@ class IntelligentGenerationPipeline:
         """Initialize all subsystem services."""
         # Import here to avoid circular dependencies
         try:
-            from ml_lib.diffusion.intelligent.hub_integration import (
+            from ml_lib.diffusion.services import (
                 ModelRegistry,
             )
             from ml_lib.diffusion.services import (
@@ -82,10 +82,8 @@ class IntelligentGenerationPipeline:
                 LearningEngine,
                 LoRARecommender,
             )
-            from ml_lib.diffusion.intelligent.memory import (
-                MemoryManager,
-                ModelOffloader,
-            )
+            from ml_lib.diffusion.handlers.memory_manager import MemoryManager
+            from ml_lib.diffusion.services import ModelOffloader
             from ml_lib.diffusion.services.memory_optimizer import (
                 MemoryOptimizer,
                 MemoryOptimizationConfig,

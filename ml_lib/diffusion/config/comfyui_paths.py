@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from ml_lib.diffusion.intelligent.hub_integration.entities import ModelType
+from ml_lib.diffusion.models import ModelType
 from ml_lib.diffusion.config.path_config import ModelPathConfig
 
 logger = logging.getLogger(__name__)
@@ -275,7 +275,7 @@ class ComfyUIPathResolver:
             >>> registry = resolver.create_registry_from_comfyui()
             >>> print(f"Registered {len(registry.get_all_models())} models")
         """
-        from ml_lib.diffusion.intelligent.hub_integration import (
+        from ml_lib.diffusion.services import (
             ModelRegistry,
         )
 

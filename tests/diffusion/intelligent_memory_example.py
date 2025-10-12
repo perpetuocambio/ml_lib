@@ -10,12 +10,12 @@ This example demonstrates:
 
 import logging
 import time
-from ml_lib.diffusion.intelligent.memory import (
-    MemoryManager,
+from ml_lib.diffusion.handlers.memory_manager import MemoryManager
+from ml_lib.diffusion.services import (
     ModelPool,
     ModelOffloader,
 )
-from ml_lib.diffusion.intelligent.memory.entities import (
+from ml_lib.diffusion.models import (
     OffloadStrategy,
     EvictionPolicy,
 )

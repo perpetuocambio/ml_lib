@@ -13,7 +13,7 @@ def test_character_entities():
     """Test that the character attribute entities work."""
     try:
         # Import and test the entities we created
-        from ml_lib.diffusion.intelligent.prompting.entities.character_attribute import (
+        from ml_lib.diffusion.models import (
             CharacterAttributeSet,
             AttributeConfig,
             GeneratedCharacter,

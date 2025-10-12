@@ -16,7 +16,7 @@ from ml_lib.diffusion.config import (
     create_comfyui_registry,
     detect_comfyui_installation,
 )
-from ml_lib.diffusion.intelligent.hub_integration.entities import ModelType
+from ml_lib.diffusion.models import ModelType
 
 
 def example_1_detect_and_stats():
@@ -149,7 +149,7 @@ def example_4_intelligent_pipeline():
         from ml_lib.diffusion.intelligent.pipeline.services import (
             IntelligentGenerationPipeline,
         )
-        from ml_lib.diffusion.intelligent.pipeline.entities import (
+        from ml_lib.diffusion.models import (
             PipelineConfig,
         )
 

@@ -8,7 +8,7 @@ from typing import Optional
 from huggingface_hub import HfApi, hf_hub_download, scan_cache_dir
 from huggingface_hub.utils import HfHubHTTPError
 
-from ml_lib.diffusion.intelligent.hub_integration.entities import (
+from ml_lib.diffusion.models import (
     ModelMetadata,
     ModelFilter,
     DownloadResult,

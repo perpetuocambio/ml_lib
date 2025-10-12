@@ -4,15 +4,13 @@ import yaml
 from pathlib import Path
 from typing import List, Optional
 
-from ml_lib.diffusion.intelligent.prompting.core import (
+from ml_lib.diffusion.models import (
     AttributeType,
     AttributeDefinition,
-)
-from ml_lib.diffusion.handlers import CharacterAttributeSet
-from ml_lib.diffusion.intelligent.prompting.models import (
     ValidationResult,
     CompatibilityMap,
 )
+from ml_lib.diffusion.handlers import CharacterAttributeSet
 
 
 class ConfigLoader:

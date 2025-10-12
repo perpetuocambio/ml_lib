@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Protocol, runtime_checkable, Any
 import numpy as np
 
-from ml_lib.diffusion.intelligent.hub_integration.entities import ModelMetadata
+from ml_lib.diffusion.models.registry import ModelMetadata
 
 
 # ============================================================================

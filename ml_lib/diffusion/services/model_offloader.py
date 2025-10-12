@@ -4,7 +4,7 @@ import logging
 from typing import Any
 
 from ml_lib.diffusion.handlers.memory_manager import MemoryManager
-from ml_lib.diffusion.intelligent.memory.entities import (
+from ml_lib.diffusion.models import (
     OffloadConfig,
     OffloadStrategy,
 )

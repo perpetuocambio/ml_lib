@@ -22,16 +22,15 @@ import uuid
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from ml_lib.diffusion.intelligent.prompting import (
+from ml_lib.diffusion.services import (
     CharacterGenerator,
     PromptAnalyzer,
     LoRARecommender,
     ParameterOptimizer,
+    ModelRegistry,
 )
-from ml_lib.diffusion.intelligent.prompting.models.generated_character import GeneratedCharacter
+from ml_lib.diffusion.models import GeneratedCharacter, Priority
 from ml_lib.diffusion.services.parameter_optimizer import GenerationConstraints
-from ml_lib.diffusion.intelligent.prompting.entities import Priority
-from ml_lib.diffusion.intelligent.hub_integration import ModelRegistry
 
 # Setup logging
 logging.basicConfig(

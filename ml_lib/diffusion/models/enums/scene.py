@@ -1,6 +1,6 @@
 """Scene and environment enums - consolidated from ml_lib/diffusion/intelligent/prompting/enums/scene/."""
 
-from ml_lib.diffusion.intelligent.prompting.enums.base_prompt_enum import BasePromptEnum
+from ml_lib.diffusion.models.enums.base import BasePromptEnum
 
 
 class WeatherCondition(BasePromptEnum):

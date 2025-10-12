@@ -4,13 +4,13 @@ import logging
 import numpy as np
 from typing import Optional
 
-from ml_lib.diffusion.intelligent.hub_integration.model_registry import ModelRegistry
-from ml_lib.diffusion.intelligent.hub_integration.entities import (
+from ml_lib.diffusion.services.model_registry import ModelRegistry
+from ml_lib.diffusion.models import (
     ModelMetadata,
     ModelType,
     BaseModel,
 )
-from ml_lib.diffusion.intelligent.prompting.entities import (
+from ml_lib.diffusion.models import (
     PromptAnalysis,
     LoRARecommendation,
 )

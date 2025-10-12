@@ -8,16 +8,16 @@ This example demonstrates:
 """
 
 import logging
-from ml_lib.diffusion.intelligent.prompting import (
+from ml_lib.diffusion.services import (
     PromptAnalyzer,
     LoRARecommender,
     ParameterOptimizer,
+    ModelRegistry,
 )
 from ml_lib.diffusion.services.parameter_optimizer import (
     GenerationConstraints,
 )
-from ml_lib.diffusion.intelligent.prompting.entities.optimized_parameters import Priority
-from ml_lib.diffusion.intelligent.hub_integration import ModelRegistry
+from ml_lib.diffusion.models import Priority
 
 # Setup logging
 logging.basicConfig(

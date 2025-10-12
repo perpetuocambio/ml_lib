@@ -126,7 +126,7 @@ if env_path := os.getenv("COMFYUI_PATH"):
 
 ```python
 from ml_lib.diffusion.config import ModelPathConfig
-from ml_lib.diffusion.intelligent.hub_integration.entities import ModelType
+from ml_lib.diffusion.models import ModelType
 
 # Opción 1: Explicit paths
 config = ModelPathConfig(

@@ -11,10 +11,8 @@ import random
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ml_lib.diffusion.intelligent.prompting.enhanced_attributes import (
-        AttributeCollection,
-        AttributeDefinition,
-    )
+    from ml_lib.diffusion.handlers.attribute_collection import AttributeCollection
+    from ml_lib.diffusion.intelligent.prompting.core.attribute_definition import AttributeDefinition
 
 
 class RandomAttributeSelector:

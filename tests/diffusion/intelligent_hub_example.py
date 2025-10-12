@@ -8,12 +8,12 @@ This example demonstrates:
 """
 
 import logging
-from ml_lib.diffusion.intelligent.hub_integration import (
+from ml_lib.diffusion.services import (
     HuggingFaceHubService,
     CivitAIService,
     ModelRegistry,
 )
-from ml_lib.diffusion.intelligent.hub_integration.entities import (
+from ml_lib.diffusion.models import (
     ModelFilter,
     ModelType,
     BaseModel,

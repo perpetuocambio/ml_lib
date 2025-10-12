@@ -6,13 +6,17 @@ from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from pathlib import Path
 
-from ml_lib.diffusion.intelligent.prompting.core import AttributeType, AttributeDefinition
-from ml_lib.diffusion.intelligent.prompting.handlers import (
-    CharacterAttributeSet, AttributeCollection
+from ml_lib.diffusion.models import (
+    AttributeType,
+    AttributeDefinition,
+    GeneratedCharacter,
+    ValidationResult,
 )
-from ml_lib.diffusion.intelligent.prompting.handlers import ConfigLoader
-from ml_lib.diffusion.intelligent.prompting.entities import GeneratedCharacter
-from ml_lib.diffusion.intelligent.prompting.models import ValidationResult
+from ml_lib.diffusion.handlers import (
+    CharacterAttributeSet,
+    AttributeCollection,
+    ConfigLoader,
+)
 
 logger = logging.getLogger(__name__)
 

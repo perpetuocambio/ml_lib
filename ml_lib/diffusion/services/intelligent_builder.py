@@ -33,7 +33,7 @@ import torch
 from PIL import Image
 
 from ml_lib.diffusion.config import detect_comfyui_installation, ModelPathConfig
-from ml_lib.diffusion.intelligent.hub_integration.entities import BaseModel
+from ml_lib.diffusion.models import BaseModel
 from ml_lib.diffusion.services import (
     MemoryOptimizer,
     OptimizationLevel,
@@ -154,7 +154,7 @@ class IntelligentPipelineBuilder:
 
         # Initialize model registry (for auto-download)
         if enable_auto_download:
-            from ml_lib.diffusion.intelligent.hub_integration.model_registry import (
+            from ml_lib.diffusion.services.model_registry import (
                 ModelRegistry,
             )
 
@@ -367,7 +367,7 @@ class IntelligentPipelineBuilder:
             OllamaModelSelector,
             ModelMatcher,
         )
-        from ml_lib.diffusion.intelligent.hub_integration.entities import ModelType
+        from ml_lib.diffusion.models import ModelType
 
         logger.info("Starting intelligent model selection...")
 
@@ -453,7 +453,7 @@ class IntelligentPipelineBuilder:
                         search_query = "realistic-vision"
 
                 try:
-                    from ml_lib.diffusion.intelligent.hub_integration.entities import (
+                    from ml_lib.diffusion.models import (
                         ModelType as RegistryModelType,
                     )
 

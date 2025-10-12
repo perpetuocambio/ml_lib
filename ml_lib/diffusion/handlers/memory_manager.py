@@ -5,7 +5,7 @@ import logging
 from contextlib import contextmanager
 from typing import Generator
 
-from ml_lib.diffusion.intelligent.memory.entities import SystemResources
+from ml_lib.diffusion.models import SystemResources
 
 logger = logging.getLogger(__name__)
 

@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
-from ml_lib.diffusion.intelligent.hub_integration.entities import BaseModel, ModelType
+from ml_lib.diffusion.models import BaseModel, ModelType
 from ml_lib.system.resource_monitor import ResourceMonitor
 
 logger = logging.getLogger(__name__)

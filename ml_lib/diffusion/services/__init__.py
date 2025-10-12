@@ -43,6 +43,12 @@ from .memory_optimizer import (
     MemoryMonitor,
 )
 from .metadata_fetcher import MetadataFetcher, ModelMetadata, FetcherConfig
+from .model_offloader import ModelOffloader
+from .model_pool import ModelPool
+from .preprocessor_service import PreprocessorService
+from .civitai_service import CivitAIService
+from .huggingface_service import HuggingFaceHubService
+from .model_registry import ModelRegistry
 
 __all__ = [
     # Pipeline
@@ -91,4 +97,13 @@ __all__ = [
     "MetadataFetcher",
     "ModelMetadata",
     "FetcherConfig",
+    # Memory management
+    "ModelOffloader",
+    "ModelPool",
+    # Preprocessor
+    "PreprocessorService",
+    # Hub integration
+    "CivitAIService",
+    "HuggingFaceHubService",
+    "ModelRegistry",
 ]

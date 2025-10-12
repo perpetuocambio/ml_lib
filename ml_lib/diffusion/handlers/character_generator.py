@@ -11,9 +11,9 @@ from ml_lib.diffusion.models import (
     GenerationPreferences,
 )
 
-# Import core attribute classes from intelligent (still there)
-from ml_lib.diffusion.intelligent.prompting.core import AttributeType, AttributeDefinition
-from ml_lib.diffusion.intelligent.prompting.handlers import (
+# Import core attribute classes from models
+from ml_lib.diffusion.models import AttributeType, AttributeDefinition
+from ml_lib.diffusion.handlers import (
     CharacterAttributeSet,
     AttributeCollection,
     ConfigLoader,

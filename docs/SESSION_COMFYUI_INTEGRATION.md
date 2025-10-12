@@ -250,7 +250,7 @@ result = pipeline.generate("your prompt here")
 
 ```python
 from ml_lib.diffusion.config import ComfyUIPathResolver
-from ml_lib.diffusion.intelligent.hub_integration.entities import ModelType
+from ml_lib.diffusion.models import ModelType
 
 # Custom ComfyUI path
 resolver = ComfyUIPathResolver(comfyui_root="/custom/path")
@@ -357,7 +357,7 @@ encoder = ImageEncoder.from_pretrained(
 python3 -c "from ml_lib.diffusion.config import detect_comfyui_installation; print(detect_comfyui_installation())"
 
 # 2. Contar LoRAs
-python3 -c "from ml_lib.diffusion.config import ComfyUIPathResolver; from ml_lib.diffusion.intelligent.hub_integration.entities import ModelType; r = ComfyUIPathResolver(); print(len(r.scan_models(ModelType.LORA)))"
+python3 -c "from ml_lib.diffusion.config import ComfyUIPathResolver; from ml_lib.diffusion.models import ModelType; r = ComfyUIPathResolver(); print(len(r.scan_models(ModelType.LORA)))"
 
 # 3. Crear registry (esto puede tardar ~1 minuto)
 python3 -c "from ml_lib.diffusion.config import create_comfyui_registry; r = create_comfyui_registry(); print(f'Loaded {len(r.get_all_loras())} LoRAs')"

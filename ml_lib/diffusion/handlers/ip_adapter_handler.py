@@ -6,7 +6,7 @@ from typing import Optional, Any, Union
 import numpy as np
 from PIL import Image
 
-from ml_lib.diffusion.intelligent.ip_adapter.entities import (
+from ml_lib.diffusion.models import (
     IPAdapterConfig,
     ReferenceImage,
     ImageFeatures,

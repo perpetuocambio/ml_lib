@@ -6,7 +6,7 @@ import time
 from collections import defaultdict
 from typing import Any, Callable, Optional
 
-from ml_lib.diffusion.intelligent.memory.entities import (
+from ml_lib.diffusion.models import (
     LoadedModel,
     EvictionPolicy,
 )

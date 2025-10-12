@@ -7,17 +7,17 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from ml_lib.diffusion.intelligent.hub_integration.entities import (
+from ml_lib.diffusion.models import (
     ModelMetadata,
     ModelFilter,
     Source,
     ModelType,
     BaseModel,
 )
-from ml_lib.diffusion.intelligent.hub_integration.huggingface_service import (
+from ml_lib.diffusion.services.huggingface_service import (
     HuggingFaceHubService,
 )
-from ml_lib.diffusion.intelligent.hub_integration.civitai_service import (
+from ml_lib.diffusion.services.civitai_service import (
     CivitAIService,
 )
 

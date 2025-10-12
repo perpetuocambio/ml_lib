@@ -4,7 +4,7 @@ import logging
 from typing import Optional, Any
 from pathlib import Path
 
-from ml_lib.diffusion.intelligent.controlnet.entities import (
+from ml_lib.diffusion.models import (
     ControlNetConfig,
     ControlImage,
     ControlType,

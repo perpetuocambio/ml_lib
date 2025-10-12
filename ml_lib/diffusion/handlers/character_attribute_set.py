@@ -4,10 +4,7 @@ import yaml
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from ml_lib.diffusion.intelligent.prompting.core.attribute_type import AttributeType
-from ml_lib.diffusion.intelligent.prompting.core.attribute_definition import (
-    AttributeDefinition,
-)
+from ml_lib.diffusion.models import AttributeType, AttributeDefinition
 from ml_lib.diffusion.handlers.attribute_collection import AttributeCollection
 
 
