@@ -10,7 +10,7 @@ from ml_lib.diffusion.models import (
     Priority,
     ArtisticStyle,
 )
-from ml_lib.diffusion.handlers.config_loader import get_default_config
+# ConfigLoader removed - using defaults instead
 
 logger = logging.getLogger(__name__)
 
@@ -32,13 +32,37 @@ class ParameterOptimizer:
         Initialize parameter optimizer.
 
         Args:
-            config: PrompterConfig with configuration (if None, loads default)
+            config: Optional config object (if None, uses defaults)
         """
-        # Load configuration
+        # Load configuration or use defaults
         if config is None:
-            config = get_default_config()
+            class DefaultConfig:
+                model_strategies = {
+                    "sdxl": {"default_sampler": "DPM++ 2M Karras", "default_clip_skip": 1},
+                    "sd20": {"default_sampler": "DPM++ 2M", "default_clip_skip": 1}
+                }
+                default_ranges = {
+                    "min_steps": 20, "max_steps": 80,
+                    "min_cfg": 7.0, "max_cfg": 15.0,
+                    "min_resolution": [768, 768], "max_resolution": [1536, 1536]
+                }
+                vram_presets = {
+                    "low_vram": {"max_resolution": [768, 768]},
+                    "medium_vram": {"max_resolution": [1024, 1024]},
+                    "high_vram": {"max_resolution": [1216, 832]}
+                }
+                activity_profiles = {}
+                age_profiles = {}
+                detail_presets = {
+                    "medium": {"base_steps": 35, "base_cfg": 9.0, "base_resolution": [1024, 1024]}
+                }
+                group_profiles = {
+                    "trio": {"default_resolution": [1280, 896]},
+                    "couple": {"default_resolution": [1024, 1024]}
+                }
+            config = DefaultConfig()
         self.config = config
-        
+
         # Set up configurable values
         self.SAMPLER_MAP = self.config.model_strategies
         self.DEFAULT_RANGES = self.config.default_ranges

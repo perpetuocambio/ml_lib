@@ -8,8 +8,8 @@ Example:
     Basic usage:
     >>> from ml_lib.diffusion import ImageGenerator
     >>> generator = ImageGenerator()
-    >>> image = generator.generate_character()
-    >>> image.save("character.png")
+    >>> image = generator.generate_from_prompt("a beautiful woman")
+    >>> image.save("woman.png")
 
     Advanced usage:
     >>> generator = ImageGenerator(model="stabilityai/stable-diffusion-xl-base-1.0")
@@ -26,6 +26,15 @@ from pathlib import Path
 from typing import Optional, Literal
 from dataclasses import dataclass
 from PIL import Image
+
+from ml_lib.diffusion.services import IntelligentPipelineBuilder
+from ml_lib.diffusion.models.pipeline import (
+    PipelineConfig,
+    MemorySettings,
+    OffloadStrategy,
+    LoRAPreferences,
+)
+from ml_lib.diffusion.models.value_objects import PromptAnalysisResult
 
 
 @dataclass
@@ -90,34 +99,27 @@ class ImageGenerator:
 
         # Lazy initialization - will be set on first use
         self._pipeline = None
-        self._character_generator = None
 
-    def _init_pipeline(self):
+    def _init_pipeline(self) -> None:
         """Initialize the intelligent generation pipeline (lazy)."""
         if self._pipeline is not None:
             return
 
-        # Import here to avoid circular dependencies and allow usage without
-        # full installation (for documentation, testing structure, etc.)
         try:
-            from ml_lib.diffusion.services import IntelligentPipelineBuilder
-            from ml_lib.diffusion.models.pipeline import (
-                PipelineConfig,
-                MemorySettings,
-                OffloadStrategy,
-                LoRAPreferences
-            )
-
-            # Map simple memory mode to complex config
-            memory_strategy_map = {
-                "auto": OffloadStrategy.BALANCED,
-                "low": OffloadStrategy.AGGRESSIVE,
-                "balanced": OffloadStrategy.BALANCED,
-                "aggressive": OffloadStrategy.AGGRESSIVE,
-            }
+            # Map simple memory mode to complex config using explicit logic
+            if self.options.memory_mode == "auto":
+                offload_strategy = OffloadStrategy.BALANCED
+            elif self.options.memory_mode == "low":
+                offload_strategy = OffloadStrategy.AGGRESSIVE
+            elif self.options.memory_mode == "balanced":
+                offload_strategy = OffloadStrategy.BALANCED
+            elif self.options.memory_mode == "aggressive":
+                offload_strategy = OffloadStrategy.AGGRESSIVE
+            else:
+                offload_strategy = OffloadStrategy.BALANCED
 
             memory_settings = MemorySettings(
-                offload_strategy=memory_strategy_map[self.options.memory_mode],
+                offload_strategy=offload_strategy,
                 enable_quantization=True,
                 enable_vae_tiling=True,
                 max_vram_gb=None  # Auto-detect
@@ -150,81 +152,27 @@ class ImageGenerator:
                 "  pip install diffusers torch transformers"
             )
 
-    def _init_character_generator(self):
-        """Initialize the character generator (lazy)."""
-        if self._character_generator is not None:
-            return
-
-        try:
-            from ml_lib.diffusion.handlers import CharacterGenerator
-            self._character_generator = CharacterGenerator()
-        except ImportError as e:
-            raise RuntimeError(
-                f"Failed to initialize character generator: {e}\n"
-                "Character generation requires the intelligent prompting module."
-            )
-
-    def generate_character(
-        self,
-        age_range: Optional[str] = None,
-        ethnicity: Optional[str] = None,
-        style: Optional[str] = None,
-        **options
-    ) -> Image.Image:
-        """
-        Generate a character image with intelligent attribute selection.
-
-        Args:
-            age_range: Optional age range (e.g., "young_adult", "milf")
-            ethnicity: Optional ethnicity (e.g., "caucasian", "asian")
-            style: Optional artistic style (e.g., "realistic", "anime")
-            **options: Override default GenerationOptions (steps, cfg_scale, etc.)
-
-        Returns:
-            PIL Image of the generated character
-
-        Example:
-            >>> generator = ImageGenerator()
-            >>> image = generator.generate_character(
-            ...     age_range="young_adult",
-            ...     ethnicity="asian",
-            ...     steps=50
-            ... )
-            >>> image.save("asian_character.png")
-        """
-        # Initialize subsystems
-        self._init_character_generator()
-        self._init_pipeline()
-
-        # Generate character
-        character = self._character_generator.generate_character()
-        prompt = character.to_prompt()
-
-        # Merge options
-        gen_options = self._merge_options(**options)
-
-        # Generate image
-        return self._generate_internal(
-            prompt=prompt,
-            negative_prompt=gen_options.negative_prompt,
-            steps=gen_options.steps,
-            cfg_scale=gen_options.cfg_scale,
-            width=gen_options.width,
-            height=gen_options.height,
-            seed=gen_options.seed
-        )
-
     def generate_from_prompt(
         self,
         prompt: str,
-        **options
+        negative_prompt: Optional[str] = None,
+        steps: Optional[int] = None,
+        cfg_scale: Optional[float] = None,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+        seed: Optional[int] = None
     ) -> Image.Image:
         """
         Generate an image from a text prompt.
 
         Args:
             prompt: Text description of the image to generate
-            **options: Override default GenerationOptions
+            negative_prompt: Negative prompt to guide generation away from
+            steps: Number of denoising steps (overrides default)
+            cfg_scale: Classifier-free guidance scale (overrides default)
+            width: Image width in pixels (overrides default)
+            height: Image height in pixels (overrides default)
+            seed: Random seed for reproducibility (overrides default)
 
         Returns:
             PIL Image of the generated image
@@ -240,16 +188,14 @@ class ImageGenerator:
         """
         self._init_pipeline()
 
-        gen_options = self._merge_options(**options)
-
         return self._generate_internal(
             prompt=prompt,
-            negative_prompt=gen_options.negative_prompt,
-            steps=gen_options.steps,
-            cfg_scale=gen_options.cfg_scale,
-            width=gen_options.width,
-            height=gen_options.height,
-            seed=gen_options.seed
+            negative_prompt=negative_prompt if negative_prompt is not None else self.options.negative_prompt,
+            steps=steps if steps is not None else self.options.steps,
+            cfg_scale=cfg_scale if cfg_scale is not None else self.options.cfg_scale,
+            width=width if width is not None else self.options.width,
+            height=height if height is not None else self.options.height,
+            seed=seed if seed is not None else self.options.seed
         )
 
     def _generate_internal(
@@ -276,29 +222,7 @@ class ImageGenerator:
 
         return result.image
 
-    def _merge_options(self, **overrides) -> GenerationOptions:
-        """Merge default options with overrides."""
-        # Start with defaults
-        merged = GenerationOptions(
-            negative_prompt=self.options.negative_prompt,
-            steps=self.options.steps,
-            cfg_scale=self.options.cfg_scale,
-            width=self.options.width,
-            height=self.options.height,
-            seed=self.options.seed,
-            memory_mode=self.options.memory_mode,
-            enable_loras=self.options.enable_loras,
-            enable_learning=self.options.enable_learning
-        )
-
-        # Apply overrides
-        for key, value in overrides.items():
-            if hasattr(merged, key):
-                setattr(merged, key, value)
-
-        return merged
-
-    def analyze_prompt(self, prompt: str) -> dict:
+    def analyze_prompt(self, prompt: str) -> PromptAnalysisResult:
         """
         Analyze a prompt and get recommendations without generating.
 
@@ -308,31 +232,28 @@ class ImageGenerator:
             prompt: Text prompt to analyze
 
         Returns:
-            Dictionary with analysis, recommended LoRAs, and parameters
+            PromptAnalysisResult with concepts, emphases, and reasoning
 
         Example:
             >>> generator = ImageGenerator()
             >>> analysis = generator.analyze_prompt("anime girl with magic")
-            >>> print(analysis["suggested_loras"])
-            >>> print(analysis["suggested_params"])
+            >>> print(analysis.concepts)
+            >>> print(analysis.emphases)
         """
         self._init_pipeline()
 
         recommendations = self._pipeline.analyze_and_recommend(prompt)
 
-        return {
-            "analysis": recommendations.prompt_analysis,
-            "suggested_loras": recommendations.suggested_loras,
-            "suggested_params": recommendations.suggested_params,
-            "explanation": recommendations.explanation
-        }
+        # Convert pipeline recommendations to PromptAnalysisResult
+        # TODO: This needs to be properly implemented when pipeline returns proper types
+        return recommendations.prompt_analysis
 
     def provide_feedback(
         self,
         generation_id: str,
         rating: int,
         comments: str = ""
-    ):
+    ) -> None:
         """
         Provide feedback on a generation to improve future results.
 
@@ -345,7 +266,7 @@ class ImageGenerator:
 
         Example:
             >>> generator = ImageGenerator(options=GenerationOptions(enable_learning=True))
-            >>> image = generator.generate_character()
+            >>> image = generator.generate_from_prompt("a beautiful landscape")
             >>> # After reviewing the image...
             >>> generator.provide_feedback(result.id, rating=4, comments="Good but too bright")
         """

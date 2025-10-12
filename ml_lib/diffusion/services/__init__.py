@@ -30,7 +30,7 @@ from .image_metadata import (
     create_generation_id,
     create_timestamp,
 )
-from .character_generator import CharacterGenerator
+# CharacterGenerator removed - was dependent on deleted ConfigLoader
 from .learning_engine import LearningEngine
 from .lora_recommender import LoRARecommender
 from .negative_prompt_generator import NegativePromptGenerator
@@ -82,7 +82,7 @@ __all__ = [
     "create_generation_id",
     "create_timestamp",
     # Prompting services
-    "CharacterGenerator",
+    # "CharacterGenerator",  # Removed - was dependent on deleted ConfigLoader
     "LearningEngine",
     "LoRARecommender",
     "NegativePromptGenerator",

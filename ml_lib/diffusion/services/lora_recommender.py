@@ -14,7 +14,7 @@ from ml_lib.diffusion.models import (
     PromptAnalysis,
     LoRARecommendation,
 )
-from ml_lib.diffusion.handlers.config_loader import get_default_config
+# ConfigLoader removed - using defaults instead
 
 logger = logging.getLogger(__name__)
 
@@ -32,15 +32,33 @@ class LoRARecommender:
 
         Args:
             registry: Model registry for accessing LoRA metadata
-            config: PrompterConfig with configuration (if None, loads default)
+            config: Optional config object (if None, uses defaults)
         """
         self.registry = registry
-        
-        # Load configuration
+
+        # Load configuration or use defaults
         if config is None:
-            config = get_default_config()
+            class DefaultConfig:
+                blocked_tags = ['anime', 'cartoon', 'child', 'minor', 'teen']
+                priority_tags = ['photorealistic', 'nsfw', 'mature', 'realistic']
+                anatomy_tags = ['anatomy', 'detailed', 'breasts', 'body']
+                scoring_weights = {
+                    "priority_score_weight": 0.25,
+                    "anatomy_score_weight": 0.20,
+                    "keyword_score_weight": 0.25,
+                    "tag_score_weight": 0.20,
+                    "popularity_score_weight": 0.10
+                }
+                lora_limits = {
+                    "max_loras": 3,
+                    "min_confidence": 0.5,
+                    "min_individual_weight": 0.3,
+                    "max_individual_weight": 1.2,
+                    "max_total_weight": 3.0
+                }
+            config = DefaultConfig()
         self.config = config
-        
+
         # Set up configurable values
         self.BLOCKED_TAGS = set(config.blocked_tags)
         self.PRIORITY_TAGS = set(config.priority_tags)

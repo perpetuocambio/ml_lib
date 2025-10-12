@@ -33,7 +33,7 @@ from ml_lib.diffusion.facade import ImageGenerator, Generator, GenerationOptions
 # Most users should use the facade instead
 __advanced_api__ = [
     "services.intelligent_pipeline",
-    "handlers.character_generator",
+    # "handlers.character_generator",  # Removed - was dependent on deleted ConfigLoader
     "handlers.memory_manager",
 ]
 

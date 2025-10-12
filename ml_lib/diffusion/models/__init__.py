@@ -1,5 +1,29 @@
 """Models for the diffusion module."""
 
+# Value objects
+from ml_lib.diffusion.models.value_objects import (
+    Resolution,
+    LoRAWeight,
+    LoRAWeights,
+    ParameterDelta,
+    DeltaWeights,
+    WeightConfig,
+    Concept,
+    ConceptMap,
+    Emphasis,
+    EmphasisMap,
+    ReasoningEntry,
+    ReasoningMap,
+    LoRAReasoning,
+    ParameterReasoning,
+    SafetyStatus,
+    SafetyCheckResult,
+    PromptAnalysisResult,
+    LoRARecommendationResult,
+    ParameterOptimizationResult,
+    NegativePromptResult,
+)
+
 # Core types
 from ml_lib.diffusion.models.core import (
     AttributeType,
@@ -79,6 +103,27 @@ from ml_lib.diffusion.models.registry import (
 )
 
 __all__ = [
+    # Value objects
+    "Resolution",
+    "LoRAWeight",
+    "LoRAWeights",
+    "ParameterDelta",
+    "DeltaWeights",
+    "WeightConfig",
+    "Concept",
+    "ConceptMap",
+    "Emphasis",
+    "EmphasisMap",
+    "ReasoningEntry",
+    "ReasoningMap",
+    "LoRAReasoning",
+    "ParameterReasoning",
+    "SafetyStatus",
+    "SafetyCheckResult",
+    "PromptAnalysisResult",
+    "LoRARecommendationResult",
+    "ParameterOptimizationResult",
+    "NegativePromptResult",
     # Core types
     "AttributeType",
     "AttributeDefinition",

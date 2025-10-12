@@ -18,7 +18,8 @@ from ml_lib.diffusion.models import (
     ContentType,
     QualityLevel,
 )
-from ml_lib.diffusion.handlers.config_loader import ConfigLoader
+# ConfigLoader removed - no longer needed
+# from ml_lib.diffusion.handlers.config_loader import ConfigLoader
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ class PromptAnalyzer:
 
     def __init__(
         self,
-        config: ConfigLoader | None = None,
+        config: dict | None = None,
         ollama_url: str = "http://localhost:11434",
         model_name: str = "llama2",
         use_llm: bool = True,
@@ -40,18 +41,22 @@ class PromptAnalyzer:
         Initialize prompt analyzer.
 
         Args:
-            config: ConfigLoader with concept categories (if None, loads default)
+            config: Optional concept categories dict (if None, uses defaults)
             ollama_url: Ollama server URL
             model_name: Ollama model to use
             use_llm: Whether to use LLM for enhanced analysis
         """
-        # Load configuration
+        # Use default concept categories if none provided
         if config is None:
-            from ml_lib.diffusion.handlers.config_loader import get_default_config
-            config = get_default_config()
+            config = {
+                "character": ["woman", "man", "person", "character"],
+                "style": ["photorealistic", "anime", "cartoon", "realistic"],
+                "content": ["portrait", "scene", "landscape"],
+                "quality": ["masterpiece", "high quality", "detailed"],
+            }
 
         self.config = config
-        self.CONCEPT_CATEGORIES = config.concept_categories
+        self.CONCEPT_CATEGORIES = config
         self.use_llm = use_llm
 
         if use_llm:

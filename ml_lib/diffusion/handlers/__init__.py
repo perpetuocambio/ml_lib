@@ -3,7 +3,7 @@
 from ml_lib.diffusion.handlers.attribute_collection import AttributeCollection
 from ml_lib.diffusion.handlers.random_selector import RandomAttributeSelector
 from ml_lib.diffusion.handlers.memory_manager import MemoryManager
-from ml_lib.diffusion.handlers.character_generator import CharacterGenerator
+# CharacterGenerator removed - was dependent on deleted ConfigLoader
 from ml_lib.diffusion.handlers.clip_vision_handler import (
     CLIPVisionEncoder,
     CLIPVisionModelType,
@@ -21,7 +21,7 @@ __all__ = [
     "AttributeCollection",
     "RandomAttributeSelector",
     "MemoryManager",
-    "CharacterGenerator",
+    # "CharacterGenerator",  # Removed - was dependent on deleted ConfigLoader
     "CLIPVisionEncoder",
     "CLIPVisionModelType",
     "load_clip_vision",

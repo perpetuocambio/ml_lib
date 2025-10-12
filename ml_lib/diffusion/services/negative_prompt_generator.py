@@ -2,7 +2,7 @@
 
 from typing import Dict, List, Set
 import re
-from ml_lib.diffusion.handlers.config_loader import get_default_config
+# ConfigLoader removed - using defaults instead
 
 
 class NegativePromptGenerator:
@@ -11,12 +11,20 @@ class NegativePromptGenerator:
     def __init__(self, config=None):
         """
         Initialize negative prompt generator.
-        
+
         Args:
-            config: PrompterConfig with negative prompt definitions (if None, loads default)
+            config: Optional object with negative_prompts attribute (if None, uses defaults)
         """
         if config is None:
-            config = get_default_config()
+            # Create default config with negative_prompts
+            class DefaultConfig:
+                negative_prompts = {
+                    'general': ['low quality', 'blurry', 'deformed', 'bad anatomy'],
+                    'photorealistic': ['cartoon', 'anime', 'unrealistic'],
+                    'age_inappropriate': ['child', 'minor', 'teen', 'underage'],
+                    'explicit': ['nsfw']
+                }
+            config = DefaultConfig()
         self.config = config
         self.negative_prompts = config.negative_prompts
         
