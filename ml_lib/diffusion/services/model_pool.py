@@ -4,14 +4,21 @@ import gc
 import logging
 import time
 from collections import defaultdict
-from typing import Any, Callable, Optional
+from typing import Callable, Optional, TypeVar
 
 from ml_lib.diffusion.models import (
     LoadedModel,
     EvictionPolicy,
 )
+from ml_lib.diffusion.models.value_objects import (
+    PoolStatistics,
+    ModelProtocol,
+)
 
 logger = logging.getLogger(__name__)
+
+# Generic type for models
+T = TypeVar('T', bound=ModelProtocol)
 
 
 class ModelPool:
@@ -32,10 +39,11 @@ class ModelPool:
         self.max_size_gb = max_size_gb
         self.eviction_policy = eviction_policy
 
-        # Storage
-        self.loaded_models: dict[str, LoadedModel] = {}
-        self.access_times: dict[str, float] = {}
-        self.access_counts: dict[str, int] = defaultdict(int)
+        # Storage - keep internal dicts for performance
+        # but don't expose them in public API
+        self._loaded_models: dict[str, LoadedModel] = {}
+        self._access_times: dict[str, float] = {}
+        self._access_counts: dict[str, int] = defaultdict(int)
 
         logger.info(
             f"ModelPool initialized: max_size={max_size_gb}GB, "
@@ -45,27 +53,25 @@ class ModelPool:
     def load(
         self,
         model_id: str,
-        loader_fn: Callable[[], Any],
+        loader_fn: Callable[[], T],
         estimated_size_gb: float = 2.0,
-        **kwargs,
-    ) -> Any:
+    ) -> T:
         """
         Load model with automatic eviction if needed.
 
         Args:
             model_id: Unique model identifier
-            loader_fn: Function to load the model
+            loader_fn: Function to load the model (takes no args)
             estimated_size_gb: Estimated model size
-            **kwargs: Additional arguments for loader
 
         Returns:
             Loaded model
         """
         # Check if already loaded
-        if model_id in self.loaded_models:
+        if model_id in self._loaded_models:
             logger.debug(f"Model {model_id} already loaded (cache hit)")
             self._update_access(model_id)
-            return self.loaded_models[model_id].model
+            return self._loaded_models[model_id].model  # type: ignore
 
         # Evict if necessary
         while self._current_size() + estimated_size_gb > self.max_size_gb:
@@ -78,7 +84,7 @@ class ModelPool:
         start_time = time.time()
 
         try:
-            model = loader_fn(**kwargs)
+            model = loader_fn()
         except Exception as e:
             logger.error(f"Failed to load model {model_id}: {e}")
             raise
@@ -92,7 +98,7 @@ class ModelPool:
             loaded_at=time.time(),
         )
 
-        self.loaded_models[model_id] = loaded_model
+        self._loaded_models[model_id] = loaded_model
         self._update_access(model_id)
 
         logger.info(
@@ -100,7 +106,7 @@ class ModelPool:
             f"(pool: {self._current_size():.2f}/{self.max_size_gb:.2f}GB)"
         )
 
-        return model
+        return model  # type: ignore
 
     def unload(self, model_id: str) -> bool:
         """
@@ -112,15 +118,15 @@ class ModelPool:
         Returns:
             True if unloaded
         """
-        if model_id not in self.loaded_models:
+        if model_id not in self._loaded_models:
             return False
 
-        size = self.loaded_models[model_id].size_gb
+        size = self._loaded_models[model_id].size_gb
 
         # Remove from tracking
-        del self.loaded_models[model_id]
-        self.access_times.pop(model_id, None)
-        self.access_counts.pop(model_id, None)
+        del self._loaded_models[model_id]
+        self._access_times.pop(model_id, None)
+        self._access_counts.pop(model_id, None)
 
         # Force cleanup
         gc.collect()
@@ -131,7 +137,7 @@ class ModelPool:
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         except ImportError:
-            pass
+            logger.debug("torch not available, skipping CUDA cache clearing")
 
         logger.info(f"Unloaded model {model_id} ({size:.2f}GB)")
         return True
@@ -146,9 +152,9 @@ class ModelPool:
         Returns:
             True if loaded
         """
-        return model_id in self.loaded_models
+        return model_id in self._loaded_models
 
-    def get_model(self, model_id: str) -> Optional[Any]:
+    def get_model(self, model_id: str) -> Optional[T]:
         """
         Get model from pool.
 
@@ -158,46 +164,49 @@ class ModelPool:
         Returns:
             Model or None
         """
-        if model_id in self.loaded_models:
+        if model_id in self._loaded_models:
             self._update_access(model_id)
-            return self.loaded_models[model_id].model
+            return self._loaded_models[model_id].model  # type: ignore
         return None
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all models from pool."""
-        model_ids = list(self.loaded_models.keys())
+        model_ids = list(self._loaded_models.keys())
         for model_id in model_ids:
             self.unload(model_id)
 
         logger.info("Pool cleared")
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> PoolStatistics:
         """
         Get pool statistics.
 
         Returns:
-            Statistics dictionary
+            PoolStatistics object
         """
-        return {
-            "loaded_count": len(self.loaded_models),
-            "current_size_gb": self._current_size(),
-            "max_size_gb": self.max_size_gb,
-            "utilization": self._current_size() / self.max_size_gb if self.max_size_gb > 0 else 0,
-            "models": list(self.loaded_models.keys()),
-        }
+        current_size = self._current_size()
+        utilization = current_size / self.max_size_gb if self.max_size_gb > 0 else 0.0
+
+        return PoolStatistics(
+            loaded_count=len(self._loaded_models),
+            current_size_gb=current_size,
+            max_size_gb=self.max_size_gb,
+            utilization=utilization,
+            model_ids=list(self._loaded_models.keys()),
+        )
 
     def _current_size(self) -> float:
         """Get current pool size in GB."""
-        return sum(m.size_gb for m in self.loaded_models.values())
+        return sum(m.size_gb for m in self._loaded_models.values())
 
-    def _update_access(self, model_id: str):
+    def _update_access(self, model_id: str) -> None:
         """Update access tracking for a model."""
-        self.access_times[model_id] = time.time()
-        self.access_counts[model_id] += 1
+        self._access_times[model_id] = time.time()
+        self._access_counts[model_id] += 1
 
         # Update LoadedModel tracking
-        if model_id in self.loaded_models:
-            self.loaded_models[model_id].update_access()
+        if model_id in self._loaded_models:
+            self._loaded_models[model_id].update_access()
 
     def _evict_one(self) -> bool:
         """
@@ -206,7 +215,7 @@ class ModelPool:
         Returns:
             True if a model was evicted
         """
-        if not self.loaded_models:
+        if not self._loaded_models:
             return False
 
         # Select model to evict based on policy
@@ -230,31 +239,31 @@ class ModelPool:
 
     def _select_lru(self) -> Optional[str]:
         """Select least recently used model."""
-        if not self.access_times:
+        if not self._access_times:
             return None
 
-        return min(self.access_times.items(), key=lambda x: x[1])[0]
+        return min(self._access_times.items(), key=lambda x: x[1])[0]
 
     def _select_lfu(self) -> Optional[str]:
         """Select least frequently used model."""
-        if not self.access_counts:
+        if not self._access_counts:
             return None
 
-        return min(self.access_counts.items(), key=lambda x: x[1])[0]
+        return min(self._access_counts.items(), key=lambda x: x[1])[0]
 
     def _select_largest(self) -> Optional[str]:
         """Select largest model."""
-        if not self.loaded_models:
+        if not self._loaded_models:
             return None
 
-        return max(self.loaded_models.items(), key=lambda x: x[1].size_gb)[0]
+        return max(self._loaded_models.items(), key=lambda x: x[1].size_gb)[0]
 
     def _select_fifo(self) -> Optional[str]:
         """Select first in (oldest loaded)."""
-        if not self.loaded_models:
+        if not self._loaded_models:
             return None
 
         return min(
-            self.loaded_models.items(),
+            self._loaded_models.items(),
             key=lambda x: x[1].loaded_at,
         )[0]

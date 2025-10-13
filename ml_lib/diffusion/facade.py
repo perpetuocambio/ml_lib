@@ -244,9 +244,75 @@ class ImageGenerator:
 
         recommendations = self._pipeline.analyze_and_recommend(prompt)
 
-        # Convert pipeline recommendations to PromptAnalysisResult
-        # TODO: This needs to be properly implemented when pipeline returns proper types
-        return recommendations.prompt_analysis
+        # Convert PromptAnalysis to PromptAnalysisResult
+        prompt_analysis = recommendations.prompt_analysis
+
+        # Convert detected_concepts (dict[str, list[str]]) to ConceptMap
+        from ml_lib.diffusion.models.value_objects import (
+            ConceptMap,
+            EmphasisMap,
+            ReasoningMap,
+            Concept,
+            Emphasis,
+            Reasoning,
+        )
+
+        # Build concepts from detected_concepts
+        concepts_list = []
+        for category, concept_names in prompt_analysis.detected_concepts.items():
+            for concept_name in concept_names:
+                concepts_list.append(
+                    Concept(
+                        name=concept_name,
+                        category=category,
+                        confidence=0.8  # Default confidence (PromptAnalysis doesn't track this)
+                    )
+                )
+
+        concept_map = ConceptMap(concepts_list)
+
+        # Build emphases from emphasis_map
+        emphasis_list = []
+        for keyword, weight in prompt_analysis.emphasis_map.items():
+            emphasis_list.append(
+                Emphasis(
+                    keyword=keyword,
+                    weight=weight,
+                    position=0  # PromptAnalysis doesn't track position
+                )
+            )
+
+        emphasis_map = EmphasisMap(emphasis_list)
+
+        # Build reasoning map
+        reasoning_list = []
+        if hasattr(recommendations, 'explanation') and recommendations.explanation:
+            reasoning_list.append(
+                Reasoning(
+                    decision="prompt_analysis",
+                    reason=recommendations.explanation,
+                    confidence=0.85
+                )
+            )
+
+        # Add intent reasoning if available
+        if prompt_analysis.intent:
+            reasoning_list.append(
+                Reasoning(
+                    decision="intent_detection",
+                    reason=f"Detected style: {prompt_analysis.intent.artistic_style.value}, "
+                           f"Content: {prompt_analysis.intent.content_type.value}",
+                    confidence=prompt_analysis.intent.confidence
+                )
+            )
+
+        reasoning_map = ReasoningMap(reasoning_list)
+
+        return PromptAnalysisResult(
+            concepts=concept_map,
+            emphases=emphasis_map,
+            reasoning=reasoning_map
+        )
 
     def provide_feedback(
         self,

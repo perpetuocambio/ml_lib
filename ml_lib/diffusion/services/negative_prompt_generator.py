@@ -1,32 +1,31 @@
 """Negative prompt utilities for content safety and quality control."""
 
-from typing import Dict, List, Set
+from typing import Optional
 import re
-# ConfigLoader removed - using defaults instead
+
+from ml_lib.diffusion.models.value_objects import (
+    PromptBlockResult,
+    PromptSafetyResult,
+)
 
 
 class NegativePromptGenerator:
     """Generates negative prompts based on content analysis and safety requirements."""
     
-    def __init__(self, config=None):
+    def __init__(self, config: Optional[object] = None):
         """
         Initialize negative prompt generator.
 
         Args:
             config: Optional object with negative_prompts attribute (if None, uses defaults)
         """
-        if config is None:
-            # Create default config with negative_prompts
-            class DefaultConfig:
-                negative_prompts = {
-                    'general': ['low quality', 'blurry', 'deformed', 'bad anatomy'],
-                    'photorealistic': ['cartoon', 'anime', 'unrealistic'],
-                    'age_inappropriate': ['child', 'minor', 'teen', 'underage'],
-                    'explicit': ['nsfw']
-                }
-            config = DefaultConfig()
+        # Define default negative prompts as explicit attributes
+        self._general_negatives = ['low quality', 'blurry', 'deformed', 'bad anatomy']
+        self._photorealistic_negatives = ['cartoon', 'anime', 'unrealistic']
+        self._age_inappropriate_negatives = ['child', 'minor', 'teen', 'underage']
+        self._explicit_negatives = ['nsfw']
+
         self.config = config
-        self.negative_prompts = config.negative_prompts
         
         # Define context-sensitive terms that require additional analysis
         self.relation_terms = [
@@ -57,104 +56,115 @@ class NegativePromptGenerator:
             'little', 'compact', 'short stature', 'proportions'
         ]
         
-    def generate_negative_prompt(self, 
+    def generate_negative_prompt(self,
                                is_explicit: bool = True,
                                content_type: str = "photorealistic",
-                               safety_level: str = "strict") -> List[str]:
+                               safety_level: str = "strict") -> list[str]:
         """
         Generate negative prompt based on content type and safety requirements.
-        
+
         Args:
             is_explicit: Whether content is explicit
             content_type: Type of content (photorealistic, anime, etc.)
             safety_level: Safety level ('strict', 'moderate', 'relaxed')
-            
+
         Returns:
             List of negative prompt terms
         """
-        negative_terms = set()
-        
+        negative_terms: set[str] = set()
+
         # Add base negative prompts for content type
-        if content_type in self.negative_prompts:
-            negative_terms.update(self.negative_prompts[content_type])
-        
+        if content_type == "photorealistic":
+            negative_terms.update(self._photorealistic_negatives)
+
         # Add general negative prompts
-        if "general" in self.negative_prompts:
-            negative_terms.update(self.negative_prompts["general"])
-        
+        negative_terms.update(self._general_negatives)
+
         # Add age inappropriate terms based on safety level
-        age_inappropriate = self.negative_prompts.get("age_inappropriate", [])
         if safety_level in ["strict", "moderate"]:
-            negative_terms.update(age_inappropriate)
-        
+            negative_terms.update(self._age_inappropriate_negatives)
+
         # Add specific explicit content filters if not explicit content
-        if not is_explicit and "explicit" in self.negative_prompts:
-            negative_terms.update(self.negative_prompts["explicit"])
-            
+        if not is_explicit:
+            negative_terms.update(self._explicit_negatives)
+
         return list(negative_terms)
-    
-    def get_age_safe_negative_prompt(self) -> List[str]:
+
+    def get_age_safe_negative_prompt(self) -> list[str]:
         """Get negative prompts specifically for age safety."""
-        return self.negative_prompts.get("age_inappropriate", [])
+        return self._age_inappropriate_negatives.copy()
     
-    def should_block_prompt(self, prompt: str, threshold: float = 0.5) -> tuple[bool, float, List[str]]:
+    def should_block_prompt(self, prompt: str, threshold: float = 0.5) -> PromptBlockResult:
         """
         Determine if a prompt should be blocked based on safety threshold.
-        
+
         Args:
             prompt: Prompt to check
             threshold: Safety score threshold (0.0-1.0). Below this = blocked.
-            
+
         Returns:
-            Tuple of (should_block, safety_score, violations)
+            PromptBlockResult with block decision, score, and violations
         """
         safety_score = self.get_contextual_safety_score(prompt)
-        is_safe, violations = self.is_prompt_safe(prompt)
-        
+        safety_result = self.is_prompt_safe(prompt)
+
         should_block = safety_score < threshold
-        return should_block, safety_score, violations
-    
-    def is_prompt_safe(self, prompt: str, check_age_only: bool = False) -> tuple[bool, List[str]]:
+        return PromptBlockResult(
+            should_block=should_block,
+            safety_score=safety_score,
+            violations=safety_result.violations
+        )
+
+    def is_prompt_safe(self, prompt: str, check_age_only: bool = False) -> PromptSafetyResult:
         """
         Check if a prompt is safe based on negative terms with contextual analysis.
-        
+
         Args:
             prompt: Prompt to check
             check_age_only: Only check for age-inappropriate content
-            
+
         Returns:
-            Tuple of (is_safe, list_of_violations)
+            PromptSafetyResult with safety status and violations
         """
         prompt_lower = prompt.lower()
-        violations = []
-        
+        violations: list[str] = []
+
         # Basic pattern matching
         if check_age_only:
-            age_inappropriate = self.negative_prompts.get("age_inappropriate", [])
-            basic_violations = [term for term in age_inappropriate if term.lower() in prompt_lower]
+            basic_violations = [
+                term for term in self._age_inappropriate_negatives
+                if term.lower() in prompt_lower
+            ]
         else:
             basic_violations = []
             # Check all negative prompt categories
-            for category, terms in self.negative_prompts.items():
-                for term in terms:
-                    if term.lower() in prompt_lower:
-                        basic_violations.append(term)
-        
+            all_negatives = (
+                self._general_negatives +
+                self._photorealistic_negatives +
+                self._age_inappropriate_negatives +
+                self._explicit_negatives
+            )
+            for term in all_negatives:
+                if term.lower() in prompt_lower:
+                    basic_violations.append(term)
+
         # Contextual analysis for relationship terms
         context_violations = self._analyze_contextual_violations(prompt_lower)
-        
+
         violations = basic_violations + context_violations
-        
+
         # Apply contextual filtering only if there are potential violations
         if violations:
             filtered_violations = self._apply_contextual_filtering(violations, prompt_lower)
-            return len(filtered_violations) == 0, filtered_violations
-        
-        return len(violations) == 0, violations
+            is_safe = len(filtered_violations) == 0
+            return PromptSafetyResult(is_safe=is_safe, violations=filtered_violations)
+
+        is_safe = len(violations) == 0
+        return PromptSafetyResult(is_safe=is_safe, violations=violations)
     
-    def _analyze_contextual_violations(self, prompt_lower: str) -> List[str]:
+    def _analyze_contextual_violations(self, prompt_lower: str) -> list[str]:
         """Analyze potentially problematic terms with context."""
-        violations = []
+        violations: list[str] = []
         
         # Check for terms that are ALWAYS blocked (highest priority)
         for term in self.always_blocked:
@@ -190,9 +200,9 @@ class NegativePromptGenerator:
         
         return violations
     
-    def _apply_contextual_filtering(self, violations: List[str], prompt_lower: str) -> List[str]:
+    def _apply_contextual_filtering(self, violations: list[str], prompt_lower: str) -> list[str]:
         """Apply contextual filtering to determine if violations are real."""
-        filtered = []
+        filtered: list[str] = []
         
         for violation in violations:
             # Terms that are ALWAYS blocked (highest priority) - never filtered out
@@ -234,12 +244,13 @@ class NegativePromptGenerator:
         Returns:
             Safety score between 0.0 (unsafe) and 1.0 (safe)
         """
-        is_safe, violations = self.is_prompt_safe(prompt)
-        
-        if not violations:
+        safety_result = self.is_prompt_safe(prompt)
+
+        if not safety_result.violations:
             return 1.0
-        
+
         # Calculate based on severity of violations
+        violations = safety_result.violations
         age_violations = [v for v in violations if any(x in v for x in ['age_restricted', 'minor', 'child', 'teen'])]
         relation_violations = [v for v in violations if 'relation' in v]
         other_violations = [v for v in violations if v not in age_violations and v not in relation_violations]

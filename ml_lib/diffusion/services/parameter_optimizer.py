@@ -10,7 +10,7 @@ from ml_lib.diffusion.models import (
     Priority,
     ArtisticStyle,
 )
-# ConfigLoader removed - using defaults instead
+from ml_lib.diffusion.models.value_objects import Resolution
 
 logger = logging.getLogger(__name__)
 
@@ -34,42 +34,35 @@ class ParameterOptimizer:
         Args:
             config: Optional config object (if None, uses defaults)
         """
-        # Load configuration or use defaults
-        if config is None:
-            class DefaultConfig:
-                model_strategies = {
-                    "sdxl": {"default_sampler": "DPM++ 2M Karras", "default_clip_skip": 1},
-                    "sd20": {"default_sampler": "DPM++ 2M", "default_clip_skip": 1}
-                }
-                default_ranges = {
-                    "min_steps": 20, "max_steps": 80,
-                    "min_cfg": 7.0, "max_cfg": 15.0,
-                    "min_resolution": [768, 768], "max_resolution": [1536, 1536]
-                }
-                vram_presets = {
-                    "low_vram": {"max_resolution": [768, 768]},
-                    "medium_vram": {"max_resolution": [1024, 1024]},
-                    "high_vram": {"max_resolution": [1216, 832]}
-                }
-                activity_profiles = {}
-                age_profiles = {}
-                detail_presets = {
-                    "medium": {"base_steps": 35, "base_cfg": 9.0, "base_resolution": [1024, 1024]}
-                }
-                group_profiles = {
-                    "trio": {"default_resolution": [1280, 896]},
-                    "couple": {"default_resolution": [1024, 1024]}
-                }
-            config = DefaultConfig()
+        # Store config or use defaults
         self.config = config
 
-        # Set up configurable values
-        self.SAMPLER_MAP = self.config.model_strategies
-        self.DEFAULT_RANGES = self.config.default_ranges
-        self.VRAM_PRESETS = self.config.vram_presets
-        self.ACTIVITY_PROFILES = self.config.activity_profiles
-        self.AGE_PROFILES = self.config.age_profiles
-        self.DETAIL_PRESETS = self.config.detail_presets
+        # Define defaults - using explicit values instead of dicts
+        self._min_steps = 20
+        self._max_steps = 80
+        self._min_cfg = 7.0
+        self._max_cfg = 15.0
+        self._min_resolution = Resolution(width=768, height=768)
+        self._max_resolution = Resolution(width=1536, height=1536)
+
+        # VRAM presets
+        self._low_vram_max = Resolution(width=768, height=768)
+        self._medium_vram_max = Resolution(width=1024, height=1024)
+        self._high_vram_max = Resolution(width=1216, height=832)
+
+        # Detail presets
+        self._base_steps = 35
+        self._base_cfg = 9.0
+        self._base_resolution = Resolution(width=1024, height=1024)
+
+        # Group profiles
+        self._trio_resolution = Resolution(width=1280, height=896)
+        self._couple_resolution = Resolution(width=1024, height=1024)
+
+        # Sampler defaults
+        self._sdxl_sampler = "DPM++ 2M Karras"
+        self._sd20_sampler = "DPM++ 2M"
+        self._default_clip_skip = 1
 
     def optimize(
         self,
@@ -109,8 +102,8 @@ class ParameterOptimizer:
         return OptimizedParameters(
             num_steps=steps,
             guidance_scale=cfg,
-            width=resolution[0],
-            height=resolution[1],
+            width=resolution.width,
+            height=resolution.height,
             sampler_name=sampler,
             clip_skip=clip_skip,
             estimated_time_seconds=time,
@@ -128,8 +121,8 @@ class ParameterOptimizer:
 
         Explicit anatomical detail requires MORE steps.
         """
-        # Use base from configuration, defaulting to 25
-        base = self.DETAIL_PRESETS.get("medium", {}).get("base_steps", 35)
+        # Use base from defaults
+        base = self._base_steps
 
         # Complexity adjustment from configuration
         complexity_bonus = 0
@@ -181,11 +174,8 @@ class ParameterOptimizer:
 
         steps = base + complexity_bonus + quality_bonus + anatomy_bonus + activity_bonus - speed_penalty
 
-        # Use configurable range
-        min_steps = self.DEFAULT_RANGES.get("min_steps", 20)
-        max_steps = self.DEFAULT_RANGES.get("max_steps", 80)
-        
-        return int(np.clip(steps, min_steps, max_steps))
+        # Use configured range
+        return int(np.clip(steps, self._min_steps, self._max_steps))
 
     def _optimize_cfg(self, analysis: PromptAnalysis) -> float:
         """
@@ -193,8 +183,8 @@ class ParameterOptimizer:
 
         Uses configurable ranges and base values.
         """
-        # START with configurable base
-        base_cfg = self.DETAIL_PRESETS.get("medium", {}).get("base_cfg", 9.0)
+        # START with configured base
+        base_cfg = self._base_cfg
 
         # Adjust for complexity (more details = higher CFG)
         if analysis.complexity_score > 0.8:
@@ -246,15 +236,12 @@ class ParameterOptimizer:
         if len(physical_details) > 3:
             base_cfg += 1.0
 
-        # Use configurable range
-        min_cfg = self.DEFAULT_RANGES.get("min_cfg", 7.0)
-        max_cfg = self.DEFAULT_RANGES.get("max_cfg", 15.0)
-        
-        return round(np.clip(base_cfg, min_cfg, max_cfg), 1)
+        # Use configured range
+        return round(np.clip(base_cfg, self._min_cfg, self._max_cfg), 1)
 
     def _optimize_resolution(
         self, analysis: PromptAnalysis, constraints: GenerationConstraints
-    ) -> tuple[int, int]:
+    ) -> Resolution:
         """
         Optimize resolution from configuration.
 
@@ -264,8 +251,9 @@ class ParameterOptimizer:
         - Anatomical detail focus
         - VRAM constraints
         """
-        # Use configurable base resolution or defaults
-        base_width, base_height = self.DETAIL_PRESETS.get("medium", {}).get("base_resolution", [1024, 1024])
+        # Use configured base resolution
+        base_width = self._base_resolution.width
+        base_height = self._base_resolution.height
 
         # Adjust for content type and group size using configuration
         if analysis.intent:
@@ -280,21 +268,26 @@ class ParameterOptimizer:
             is_couple = any(kw in subject_text for kw in ["couple", "two", "duo"])
 
             if is_trio:
-                # Trio - use configuration or default
-                base_width, base_height = self.config.group_profiles.get("trio", {}).get("default_resolution", [1280, 896])
+                # Trio - use configured resolution
+                base_width = self._trio_resolution.width
+                base_height = self._trio_resolution.height
             elif is_couple:
-                # Couple - use configuration or default
-                base_width, base_height = self.config.group_profiles.get("couple", {}).get("default_resolution", [1024, 1024])
+                # Couple - use configured resolution
+                base_width = self._couple_resolution.width
+                base_height = self._couple_resolution.height
                 # Adjust for activity
                 activity_concepts = analysis.detected_concepts.get("activity", [])
                 if any("lying" in a or "horizontal" in a for a in activity_concepts):
-                    base_width, base_height = [1216, 832]
+                    base_width = 1216
+                    base_height = 832
             elif content in ["portrait", "character"]:
-                # Single portrait - use configuration or default
-                base_width, base_height = [896, 1152]
+                # Single portrait
+                base_width = 896
+                base_height = 1152
             elif content == "scene":
-                # Scene - use configuration or default
-                base_width, base_height = [1152, 896]
+                # Scene
+                base_width = 1152
+                base_height = 896
 
         # NEW: Increase resolution for high anatomical detail
         anatomy_count = len(analysis.detected_concepts.get("anatomy", []))
@@ -314,37 +307,31 @@ class ParameterOptimizer:
             base_width = (base_width // 64) * 64
             base_height = (base_height // 64) * 64
 
-        # Adjust for VRAM constraints using configuration presets
+        # Adjust for VRAM constraints using configured presets
         if constraints.max_vram_gb < 8:
             # Use low VRAM preset
-            preset_res = self.VRAM_PRESETS.get("low_vram", {}).get("max_resolution", [768, 768])
-            base_width = min(base_width, preset_res[0])
-            base_height = min(base_height, preset_res[1])
+            base_width = min(base_width, self._low_vram_max.width)
+            base_height = min(base_height, self._low_vram_max.height)
         elif constraints.max_vram_gb < 12:
             # Use medium VRAM preset
-            preset_res = self.VRAM_PRESETS.get("medium_vram", {}).get("max_resolution", [1024, 1024])
-            base_width = min(base_width, preset_res[0])
-            base_height = min(base_height, preset_res[1])
+            base_width = min(base_width, self._medium_vram_max.width)
+            base_height = min(base_height, self._medium_vram_max.height)
         elif constraints.max_vram_gb < 16:
             # Use high VRAM preset
-            preset_res = self.VRAM_PRESETS.get("high_vram", {}).get("max_resolution", [1216, 832])
-            base_width = min(base_width, preset_res[0])
-            base_height = min(base_height, preset_res[1])
+            base_width = min(base_width, self._high_vram_max.width)
+            base_height = min(base_height, self._high_vram_max.height)
 
-        # Use configurable min/max values
-        min_res = self.DEFAULT_RANGES.get("min_resolution", [768, 768])
-        max_res = self.DEFAULT_RANGES.get("max_resolution", [1536, 1536])
-
-        base_width = max(base_width, min_res[0])
-        base_height = max(base_height, min_res[1])
-        base_width = min(base_width, max_res[0])
-        base_height = min(base_height, max_res[1])
+        # Use configured min/max values
+        base_width = max(base_width, self._min_resolution.width)
+        base_height = max(base_height, self._min_resolution.height)
+        base_width = min(base_width, self._max_resolution.width)
+        base_height = min(base_height, self._max_resolution.height)
 
         # Round to nearest 64
         base_width = (base_width // 64) * 64
         base_height = (base_height // 64) * 64
 
-        return (base_width, base_height)
+        return Resolution(width=base_width, height=base_height)
 
     def _select_sampler(
         self, analysis: PromptAnalysis, constraints: GenerationConstraints
@@ -353,55 +340,45 @@ class ParameterOptimizer:
         Select optimal sampler from configuration.
 
         Decision matrix:
-        - Priority SPEED → Configurable speed sampler
-        - Style-based selection from configuration
-        - Default from configuration
+        - Priority SPEED → Fast sampler
+        - Style-based selection
+        - Default
         """
         # Speed priority
         if constraints.priority == Priority.SPEED:
-            # Use a fast sampler from the model strategies or default to "Euler A"
-            return self.SAMPLER_MAP.get("sdxl", {}).get("default_sampler", "Euler A")
+            return "Euler A"  # Fast sampler
 
         # Style-based selection
         if analysis.intent:
             style = analysis.intent.artistic_style
-            # Use the style name as key, fallback to lowercase name
-            style_key = style.value  # This gives us the string value like "photorealistic"
-            
-            # Look for a matching sampler in the configuration
-            if style_key in self.SAMPLER_MAP:
-                sampler = self.SAMPLER_MAP[style_key].get("default_sampler")
-                if sampler:
-                    return sampler
-            elif style_key == "PHOTOREALISTIC":
-                return self.SAMPLER_MAP.get("sdxl", {}).get("default_sampler", "DPM++ 2M Karras")
-            elif style_key == "ANIME":
-                return self.SAMPLER_MAP.get("sd20", {}).get("default_sampler", "DPM++ 2M")
-            elif style_key == "CARTOON":
-                return self.SAMPLER_MAP.get("sd20", {}).get("default_sampler", "Euler A")
-            elif style_key == "PAINTING":
-                return self.SAMPLER_MAP.get("sdxl", {}).get("default_sampler", "DPM++ 2M Karras")
-            elif style_key == "SKETCH":
-                return self.SAMPLER_MAP.get("sd20", {}).get("default_sampler", "Euler A")
-            elif style_key == "ABSTRACT":
-                return self.SAMPLER_MAP.get("sd20", {}).get("default_sampler", "Euler A")
-            elif style_key == "CONCEPT_ART":
-                return self.SAMPLER_MAP.get("sd20", {}).get("default_sampler", "DPM++ 2M")
+            style_key = style.value
 
-        # Default from config or fallback
-        return self.SAMPLER_MAP.get("sdxl", {}).get("default_sampler", "DPM++ 2M Karras")
+            if style_key == "PHOTOREALISTIC":
+                return self._sdxl_sampler
+            elif style_key == "ANIME":
+                return self._sd20_sampler
+            elif style_key == "CARTOON":
+                return "Euler A"
+            elif style_key == "PAINTING":
+                return self._sdxl_sampler
+            elif style_key == "SKETCH":
+                return "Euler A"
+            elif style_key == "ABSTRACT":
+                return "Euler A"
+            elif style_key == "CONCEPT_ART":
+                return self._sd20_sampler
+
+        # Default
+        return self._sdxl_sampler
 
     def _determine_clip_skip(self, analysis: PromptAnalysis) -> int:
         """
         Determine CLIP skip value from configuration.
         """
-        # Use default from config, defaulting to 1 for photorealistic content
-        if analysis.intent and analysis.intent.artistic_style == ArtisticStyle.PHOTOREALISTIC:
-            return self.SAMPLER_MAP.get("sdxl", {}).get("default_clip_skip", 1)
-        else:
-            return self.SAMPLER_MAP.get("sdxl", {}).get("default_clip_skip", 1)
+        # Use default clip skip
+        return self._default_clip_skip
 
-    def _estimate_vram(self, resolution: tuple[int, int], steps: int) -> float:
+    def _estimate_vram(self, resolution: Resolution, steps: int) -> float:
         """
         Estimate VRAM usage.
 
@@ -410,8 +387,7 @@ class ParameterOptimizer:
         - 768x768: ~5-6 GB
         - 512x512: ~3-4 GB
         """
-        width, height = resolution
-        pixels = width * height
+        pixels = resolution.width * resolution.height
 
         # Base VRAM (GB) = pixels / 100000
         base_vram = pixels / 100000.0
@@ -424,7 +400,7 @@ class ParameterOptimizer:
         return round(total_vram, 2)
 
     def _estimate_time(
-        self, resolution: tuple[int, int], steps: int, sampler: str
+        self, resolution: Resolution, steps: int, sampler: str
     ) -> float:
         """
         Estimate generation time.
@@ -433,8 +409,7 @@ class ParameterOptimizer:
         - NVIDIA RTX 3090 / 4090 class GPU
         - SDXL base model
         """
-        width, height = resolution
-        pixels = width * height
+        pixels = resolution.width * resolution.height
 
         # Base time per step (seconds)
         # Assumes ~0.5s/step for 1024x1024 on RTX 4090

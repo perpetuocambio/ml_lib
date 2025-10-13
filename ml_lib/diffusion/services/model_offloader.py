@@ -1,7 +1,7 @@
 """Model offloading strategies for memory optimization."""
 
 import logging
-from typing import Any
+from typing import Protocol
 
 from ml_lib.diffusion.handlers.memory_manager import MemoryManager
 from ml_lib.diffusion.models import (
@@ -10,6 +10,20 @@ from ml_lib.diffusion.models import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class ModelProtocol(Protocol):
+    """Protocol for model objects that can be moved between devices."""
+
+    def to(self, **kwargs) -> "ModelProtocol": ...  # type: ignore[misc]
+
+
+class PipelineProtocol(Protocol):
+    """Protocol for diffusion pipeline objects."""
+
+    def enable_sequential_cpu_offload(self) -> None: ...
+
+    def enable_model_cpu_offload(self) -> None: ...
 
 
 class ModelOffloader:
@@ -152,10 +166,10 @@ class ModelOffloader:
 
     def move_to_device(
         self,
-        model: Any,
+        model: ModelProtocol,
         device: str,
-        dtype: Any | None = None,
-    ) -> Any:
+        dtype: str | None = None,
+    ) -> ModelProtocol:
         """
         Move model to specified device.
 
@@ -193,7 +207,9 @@ class ModelOffloader:
             logger.error(f"Failed to move model to {device}: {e}")
             raise
 
-    def enable_sequential_cpu_offload(self, pipeline: Any) -> Any:
+    def enable_sequential_cpu_offload(
+        self, pipeline: PipelineProtocol
+    ) -> PipelineProtocol:
         """
         Enable sequential CPU offload for diffusers pipeline.
 
@@ -216,7 +232,9 @@ class ModelOffloader:
             logger.error(f"Failed to enable sequential offload: {e}")
             return pipeline
 
-    def enable_model_cpu_offload(self, pipeline: Any) -> Any:
+    def enable_model_cpu_offload(
+        self, pipeline: PipelineProtocol
+    ) -> PipelineProtocol:
         """
         Enable model-wise CPU offload for diffusers pipeline.
 
@@ -239,7 +257,9 @@ class ModelOffloader:
             logger.error(f"Failed to enable model offload: {e}")
             return pipeline
 
-    def apply_config(self, pipeline: Any, config: OffloadConfig) -> Any:
+    def apply_config(
+        self, pipeline: PipelineProtocol, config: OffloadConfig
+    ) -> PipelineProtocol:
         """
         Apply offload configuration to pipeline.
 

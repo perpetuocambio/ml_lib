@@ -430,6 +430,90 @@ class ModelOrchestrator:
             "ollama_enabled": self.enable_ollama,
         }
 
+    def select_best_model(
+        self,
+        base_model: BaseModel,
+        style_hint: Optional[str] = None,
+        min_popularity: float = 0.0,
+    ) -> Optional[ModelMetadataFile]:
+        """
+        Select best base model from available models.
 
-# TODO: Next part will be the actual selection logic
-# This is the foundation - metadata parsing and architecture definitions
+        Args:
+            base_model: Target base model architecture
+            style_hint: Optional style hint (e.g., "anime", "realistic")
+            min_popularity: Minimum popularity score (0-100)
+
+        Returns:
+            Best matching model or None if not found
+        """
+        checkpoints = self.metadata_index.get(ModelType.BASE_MODEL, [])
+
+        # Filter by base model
+        candidates = [
+            m for m in checkpoints
+            if m.get_base_model_enum() == base_model
+            and m.popularity_score >= min_popularity
+        ]
+
+        if not candidates:
+            return None
+
+        # Sort by popularity and pick best
+        candidates.sort(key=lambda m: m.popularity_score, reverse=True)
+
+        return candidates[0]
+
+    def select_compatible_loras(
+        self,
+        base_model: BaseModel,
+        prompt: str,
+        max_loras: int = 3,
+        min_confidence: float = 0.5,
+    ) -> list[ModelMetadataFile]:
+        """
+        Select compatible LoRAs for prompt.
+
+        Args:
+            base_model: Base model architecture
+            prompt: User prompt
+            max_loras: Maximum LoRAs to select
+            min_confidence: Minimum confidence score
+
+        Returns:
+            List of selected LoRAs
+        """
+        loras = self.metadata_index.get(ModelType.LORA, [])
+
+        # Filter by base model compatibility
+        compatible = [
+            lora for lora in loras
+            if lora.get_base_model_enum() == base_model
+        ]
+
+        # Score based on trigger words and tags
+        prompt_lower = prompt.lower()
+        scored_loras = []
+
+        for lora in compatible:
+            score = 0.0
+
+            # Check trigger words
+            for trigger in lora.trigger_words:
+                if trigger.lower() in prompt_lower:
+                    score += 0.3
+
+            # Check tags
+            for tag in lora.tags:
+                if tag.lower() in prompt_lower:
+                    score += 0.1
+
+            # Add popularity bonus
+            score += lora.popularity_score / 1000  # Small boost
+
+            if score >= min_confidence:
+                scored_loras.append((lora, score))
+
+        # Sort by score and return top N
+        scored_loras.sort(key=lambda x: x[1], reverse=True)
+        return [lora for lora, _ in scored_loras[:max_loras]]

@@ -6,7 +6,7 @@ import time
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Any
+from typing import Optional, Protocol
 
 import torch
 from PIL import Image
@@ -21,6 +21,7 @@ from ..entities import (
     Recommendations,
     OperationMode,
 )
+from ml_lib.diffusion.models.value_objects import ParameterModifications
 from ml_lib.diffusion.services import (
     ModelRegistry,
     PromptAnalyzer,
@@ -45,6 +46,31 @@ from ml_lib.llm.client import LLMClient
 logger = logging.getLogger(__name__)
 
 
+class PromptAnalysisProtocol(Protocol):
+    """Protocol for prompt analysis results."""
+
+    pass
+
+
+class ParameterOptimizationProtocol(Protocol):
+    """Protocol for optimized parameters."""
+
+    num_steps: int
+    guidance_scale: float
+    width: int
+    height: int
+    sampler_name: str
+
+
+class LoRARecommendationProtocol(Protocol):
+    """Protocol for LoRA recommendations."""
+
+    lora_name: str
+    suggested_alpha: float
+    confidence_score: float
+    reasoning: str
+
+
 class IntelligentGenerationPipeline:
     """
     Intelligent pipeline for image generation.
@@ -67,7 +93,7 @@ class IntelligentGenerationPipeline:
     def __init__(
         self,
         config: Optional[PipelineConfig] = None,
-        model_registry: Optional[Any] = None,
+        model_registry: Optional[ModelRegistry] = None,
     ):
         """
         Initialize intelligent generation pipeline.
@@ -82,14 +108,14 @@ class IntelligentGenerationPipeline:
         self._init_subsystems(model_registry)
 
         # Pipeline state
-        self.diffusion_pipeline: Optional[Any] = None
+        self.diffusion_pipeline: Optional[DiffusionPipeline] = None
         self.current_base_model: Optional[str] = None
 
         logger.info(
             f"IntelligentGenerationPipeline initialized (mode: {self.config.mode.value})"
         )
 
-    def _init_subsystems(self, model_registry: Optional[Any]):
+    def _init_subsystems(self, model_registry: Optional[ModelRegistry]):
         """Initialize all subsystem services."""
         # Model Registry (US 14.1)
         self.registry = model_registry or ModelRegistry()
@@ -155,7 +181,7 @@ class IntelligentGenerationPipeline:
         else:
             return OptimizationLevel.BALANCED
 
-    def _init_ollama(self) -> Optional[Any]:
+    def _init_ollama(self) -> Optional[LLMClient]:
         """Initialize Ollama client for semantic analysis."""
         if self.config.ollama_config is None:
             return None
@@ -173,7 +199,7 @@ class IntelligentGenerationPipeline:
         prompt: str,
         negative_prompt: str = "",
         seed: Optional[int] = None,
-        **overrides: Any,
+        **overrides: str,
     ) -> GenerationResult:
         """
         Generate image with intelligent pipeline.
@@ -446,7 +472,7 @@ class IntelligentGenerationPipeline:
         generation_id: str,
         rating: int,
         comments: str = "",
-        modified_params: Optional[dict[str, Any]] = None,
+        modified_params: Optional[ParameterModifications] = None,
     ):
         """
         Provide feedback for a generation to improve future recommendations.
@@ -471,7 +497,7 @@ class IntelligentGenerationPipeline:
             recommended_loras=[],  # Would be retrieved
             recommended_params={},  # Would be retrieved
             rating=rating,
-            user_modified_params=modified_params,
+            user_modified_params=modified_params.to_dict() if modified_params else None,
             notes=comments,
         )
 
@@ -481,7 +507,7 @@ class IntelligentGenerationPipeline:
     def _ensure_pipeline_loaded(
         self,
         base_model: str,
-        loras: list[Any],
+        loras: list[LoRARecommendationProtocol],
     ):
         """
         Ensure diffusion pipeline is loaded with correct model and LoRAs.
@@ -529,7 +555,7 @@ class IntelligentGenerationPipeline:
         self.current_base_model = model_id
         logger.info(f"✅ Model loaded and optimized: {model_id}")
 
-    def _apply_loras(self, lora_recs: list[Any]):
+    def _apply_loras(self, lora_recs: list[LoRARecommendationProtocol]):
         """
         Apply LoRAs to the pipeline.
 
@@ -544,15 +570,54 @@ class IntelligentGenerationPipeline:
             logger.debug(
                 f"Applying LoRA: {rec.lora_name} (alpha={rec.suggested_alpha:.2f})"
             )
-            # In production: self.diffusion_pipeline.load_lora_weights(...)
+            try:
+                # Real implementation using diffusers
+                # Try to load LoRA weights if available
+                lora_path = self._resolve_lora_path(rec.lora_name)
+                if lora_path:
+                    self.diffusion_pipeline.load_lora_weights(
+                        lora_path,
+                        adapter_name=rec.lora_name
+                    )
+                    # Set LoRA scale
+                    self.diffusion_pipeline.set_adapters(
+                        [rec.lora_name],
+                        adapter_weights=[rec.suggested_alpha]
+                    )
+                    logger.info(f"✅ LoRA loaded: {rec.lora_name}")
+                else:
+                    logger.warning(f"LoRA path not found for: {rec.lora_name}")
+            except Exception as e:
+                logger.error(f"Failed to load LoRA {rec.lora_name}: {e}")
+                # Continue with other LoRAs
+
+    def _resolve_lora_path(self, lora_name: str) -> Optional[str]:
+        """
+        Resolve LoRA name to file path.
+
+        Args:
+            lora_name: LoRA name to resolve
+
+        Returns:
+            Path to LoRA file or None if not found
+        """
+        # Try to get from registry
+        if self.registry:
+            lora_info = self.registry.get_lora_by_name(lora_name)
+            if lora_info and hasattr(lora_info, 'path'):
+                return str(lora_info.path)
+
+        # Could also check common locations
+        # For now, return None if not in registry
+        return None
 
     def _generate_image(
         self,
         prompt: str,
         negative_prompt: str,
-        params: Any,
+        params: ParameterOptimizationProtocol,
         seed: int,
-    ) -> Any:
+    ) -> Image.Image:
         """
         Generate image using diffusion pipeline with IMMEDIATE memory cleanup.
 
@@ -618,9 +683,9 @@ class IntelligentGenerationPipeline:
 
     def _build_explanation(
         self,
-        analysis: Any,
-        lora_recs: list[Any],
-        params: Any,
+        analysis: PromptAnalysisProtocol,
+        lora_recs: list[LoRARecommendationProtocol],
+        params: ParameterOptimizationProtocol,
         generation_time: Optional[float] = None,
     ) -> GenerationExplanation:
         """
@@ -682,7 +747,9 @@ class IntelligentGenerationPipeline:
             performance_notes=performance_notes,
         )
 
-    def _apply_learning_adjustments(self, lora_recs: list[Any]) -> list[Any]:
+    def _apply_learning_adjustments(
+        self, lora_recs: list[LoRARecommendationProtocol]
+    ) -> list[LoRARecommendationProtocol]:
         """
         Apply learning engine adjustments to LoRA recommendations.
 

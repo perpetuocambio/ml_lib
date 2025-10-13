@@ -6,7 +6,13 @@ This module consolidates all memory-related entities from the intelligent memory
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Protocol
+
+
+class ModelProtocol(Protocol):
+    """Protocol for generic model objects."""
+
+    pass
 
 
 # ==================== System Resources ====================
@@ -122,7 +128,7 @@ class EvictionPolicy(Enum):
 class LoadedModel:
     """Tracking information for a loaded model."""
 
-    model: Any  # The actual model object
+    model: ModelProtocol  # The actual model object
     size_gb: float
     loaded_at: datetime
     device: str = "cuda"

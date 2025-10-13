@@ -20,9 +20,18 @@ import gc
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional
+from typing import Optional
 
 import torch
+
+from ml_lib.diffusion.models.value_objects.memory_stats import (
+    MemoryStatistics,
+    PipelineProtocol,
+    VAEProtocol,
+    UNetProtocol,
+    TransformerProtocol,
+    ModelComponentProtocol,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +159,7 @@ class MemoryOptimizer:
         self.config = config
         logger.info(f"MemoryOptimizer initialized with level: {config.level.value}")
 
-    def optimize_pipeline(self, pipeline: Any) -> None:
+    def optimize_pipeline(self, pipeline: PipelineProtocol) -> None:
         """
         Apply ALL memory optimizations to pipeline.
 
@@ -188,7 +197,7 @@ class MemoryOptimizer:
         logger.info("✅ All memory optimizations applied")
         self._log_memory_stats()
 
-    def _apply_group_offloading(self, pipeline: Any) -> None:
+    def _apply_group_offloading(self, pipeline: PipelineProtocol) -> None:
         """Apply group offloading (ULTRA level)."""
         try:
             from diffusers.hooks import apply_group_offloading
@@ -227,7 +236,7 @@ class MemoryOptimizer:
             logger.warning("Group offloading not available, falling back to model offload")
             self._apply_model_offload(pipeline)
 
-    def _apply_sequential_offload(self, pipeline: Any) -> None:
+    def _apply_sequential_offload(self, pipeline: PipelineProtocol) -> None:
         """Apply sequential CPU offload (AGGRESSIVE level)."""
         try:
             pipeline.enable_sequential_cpu_offload()
@@ -235,7 +244,7 @@ class MemoryOptimizer:
         except Exception as e:
             logger.warning(f"Sequential offload failed: {e}")
 
-    def _apply_model_offload(self, pipeline: Any) -> None:
+    def _apply_model_offload(self, pipeline: PipelineProtocol) -> None:
         """Apply model CPU offload (BALANCED level)."""
         try:
             pipeline.enable_model_cpu_offload()
@@ -243,7 +252,7 @@ class MemoryOptimizer:
         except Exception as e:
             logger.warning(f"Model offload failed: {e}")
 
-    def _optimize_vae(self, vae: Any) -> None:
+    def _optimize_vae(self, vae: VAEProtocol) -> None:
         """Optimize VAE for minimum memory."""
         if self.config.enable_vae_tiling:
             try:
@@ -270,7 +279,7 @@ class MemoryOptimizer:
             except Exception as e:
                 logger.warning(f"FP8 casting failed: {e}")
 
-    def _optimize_attention(self, pipeline: Any) -> None:
+    def _optimize_attention(self, pipeline: PipelineProtocol) -> None:
         """Optimize attention mechanism."""
         if self.config.enable_attention_slicing:
             try:
@@ -286,7 +295,7 @@ class MemoryOptimizer:
             except Exception as e:
                 logger.warning(f"xFormers failed (not installed?): {e}")
 
-    def _optimize_unet(self, unet: Any) -> None:
+    def _optimize_unet(self, unet: UNetProtocol) -> None:
         """Optimize UNet."""
         if self.config.enable_forward_chunking:
             try:
@@ -295,7 +304,7 @@ class MemoryOptimizer:
             except Exception as e:
                 logger.warning(f"Forward chunking failed: {e}")
 
-    def _optimize_transformer(self, transformer: Any) -> None:
+    def _optimize_transformer(self, transformer: TransformerProtocol) -> None:
         """Optimize transformer (for FLUX, etc.)."""
         # FP8 layerwise casting (ULTRA level)
         if self.config.use_fp8_layerwise:
@@ -344,22 +353,24 @@ class MemoryOptimizer:
             reserved = torch.cuda.memory_reserved() / 1024**3
             logger.info(f"GPU Memory: {allocated:.2f}GB allocated, {reserved:.2f}GB reserved")
 
-    def get_memory_stats(self) -> dict[str, float]:
+    def get_memory_stats(self) -> MemoryStatistics:
         """Get current memory statistics."""
         if not torch.cuda.is_available():
-            return {"allocated_gb": 0.0, "reserved_gb": 0.0, "free_gb": 0.0}
+            return MemoryStatistics(
+                allocated_gb=0.0, reserved_gb=0.0, free_gb=0.0, total_gb=0.0
+            )
 
         allocated = torch.cuda.memory_allocated() / 1024**3
         reserved = torch.cuda.memory_reserved() / 1024**3
         total = torch.cuda.get_device_properties(0).total_memory / 1024**3
         free = total - allocated
 
-        return {
-            "allocated_gb": round(allocated, 2),
-            "reserved_gb": round(reserved, 2),
-            "free_gb": round(free, 2),
-            "total_gb": round(total, 2),
-        }
+        return MemoryStatistics(
+            allocated_gb=round(allocated, 2),
+            reserved_gb=round(reserved, 2),
+            free_gb=round(free, 2),
+            total_gb=round(total, 2),
+        )
 
 
 class MemoryMonitor:

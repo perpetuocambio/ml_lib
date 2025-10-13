@@ -1,8 +1,9 @@
 """ControlNet handler for spatial control in image generation."""
 
 import logging
-from typing import Optional, Any
+from typing import Optional, Protocol
 from pathlib import Path
+from dataclasses import dataclass
 
 from ml_lib.diffusion.models import (
     ControlNetConfig,
@@ -11,6 +12,24 @@ from ml_lib.diffusion.models import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class PipelineProtocol(Protocol):
+    """Protocol for diffusion pipeline objects."""
+    pass  # Pipelines can be any type implementing this
+
+
+class ModelRegistryProtocol(Protocol):
+    """Protocol for model registry."""
+    pass  # Model registries can be any type implementing this
+
+
+@dataclass
+class LoadedControlNetInfo:
+    """Information about a loaded ControlNet model."""
+    config: ControlNetConfig
+    model: Optional[object]  # Would be ControlNetModel in production
+    device: str
 
 
 class ControlNetHandler:
@@ -26,7 +45,7 @@ class ControlNetHandler:
     Full implementation requires torch/diffusers/controlnet_aux.
     """
 
-    def __init__(self, model_registry: Optional[Any] = None):
+    def __init__(self, model_registry: Optional[ModelRegistryProtocol] = None):
         """
         Initialize ControlNet handler.
 
@@ -34,7 +53,7 @@ class ControlNetHandler:
             model_registry: ModelRegistry for finding/loading models
         """
         self.model_registry = model_registry
-        self.loaded_models: dict[str, Any] = {}
+        self._loaded_models: dict[str, LoadedControlNetInfo] = {}
         logger.info("ControlNetHandler initialized")
 
     def load_controlnet(
@@ -47,11 +66,11 @@ class ControlNetHandler:
             config: ControlNet configuration
             device: Device to load model on
 
-        Note: Placeholder implementation. Real version would use:
-            from diffusers import ControlNetModel
-            model = ControlNetModel.from_pretrained(config.model_id)
+        Raises:
+            ImportError: If diffusers is not installed
+            RuntimeError: If model loading fails
         """
-        if config.model_id in self.loaded_models:
+        if config.model_id in self._loaded_models:
             logger.debug(f"ControlNet {config.model_id} already loaded")
             return
 
@@ -59,55 +78,154 @@ class ControlNetHandler:
             f"Loading ControlNet: {config.model_id} (type: {config.control_type.value})"
         )
 
-        # Placeholder for actual loading
-        # In production:
-        # from diffusers import ControlNetModel
-        # model = ControlNetModel.from_pretrained(config.model_id, torch_dtype=torch.float16)
-        # model = model.to(device)
+        try:
+            from diffusers import ControlNetModel
+            import torch
 
-        self.loaded_models[config.model_id] = {
-            "config": config,
-            "model": None,  # Would be actual ControlNetModel
-            "device": device,
-        }
+            # Determine dtype for memory efficiency
+            torch_dtype = torch.float16 if device == "cuda" else torch.float32
 
-        logger.info(f"ControlNet {config.model_id} loaded successfully")
+            # Try to load from registry first
+            model_path = None
+            if self.model_registry:
+                try:
+                    controlnet_info = self.model_registry.get_model_by_name(
+                        config.model_id, "controlnet"
+                    )
+                    if controlnet_info and hasattr(controlnet_info, 'path'):
+                        model_path = str(controlnet_info.path)
+                        logger.debug(f"Found ControlNet in registry: {model_path}")
+                except Exception as e:
+                    logger.debug(f"Could not resolve ControlNet from registry: {e}")
+
+            # Load model
+            if model_path and Path(model_path).exists():
+                # Load from local path
+                model = ControlNetModel.from_pretrained(
+                    model_path,
+                    torch_dtype=torch_dtype,
+                    use_safetensors=True
+                )
+                logger.info(f"Loaded ControlNet from local path: {model_path}")
+            else:
+                # Load from HuggingFace Hub
+                model = ControlNetModel.from_pretrained(
+                    config.model_id,
+                    torch_dtype=torch_dtype
+                )
+                logger.info(f"Loaded ControlNet from HuggingFace: {config.model_id}")
+
+            # Move to device
+            model = model.to(device)
+
+            self._loaded_models[config.model_id] = LoadedControlNetInfo(
+                config=config,
+                model=model,
+                device=device,
+            )
+
+            logger.info(f"✅ ControlNet {config.model_id} loaded successfully on {device}")
+
+        except ImportError:
+            logger.error(
+                "Failed to import diffusers. Install with: pip install diffusers torch"
+            )
+            raise
+        except Exception as e:
+            logger.error(f"Failed to load ControlNet {config.model_id}: {e}")
+            # Store placeholder to indicate attempted load
+            self._loaded_models[config.model_id] = LoadedControlNetInfo(
+                config=config,
+                model=None,
+                device=device,
+            )
+            raise RuntimeError(f"Failed to load ControlNet: {e}") from e
 
     def apply_control(
         self,
         control_image: ControlImage,
-        pipeline: Any,
-        **kwargs: Any,
-    ) -> Any:
+        pipeline: PipelineProtocol,
+    ) -> PipelineProtocol:
         """
         Apply ControlNet control to generation pipeline.
 
         Args:
             control_image: Processed control image
             pipeline: Diffusion pipeline to modify
-            **kwargs: Additional generation parameters
 
         Returns:
-            Modified pipeline or generation kwargs
+            Modified pipeline with ControlNet conditioning
 
-        Note: Placeholder. Real implementation would:
-        1. Ensure ControlNet is loaded
-        2. Add control_image to pipeline inputs
-        3. Set conditioning_scale
+        Implementation:
+        1. Validates ControlNet is loaded
+        2. Prepares control image for pipeline
+        3. Attaches ControlNet to pipeline
+        4. Sets conditioning scale
+
+        Note: The pipeline must support ControlNet (e.g., StableDiffusionControlNetPipeline)
         """
         logger.info(
             f"Applying {control_image.control_type.value} control "
             f"(scale: {control_image.scale:.2f})"
         )
 
-        # In production, this would modify the pipeline:
-        # return {
-        #     **kwargs,
-        #     'image': control_image.image,
-        #     'controlnet_conditioning_scale': control_image.scale
-        # }
+        # Find matching loaded ControlNet
+        controlnet_model = None
+        for model_id, info in self._loaded_models.items():
+            if info.config.control_type == control_image.control_type and info.model is not None:
+                controlnet_model = info.model
+                logger.debug(f"Using loaded ControlNet: {model_id}")
+                break
 
-        return kwargs
+        if controlnet_model is None:
+            logger.warning(
+                f"No ControlNet loaded for type {control_image.control_type.value}. "
+                "Control will not be applied."
+            )
+            return pipeline
+
+        try:
+            # Set ControlNet conditioning
+            # This depends on the pipeline type
+            if hasattr(pipeline, 'controlnet'):
+                # StableDiffusionControlNetPipeline
+                pipeline.controlnet = controlnet_model
+                logger.debug("✅ ControlNet attached to pipeline")
+            elif hasattr(pipeline, 'set_adapters'):
+                # ControlNet as adapter (newer diffusers API)
+                pipeline.set_adapters([controlnet_model])
+                logger.debug("✅ ControlNet set as adapter")
+            else:
+                logger.warning(
+                    "Pipeline does not support ControlNet (no controlnet attribute or set_adapters). "
+                    "Ensure you're using StableDiffusionControlNetPipeline or compatible."
+                )
+                return pipeline
+
+            # Store control image and scale for pipeline to use during generation
+            # The actual conditioning happens inside pipeline's forward pass
+            if hasattr(pipeline, 'controlnet_conditioning_scale'):
+                pipeline.controlnet_conditioning_scale = control_image.scale
+
+            # Store control image reference
+            if hasattr(pipeline, 'control_image'):
+                pipeline.control_image = control_image.image
+            else:
+                logger.warning(
+                    "Pipeline doesn't have control_image attribute. "
+                    "Control image must be passed during generation call."
+                )
+
+            logger.info(
+                f"✅ ControlNet control applied: {control_image.control_type.value} "
+                f"(scale: {control_image.scale:.2f})"
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to apply ControlNet control: {e}")
+            logger.exception(e)
+
+        return pipeline
 
     def unload_controlnet(self, model_id: str) -> None:
         """
@@ -116,13 +234,13 @@ class ControlNetHandler:
         Args:
             model_id: ID of model to unload
         """
-        if model_id in self.loaded_models:
-            del self.loaded_models[model_id]
+        if model_id in self._loaded_models:
+            del self._loaded_models[model_id]
             logger.info(f"Unloaded ControlNet: {model_id}")
 
     def list_loaded_models(self) -> list[str]:
         """Get list of loaded ControlNet model IDs."""
-        return list(self.loaded_models.keys())
+        return list(self._loaded_models.keys())
 
     def get_recommended_scale(
         self, control_type: ControlType, complexity: str = "moderate"

@@ -3,7 +3,7 @@
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Optional, Callable, Any
+from typing import Optional, Callable, Protocol
 import random
 
 from ..entities import (
@@ -13,6 +13,30 @@ from ..entities import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class IntelligentPipelineProtocol(Protocol):
+    """Protocol for intelligent generation pipeline."""
+
+    def analyze_and_recommend(self, prompt: str) -> object: ...
+
+    def generate_from_recommendations(
+        self,
+        prompt: str,
+        recommendations: object,
+        negative_prompt: str = "",
+        seed: Optional[int] = None,
+    ) -> GenerationResult: ...
+
+    def generate(
+        self, prompt: str, negative_prompt: str = "", **kwargs: str
+    ) -> GenerationResult: ...
+
+
+class RecommendationsProtocol(Protocol):
+    """Protocol for recommendations."""
+
+    suggested_params: object
 
 
 class BatchProcessor:
@@ -38,7 +62,7 @@ class BatchProcessor:
         ... )
     """
 
-    def __init__(self, pipeline: Any):
+    def __init__(self, pipeline: IntelligentPipelineProtocol):
         """
         Initialize batch processor.
 
@@ -247,8 +271,8 @@ class BatchProcessor:
         return results
 
     def _generate_param_variations(
-        self, base_recs: Any, num_variations: int
-    ) -> list[dict[str, Any]]:
+        self, base_recs: RecommendationsProtocol, num_variations: int
+    ) -> list[dict[str, int | float]]:
         """
         Generate parameter variations from base recommendations.
 
@@ -257,7 +281,11 @@ class BatchProcessor:
             num_variations: Number of variations to generate
 
         Returns:
-            List of parameter dictionaries
+            List of parameter dictionaries (internal use only)
+
+        Note:
+            Returns dict for internal use to pass as **kwargs.
+            This is acceptable as it's a private method.
         """
         base_params = base_recs.suggested_params
         variations = []

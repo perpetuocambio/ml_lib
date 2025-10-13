@@ -1,11 +1,23 @@
 """Decision explainer for explaining AI decisions in generation."""
 
 import logging
-from typing import Any, Optional
+from typing import Optional, Protocol
 from dataclasses import dataclass
 from enum import Enum
 
 logger = logging.getLogger(__name__)
+
+
+class PromptAnalysisProtocol(Protocol):
+    """Protocol for prompt analysis results."""
+
+    pass
+
+
+class GenerationResultProtocol(Protocol):
+    """Protocol for generation results."""
+
+    pass
 
 
 class ExplanationVerbosity(Enum):
@@ -31,10 +43,10 @@ class DecisionContext:
     decision_type: str
     """Type of decision (e.g., 'lora_selection', 'parameter_choice')."""
 
-    decision_value: Any
+    decision_value: str
     """The actual decision/value chosen."""
 
-    alternatives: list[Any]
+    alternatives: list[str]
     """Other options that were considered."""
 
     reasoning: str
@@ -120,23 +132,27 @@ class DecisionExplainer:
     def explain_parameter_choice(
         self,
         param_name: str,
-        param_value: Any,
+        param_value: str,
         reasoning: str,
-        default_value: Optional[Any] = None,
-        constraints: Optional[dict[str, Any]] = None,
+        default_value: Optional[str] = None,
+        constraints: Optional[dict[str, str]] = None,
     ) -> str:
         """
         Explain why a parameter was set to a specific value.
 
         Args:
             param_name: Parameter name
-            param_value: Chosen value
+            param_value: Chosen value (as string for display)
             reasoning: Reasoning text
             default_value: Default value (if different)
             constraints: Any constraints that influenced the choice
 
         Returns:
             Explanation text
+
+        Note:
+            All values should be passed as strings for display purposes.
+            Callers should convert numeric/other values to strings before calling.
         """
         explanation_parts = []
 
@@ -232,7 +248,7 @@ class DecisionExplainer:
     def explain_complete_decision_chain(
         self,
         prompt: str,
-        analysis: Any,
+        analysis: PromptAnalysisProtocol,
         lora_decisions: list[DecisionContext],
         param_decisions: list[DecisionContext],
         final_outcome: str,
@@ -332,7 +348,7 @@ class DecisionExplainer:
 
     def create_user_friendly_summary(
         self,
-        result: Any,
+        result: GenerationResultProtocol,
         include_tips: bool = True,
     ) -> str:
         """

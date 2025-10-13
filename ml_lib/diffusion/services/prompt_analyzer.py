@@ -3,7 +3,7 @@
 import json
 import logging
 import re
-from typing import Optional
+from typing import Optional, Protocol
 from pathlib import Path
 
 from ml_lib.llm.entities.llm_prompt import LLMPrompt
@@ -18,10 +18,24 @@ from ml_lib.diffusion.models import (
     ContentType,
     QualityLevel,
 )
-# ConfigLoader removed - no longer needed
-# from ml_lib.diffusion.handlers.config_loader import ConfigLoader
+from ml_lib.diffusion.models.value_objects import (
+    ConceptMap,
+    Concept,
+    EmphasisMap,
+    Emphasis,
+)
 
 logger = logging.getLogger(__name__)
+
+
+class ConfigProtocol(Protocol):
+    """Protocol for configuration dict."""
+    def get(self, key: str, default=None) -> list[str]:
+        """Get configuration value."""
+        ...
+    def items(self) -> list[tuple[str, list[str]]]:
+        """Get all items."""
+        ...
 
 
 class PromptAnalyzer:
@@ -32,7 +46,7 @@ class PromptAnalyzer:
 
     def __init__(
         self,
-        config: dict | None = None,
+        config: Optional[ConfigProtocol] = None,
         ollama_url: str = "http://localhost:11434",
         model_name: str = "llama2",
         use_llm: bool = True,
@@ -41,22 +55,19 @@ class PromptAnalyzer:
         Initialize prompt analyzer.
 
         Args:
-            config: Optional concept categories dict (if None, uses defaults)
+            config: Optional concept categories config (if None, uses defaults)
             ollama_url: Ollama server URL
             model_name: Ollama model to use
             use_llm: Whether to use LLM for enhanced analysis
         """
-        # Use default concept categories if none provided
-        if config is None:
-            config = {
-                "character": ["woman", "man", "person", "character"],
-                "style": ["photorealistic", "anime", "cartoon", "realistic"],
-                "content": ["portrait", "scene", "landscape"],
-                "quality": ["masterpiece", "high quality", "detailed"],
-            }
+        # Define default concept categories as explicit attributes
+        self._character_keywords = ["woman", "man", "person", "character"]
+        self._style_keywords = ["photorealistic", "anime", "cartoon", "realistic"]
+        self._content_keywords = ["portrait", "scene", "landscape"]
+        self._quality_keywords = ["masterpiece", "high quality", "detailed"]
 
+        # Store config if provided
         self.config = config
-        self.CONCEPT_CATEGORIES = config
         self.use_llm = use_llm
 
         if use_llm:
@@ -140,16 +151,24 @@ class PromptAnalyzer:
 
     def _extract_concepts(
         self, tokens: list[str], full_prompt: str
-    ) -> dict[str, list[str]]:
+    ) -> ConceptMap:
         """
         Extract concepts by category.
 
         If LLM is available, enhances extraction with semantic understanding.
         """
-        concepts = {}
+        # Build category-keyword mapping
+        categories = {
+            "character": self._character_keywords,
+            "style": self._style_keywords,
+            "content": self._content_keywords,
+            "quality": self._quality_keywords,
+        }
+
+        concepts_list: list[Concept] = []
 
         # Rule-based extraction
-        for category, keywords in self.CONCEPT_CATEGORIES.items():
+        for category, keywords in categories.items():
             found = []
             for token in tokens:
                 token_lower = token.lower()
@@ -159,22 +178,36 @@ class PromptAnalyzer:
                         break
 
             if found:
-                concepts[category] = list(set(found))
+                # Remove duplicates
+                unique_values = list(set(found))
+                concepts_list.append(Concept(category=category, values=unique_values))
 
         # Enhance with LLM if available
         if self.use_llm and full_prompt:
-            llm_concepts = self._llm_extract_concepts(full_prompt)
+            llm_concept_map = self._llm_extract_concepts(full_prompt)
             # Merge LLM results
-            for category, items in llm_concepts.items():
-                if category in concepts:
-                    concepts[category].extend(items)
-                    concepts[category] = list(set(concepts[category]))
+            for llm_concept in llm_concept_map.concepts:
+                # Find existing concept with same category
+                existing = None
+                for i, c in enumerate(concepts_list):
+                    if c.category == llm_concept.category:
+                        existing = i
+                        break
+
+                if existing is not None:
+                    # Merge values
+                    merged_values = list(set(concepts_list[existing].values + llm_concept.values))
+                    concepts_list[existing] = Concept(
+                        category=llm_concept.category,
+                        values=merged_values
+                    )
                 else:
-                    concepts[category] = items
+                    # Add new category
+                    concepts_list.append(llm_concept)
 
-        return concepts
+        return ConceptMap(concepts=concepts_list)
 
-    def _llm_extract_concepts(self, prompt: str) -> dict[str, list[str]]:
+    def _llm_extract_concepts(self, prompt: str) -> ConceptMap:
         """Use LLM to extract concepts semantically."""
         try:
             analysis_prompt = f"""Analyze this image generation prompt and extract key concepts:
@@ -198,19 +231,27 @@ JSON:"""
             elif "```" in content:
                 content = content.split("```")[1].split("```")[0].strip()
 
-            concepts = json.loads(content)
-            return concepts
+            concepts_dict = json.loads(content)
+
+            # Convert dict to ConceptMap
+            concepts_list = [
+                Concept(category=category, values=values)
+                for category, values in concepts_dict.items()
+                if values  # Only include non-empty categories
+            ]
+
+            return ConceptMap(concepts=concepts_list)
 
         except Exception as e:
             logger.warning(f"LLM concept extraction failed: {e}")
-            return {}
+            return ConceptMap(concepts=[])
 
     def _detect_intent(
-        self, concepts: dict[str, list[str]], tokens: list[str], full_prompt: str
+        self, concepts: ConceptMap, tokens: list[str], full_prompt: str
     ) -> Intent:
         """Detect artistic intent from concepts."""
         # Detect artistic style - ALWAYS default to photorealistic
-        style_concepts = concepts.get("style", [])
+        style_concepts = concepts.get_category("style")
         artistic_style = ArtisticStyle.PHOTOREALISTIC  # DEFAULT: Always photorealistic
 
         # Only check for explicit fantasy/sci-fi modifiers
@@ -251,13 +292,13 @@ JSON:"""
             content_type = ContentType.PORTRAIT
 
         # Default to character for single subject
-        elif concepts.get("subjects"):
+        elif concepts.get_category("subjects"):
             content_type = ContentType.CHARACTER
 
         # Detect quality level
         quality_level = QualityLevel.MEDIUM
 
-        quality_concepts = concepts.get("quality", [])
+        quality_concepts = concepts.get_category("quality")
         if any(kw in " ".join(quality_concepts).lower() for kw in ["masterpiece"]):
             quality_level = QualityLevel.MASTERPIECE
         elif any(
@@ -319,7 +360,7 @@ JSON:"""
             return None
 
     def _calculate_complexity(
-        self, tokens: list[str], concepts: dict[str, list[str]]
+        self, tokens: list[str], concepts: ConceptMap
     ) -> float:
         """
         Calculate complexity score (0-1).
@@ -333,7 +374,7 @@ JSON:"""
         lexical = min(len(tokens) / 100.0, 1.0)
 
         # Semantic complexity (concept diversity)
-        semantic = min(len(concepts) / 10.0, 1.0)
+        semantic = min(len(concepts.concepts) / 10.0, 1.0)
 
         # Detail complexity
         detail_keywords = [
@@ -354,7 +395,7 @@ JSON:"""
 
         return min(max(score, 0.0), 1.0)
 
-    def _build_emphasis_map(self, tokens: list[str], prompt: str) -> dict[str, float]:
+    def _build_emphasis_map(self, tokens: list[str], prompt: str) -> EmphasisMap:
         """
         Build emphasis map based on SD syntax.
 
@@ -362,7 +403,7 @@ JSON:"""
         ((word)) = 1.21x emphasis
         [word] = 0.9x de-emphasis
         """
-        emphasis_map = {}
+        emphases: list[Emphasis] = []
 
         # Count emphasis markers
         for token in tokens:
@@ -374,13 +415,14 @@ JSON:"""
             open_count = prompt.count(f"({token})")
             double_open = prompt.count(f"(({token}))")
 
+            weight = 1.0
             if double_open > 0:
-                emphasis_map[base_token] = 1.21
+                weight = 1.21
             elif open_count > 0:
-                emphasis_map[base_token] = 1.1
+                weight = 1.1
             elif f"[{token}]" in prompt:
-                emphasis_map[base_token] = 0.9
-            else:
-                emphasis_map[base_token] = 1.0
+                weight = 0.9
 
-        return emphasis_map
+            emphases.append(Emphasis(keyword=base_token, weight=weight))
+
+        return EmphasisMap(emphases=emphases)

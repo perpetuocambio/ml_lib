@@ -170,7 +170,7 @@ class MemoryManager:
             if torch.cuda.is_available():
                 return torch.cuda.memory_allocated(0) / (1024**3)
         except ImportError:
-            pass
+            logger.debug("torch not available, cannot get VRAM usage")
 
         return 0.0
 
@@ -187,7 +187,7 @@ class MemoryManager:
             if torch.cuda.is_available():
                 return torch.cuda.max_memory_allocated(0) / (1024**3)
         except ImportError:
-            pass
+            logger.debug("torch not available, cannot get peak VRAM usage")
 
         return 0.0
 
@@ -215,7 +215,7 @@ class MemoryManager:
                 torch.cuda.empty_cache()
                 logger.debug("CUDA cache cleared")
         except ImportError:
-            pass
+            logger.debug("torch not available, skipping cache clear")
 
         gc.collect()
         logger.debug("Garbage collection completed")
@@ -229,7 +229,7 @@ class MemoryManager:
                 torch.cuda.reset_peak_memory_stats()
                 logger.debug("Peak memory stats reset")
         except ImportError:
-            pass
+            logger.debug("torch not available, skipping peak memory reset")
 
     def get_available_vram(self) -> float:
         """

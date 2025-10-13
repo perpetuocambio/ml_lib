@@ -767,8 +767,8 @@ class IntelligentPipelineBuilder:
             try:
                 if hasattr(pipeline, "to"):
                     pipeline.to("cpu")
-            except:
-                pass
+            except Exception as e:
+                logger.debug(f"Could not offload pipeline to CPU: {e}")
 
         # Force garbage collection
         gc.collect()

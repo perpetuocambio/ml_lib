@@ -18,16 +18,25 @@ Features:
 
 import json
 import uuid
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 from PIL import Image
 from PIL.ExifTags import TAGS
 from PIL.PngImagePlugin import PngInfo
 
 from ml_lib.diffusion.services.image_naming import ImageNamingConfig
+
+
+@dataclass(frozen=True)
+class LoRAMetadataEntry:
+    """LoRA metadata entry for image metadata."""
+
+    name: str
+    weight: float
+    source: str = "unknown"
 
 
 @dataclass
@@ -89,8 +98,8 @@ class ImageMetadataEmbedding:
     """VAE model if custom."""
 
     # LoRAs
-    loras_used: list[dict[str, Any]] = None
-    """List of LoRAs: [{"name": "...", "weight": 0.8, "source": "..."}]"""
+    loras_used: list[LoRAMetadataEntry] = field(default_factory=list)
+    """List of LoRAs used in generation."""
 
     # Performance
     generation_time_seconds: Optional[float] = None
@@ -106,22 +115,32 @@ class ImageMetadataEmbedding:
     pipeline_version: str = "1.0.0"
     """Version of pipeline used."""
 
-    def __post_init__(self):
-        """Initialize lists."""
-        if self.loras_used is None:
-            self.loras_used = []
-
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization."""
-        return asdict(self)
+        data = asdict(self)
+        # Convert LoRAMetadataEntry objects to dicts for JSON serialization
+        if "loras_used" in data:
+            data["loras_used"] = [
+                {"name": lora.name, "weight": lora.weight, "source": lora.source}
+                if isinstance(lora, LoRAMetadataEntry)
+                else lora
+                for lora in self.loras_used
+            ]
+        return data
 
     def to_json(self) -> str:
         """Convert to JSON string."""
         return json.dumps(self.to_dict(), indent=2)
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "ImageMetadataEmbedding":
+    def from_dict(cls, data: dict) -> "ImageMetadataEmbedding":
         """Create from dictionary."""
+        # Convert loras_used dicts to LoRAMetadataEntry objects
+        if "loras_used" in data and data["loras_used"]:
+            data["loras_used"] = [
+                LoRAMetadataEntry(**lora) if isinstance(lora, dict) else lora
+                for lora in data["loras_used"]
+            ]
         return cls(**data)
 
     @classmethod
@@ -336,8 +355,11 @@ class ImageMetadataWriter:
         try:
             dt = datetime.fromisoformat(metadata.generation_timestamp)
             exif[0x0132] = dt.strftime("%Y:%m:%d %H:%M:%S")
-        except Exception:
-            pass
+        except Exception as e:
+            # Log parsing error but continue without timestamp in EXIF
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Could not parse timestamp for EXIF: {e}")
 
         # 0x9286 = UserComment (full metadata as JSON)
         exif[0x9286] = metadata.to_json()

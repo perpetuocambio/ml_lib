@@ -3,16 +3,37 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Any
+from typing import Optional, Protocol
 from dataclasses import dataclass, field
 import json
 
-from ml_lib.diffusion.services.learning_engine import GenerationFeedback
+from ml_lib.diffusion.models.value_objects import (
+    GenerationParameters,
+    ParameterModification,
+    ParameterModifications,
+    FeedbackStatistics,
+    TagCount,
+)
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
+class RecommendationsProtocol(Protocol):
+    """Protocol for recommendations object."""
+    suggested_loras: list  # list of LoRA recommendations
+    suggested_params: "SuggestedParamsProtocol"  # parameter recommendations
+
+
+class SuggestedParamsProtocol(Protocol):
+    """Protocol for suggested parameters."""
+    num_steps: int
+    guidance_scale: float
+    width: int
+    height: int
+    sampler_name: str
+
+
+@dataclass(frozen=True)
 class GenerationSession:
     """Tracking data for a generation session."""
 
@@ -23,15 +44,15 @@ class GenerationSession:
 
     # What was recommended
     recommended_loras: list[str]
-    recommended_params: dict[str, Any]
+    recommended_params: GenerationParameters
 
     # What was actually used (may differ if user modified)
     actual_loras: list[str]
-    actual_params: dict[str, Any]
+    actual_params: GenerationParameters
 
     # User modifications
     user_modified: bool = False
-    modifications: dict[str, Any] = field(default_factory=dict)
+    modifications: ParameterModifications = field(default_factory=lambda: ParameterModifications())
 
 
 @dataclass
@@ -71,6 +92,13 @@ class UserFeedback:
             raise ValueError("Aesthetic rating must be between 1 and 5")
 
 
+class LearningEngineProtocol(Protocol):
+    """Protocol for learning engine."""
+    def record_feedback(self, feedback: "GenerationFeedback") -> None:  # type: ignore
+        """Record feedback for learning."""
+        ...
+
+
 class FeedbackCollector:
     """
     Collects user feedback on generations for learning and improvement.
@@ -103,7 +131,7 @@ class FeedbackCollector:
 
     def __init__(
         self,
-        learning_engine: Optional[Any] = None,
+        learning_engine: Optional[LearningEngineProtocol] = None,
         session_log_path: Optional[Path] = None,
     ):
         """
@@ -117,20 +145,27 @@ class FeedbackCollector:
         self.session_log_path = session_log_path
 
         # In-memory session tracking
-        self.active_sessions: dict[str, GenerationSession] = {}
+        self._active_sessions: list[GenerationSession] = []
 
         # Feedback history
-        self.feedback_history: list[UserFeedback] = []
+        self._feedback_history: list[UserFeedback] = []
 
         logger.info("FeedbackCollector initialized")
+
+    def _find_session(self, generation_id: str) -> Optional[GenerationSession]:
+        """Find session by ID."""
+        for session in self._active_sessions:
+            if session.generation_id == generation_id:
+                return session
+        return None
 
     def start_session(
         self,
         generation_id: str,
         prompt: str,
         negative_prompt: str,
-        recommendations: Any,
-        actual_params: Optional[dict[str, Any]] = None,
+        recommendations: RecommendationsProtocol,
+        actual_params: Optional[GenerationParameters] = None,
     ) -> GenerationSession:
         """
         Start tracking a generation session.
@@ -149,27 +184,61 @@ class FeedbackCollector:
         recommended_loras = [
             lora.lora_name for lora in recommendations.suggested_loras
         ]
-        recommended_params = {
-            "num_steps": recommendations.suggested_params.num_steps,
-            "guidance_scale": recommendations.suggested_params.guidance_scale,
-            "width": recommendations.suggested_params.width,
-            "height": recommendations.suggested_params.height,
-            "sampler": recommendations.suggested_params.sampler_name,
-        }
+        recommended_params = GenerationParameters(
+            num_steps=recommendations.suggested_params.num_steps,
+            guidance_scale=recommendations.suggested_params.guidance_scale,
+            width=recommendations.suggested_params.width,
+            height=recommendations.suggested_params.height,
+            sampler=recommendations.suggested_params.sampler_name,
+            seed=None,  # Not tracked in recommendations
+        )
 
         # Check if user modified
-        actual_params = actual_params or recommended_params
-        user_modified = actual_params != recommended_params
+        actual_params_final = actual_params if actual_params is not None else recommended_params
+        user_modified = actual_params_final != recommended_params
 
-        modifications = {}
+        # Build modifications
+        modifications_dict = {}
         if user_modified:
-            for key, recommended_value in recommended_params.items():
-                actual_value = actual_params.get(key)
-                if actual_value != recommended_value:
-                    modifications[key] = {
-                        "recommended": recommended_value,
-                        "actual": actual_value,
-                    }
+            if actual_params_final.num_steps != recommended_params.num_steps:
+                modifications_dict["num_steps"] = ParameterModification(
+                    recommended_value=recommended_params.num_steps,
+                    actual_value=actual_params_final.num_steps
+                )
+            if actual_params_final.guidance_scale != recommended_params.guidance_scale:
+                modifications_dict["guidance_scale"] = ParameterModification(
+                    recommended_value=recommended_params.guidance_scale,
+                    actual_value=actual_params_final.guidance_scale
+                )
+            if actual_params_final.width != recommended_params.width:
+                modifications_dict["width"] = ParameterModification(
+                    recommended_value=recommended_params.width,
+                    actual_value=actual_params_final.width
+                )
+            if actual_params_final.height != recommended_params.height:
+                modifications_dict["height"] = ParameterModification(
+                    recommended_value=recommended_params.height,
+                    actual_value=actual_params_final.height
+                )
+            if actual_params_final.sampler != recommended_params.sampler:
+                modifications_dict["sampler"] = ParameterModification(
+                    recommended_value=recommended_params.sampler,
+                    actual_value=actual_params_final.sampler
+                )
+            if actual_params_final.seed != recommended_params.seed:
+                modifications_dict["seed"] = ParameterModification(
+                    recommended_value=recommended_params.seed if recommended_params.seed is not None else "None",
+                    actual_value=actual_params_final.seed if actual_params_final.seed is not None else "None"
+                )
+
+        modifications = ParameterModifications(
+            num_steps=modifications_dict.get("num_steps"),
+            guidance_scale=modifications_dict.get("guidance_scale"),
+            width=modifications_dict.get("width"),
+            height=modifications_dict.get("height"),
+            sampler=modifications_dict.get("sampler"),
+            seed=modifications_dict.get("seed"),
+        )
 
         session = GenerationSession(
             generation_id=generation_id,
@@ -179,12 +248,12 @@ class FeedbackCollector:
             recommended_loras=recommended_loras,
             recommended_params=recommended_params,
             actual_loras=recommended_loras,  # For now, assume same
-            actual_params=actual_params,
+            actual_params=actual_params_final,
             user_modified=user_modified,
             modifications=modifications,
         )
 
-        self.active_sessions[generation_id] = session
+        self._active_sessions.append(session)
 
         logger.debug(
             f"Started session {generation_id[:8]}... "
@@ -197,7 +266,7 @@ class FeedbackCollector:
         self,
         feedback: UserFeedback,
         session: Optional[GenerationSession] = None,
-    ):
+    ) -> None:
         """
         Collect user feedback for a generation.
 
@@ -207,7 +276,7 @@ class FeedbackCollector:
         """
         # Get session if not provided
         if session is None:
-            session = self.active_sessions.get(feedback.generation_id)
+            session = self._find_session(feedback.generation_id)
 
         if session is None:
             logger.warning(
@@ -216,7 +285,7 @@ class FeedbackCollector:
             return
 
         # Store feedback
-        self.feedback_history.append(feedback)
+        self._feedback_history.append(feedback)
 
         # Send to learning engine
         if self.learning_engine:
@@ -235,7 +304,7 @@ class FeedbackCollector:
         self,
         feedback: UserFeedback,
         session: GenerationSession,
-    ):
+    ) -> None:
         """
         Send feedback to learning engine for training.
 
@@ -243,6 +312,19 @@ class FeedbackCollector:
             feedback: User feedback
             session: Generation session
         """
+        # Import here to avoid circular dependency
+        from ml_lib.diffusion.services.learning_engine import GenerationFeedback
+
+        # Track LoRA modifications
+        user_modified_loras = None
+        if session.actual_loras != session.recommended_loras:
+            user_modified_loras = {
+                "recommended": session.recommended_loras,
+                "actual": session.actual_loras,
+                "added": [lora for lora in session.actual_loras if lora not in session.recommended_loras],
+                "removed": [lora for lora in session.recommended_loras if lora not in session.actual_loras],
+            }
+
         # Convert to learning engine format
         learning_feedback = GenerationFeedback(
             feedback_id=feedback.generation_id,
@@ -251,7 +333,7 @@ class FeedbackCollector:
             recommended_loras=session.recommended_loras,
             recommended_params=session.recommended_params,
             rating=feedback.rating,
-            user_modified_loras=None,  # TODO: track LoRA modifications
+            user_modified_loras=user_modified_loras,
             user_modified_params=(
                 session.actual_params if session.user_modified else None
             ),
@@ -260,8 +342,9 @@ class FeedbackCollector:
         )
 
         try:
-            self.learning_engine.record_feedback(learning_feedback)
-            logger.debug("Feedback sent to learning engine")
+            if self.learning_engine:
+                self.learning_engine.record_feedback(learning_feedback)
+                logger.debug("Feedback sent to learning engine")
         except Exception as e:
             logger.error(f"Failed to send feedback to learning engine: {e}")
 
@@ -269,7 +352,7 @@ class FeedbackCollector:
         self,
         session: GenerationSession,
         feedback: UserFeedback,
-    ):
+    ) -> None:
         """
         Log session and feedback to file.
 
@@ -283,16 +366,22 @@ class FeedbackCollector:
         log_path = Path(self.session_log_path)
         log_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Append to log file
+        # Create log entry - allowed dict only for JSON serialization
         log_entry = {
             "session": {
                 "generation_id": session.generation_id,
                 "timestamp": session.timestamp,
                 "prompt": session.prompt,
                 "recommended_loras": session.recommended_loras,
-                "recommended_params": session.recommended_params,
+                "recommended_params": {
+                    "num_steps": session.recommended_params.num_steps,
+                    "guidance_scale": session.recommended_params.guidance_scale,
+                    "width": session.recommended_params.width,
+                    "height": session.recommended_params.height,
+                    "sampler": session.recommended_params.sampler,
+                },
                 "user_modified": session.user_modified,
-                "modifications": session.modifications,
+                "modifications": session.modifications.count(),
             },
             "feedback": {
                 "rating": feedback.rating,
@@ -311,50 +400,57 @@ class FeedbackCollector:
         except Exception as e:
             logger.error(f"Failed to log session: {e}")
 
-    def get_feedback_stats(self) -> dict[str, Any]:
+    def get_feedback_stats(self) -> FeedbackStatistics:
         """
         Get statistics about collected feedback.
 
         Returns:
-            Dictionary with feedback statistics
+            FeedbackStatistics object with feedback statistics
         """
-        if not self.feedback_history:
-            return {
-                "total_feedback": 0,
-                "average_rating": 0.0,
-                "like_rate": 0.0,
-            }
+        if not self._feedback_history:
+            return FeedbackStatistics(
+                total_feedback=0,
+                average_rating=0.0,
+                like_rate=0.0,
+                saved_count=0,
+                shared_count=0,
+                rating_1_count=0,
+                rating_2_count=0,
+                rating_3_count=0,
+                rating_4_count=0,
+                rating_5_count=0,
+            )
 
-        total = len(self.feedback_history)
-        avg_rating = sum(f.rating for f in self.feedback_history) / total
+        total = len(self._feedback_history)
+        avg_rating = sum(f.rating for f in self._feedback_history) / total
 
         liked_count = sum(
-            1 for f in self.feedback_history if f.liked is True
+            1 for f in self._feedback_history if f.liked is True
         )
-        like_rate = liked_count / total if total > 0 else 0.0
+        like_rate = (liked_count / total * 100) if total > 0 else 0.0
 
-        saved_count = sum(1 for f in self.feedback_history if f.saved)
-        shared_count = sum(1 for f in self.feedback_history if f.shared)
+        saved_count = sum(1 for f in self._feedback_history if f.saved)
+        shared_count = sum(1 for f in self._feedback_history if f.shared)
 
-        return {
-            "total_feedback": total,
-            "average_rating": round(avg_rating, 2),
-            "like_rate": round(like_rate * 100, 1),
-            "saved_count": saved_count,
-            "shared_count": shared_count,
-            "rating_distribution": self._get_rating_distribution(),
-        }
+        # Count ratings
+        rating_counts = [0, 0, 0, 0, 0]  # Indices 0-4 for ratings 1-5
+        for feedback in self._feedback_history:
+            rating_counts[feedback.rating - 1] += 1
 
-    def _get_rating_distribution(self) -> dict[int, int]:
-        """Get distribution of ratings (1-5)."""
-        distribution = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+        return FeedbackStatistics(
+            total_feedback=total,
+            average_rating=round(avg_rating, 2),
+            like_rate=round(like_rate, 1),
+            saved_count=saved_count,
+            shared_count=shared_count,
+            rating_1_count=rating_counts[0],
+            rating_2_count=rating_counts[1],
+            rating_3_count=rating_counts[2],
+            rating_4_count=rating_counts[3],
+            rating_5_count=rating_counts[4],
+        )
 
-        for feedback in self.feedback_history:
-            distribution[feedback.rating] += 1
-
-        return distribution
-
-    def get_common_tags(self, limit: int = 10) -> list[tuple[str, int]]:
+    def get_common_tags(self, limit: int = 10) -> list[TagCount]:
         """
         Get most common feedback tags.
 
@@ -362,18 +458,29 @@ class FeedbackCollector:
             limit: Maximum tags to return
 
         Returns:
-            List of (tag, count) tuples
+            List of TagCount objects sorted by count descending
         """
-        tag_counts: dict[str, int] = {}
+        # Count tags
+        tag_count_map: list[TagCount] = []
+        tag_names_seen: list[str] = []
 
-        for feedback in self.feedback_history:
+        for feedback in self._feedback_history:
             for tag in feedback.tags:
-                tag_counts[tag] = tag_counts.get(tag, 0) + 1
+                if tag in tag_names_seen:
+                    # Update existing count
+                    for i, tc in enumerate(tag_count_map):
+                        if tc.tag == tag:
+                            tag_count_map[i] = TagCount(tag=tag, count=tc.count + 1)
+                            break
+                else:
+                    # Add new tag
+                    tag_names_seen.append(tag)
+                    tag_count_map.append(TagCount(tag=tag, count=1))
 
         # Sort by count descending
         sorted_tags = sorted(
-            tag_counts.items(),
-            key=lambda x: x[1],
+            tag_count_map,
+            key=lambda x: x.count,
             reverse=True,
         )
 
@@ -388,9 +495,29 @@ class FeedbackCollector:
         """
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
+        stats = self.get_feedback_stats()
+        common_tags = self.get_common_tags()
+
+        # Convert value objects to dicts for JSON serialization
         data = {
-            "stats": self.get_feedback_stats(),
-            "common_tags": self.get_common_tags(),
+            "stats": {
+                "total_feedback": stats.total_feedback,
+                "average_rating": stats.average_rating,
+                "like_rate": stats.like_rate,
+                "saved_count": stats.saved_count,
+                "shared_count": stats.shared_count,
+                "rating_distribution": {
+                    "1": stats.rating_1_count,
+                    "2": stats.rating_2_count,
+                    "3": stats.rating_3_count,
+                    "4": stats.rating_4_count,
+                    "5": stats.rating_5_count,
+                },
+            },
+            "common_tags": [
+                {"tag": tc.tag, "count": tc.count}
+                for tc in common_tags
+            ],
             "feedback_history": [
                 {
                     "generation_id": f.generation_id,
@@ -402,7 +529,7 @@ class FeedbackCollector:
                     "saved": f.saved,
                     "shared": f.shared,
                 }
-                for f in self.feedback_history
+                for f in self._feedback_history
             ],
         }
 
@@ -411,7 +538,7 @@ class FeedbackCollector:
 
         logger.info(f"Feedback data exported to {output_path}")
 
-    def clear_history(self, keep_recent: int = 0):
+    def clear_history(self, keep_recent: int = 0) -> None:
         """
         Clear feedback history.
 
@@ -419,8 +546,8 @@ class FeedbackCollector:
             keep_recent: Number of recent entries to keep (0 = clear all)
         """
         if keep_recent > 0:
-            self.feedback_history = self.feedback_history[-keep_recent:]
+            self._feedback_history = self._feedback_history[-keep_recent:]
         else:
-            self.feedback_history = []
+            self._feedback_history = []
 
         logger.info(f"Feedback history cleared (kept {keep_recent} recent entries)")
