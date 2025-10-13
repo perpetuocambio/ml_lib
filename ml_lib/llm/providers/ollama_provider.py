@@ -238,31 +238,60 @@ class OllamaProvider(LLMProvider):
             logger.debug("Server was not started by us, not stopping")
             return False
 
-        if self._server_process is None:
-            logger.debug("No server process to stop")
-            return False
-
-        try:
-            logger.info("Stopping Ollama server...")
-            self._server_process.terminate()
-
-            # Wait for graceful shutdown
+        # If we have a process handle, use it
+        if self._server_process is not None:
             try:
-                self._server_process.wait(timeout=5.0)
+                logger.info("Stopping Ollama server...")
+                self._server_process.terminate()
+
+                # Wait for graceful shutdown
+                try:
+                    self._server_process.wait(timeout=5.0)
+                except subprocess.TimeoutExpired:
+                    logger.warning("Server did not terminate gracefully, killing...")
+                    self._server_process.kill()
+                    self._server_process.wait(timeout=2.0)
+
+                self._server_process = None
+                self._server_started_by_us = False
+
+                logger.info("✅ Ollama server stopped")
+                return True
+
+            except Exception as e:
+                logger.error(f"Failed to stop Ollama server: {e}")
+                return False
+
+        # If force=True and no process handle, try to kill by name
+        if force:
+            try:
+                logger.info("Force-stopping Ollama server by process name...")
+                # Try to kill ollama processes
+                result = subprocess.run(
+                    ["pkill", "-9", "ollama"],
+                    capture_output=True,
+                    timeout=5
+                )
+                # pkill returns 0 if at least one process was killed
+                if result.returncode == 0:
+                    logger.info("✅ Ollama processes killed successfully")
+                    return True
+                else:
+                    logger.debug("No Ollama processes found to kill")
+                    return False
+
             except subprocess.TimeoutExpired:
-                logger.warning("Server did not terminate gracefully, killing...")
-                self._server_process.kill()
-                self._server_process.wait(timeout=2.0)
+                logger.warning("pkill command timed out")
+                return False
+            except FileNotFoundError:
+                logger.warning("pkill command not found, cannot force-stop Ollama")
+                return False
+            except Exception as e:
+                logger.error(f"Failed to force-stop Ollama: {e}")
+                return False
 
-            self._server_process = None
-            self._server_started_by_us = False
-
-            logger.info("✅ Ollama server stopped")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to stop Ollama server: {e}")
-            return False
+        logger.debug("No server process to stop")
+        return False
 
     def ensure_server_running(self) -> bool:
         """

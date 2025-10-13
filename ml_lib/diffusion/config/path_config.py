@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
-from ml_lib.diffusion.models import ModelType
+from ml_lib.diffusion.model_enums import ModelType
 
 logger = logging.getLogger(__name__)
 

@@ -100,17 +100,20 @@ class OllamaModelSelector:
 
         return self._ollama_provider
 
-    def stop_server(self) -> bool:
+    def stop_server(self, force: bool = False) -> bool:
         """
         Stop Ollama server to free memory.
 
         Call this after analysis is complete to optimize memory usage.
 
+        Args:
+            force: Force stop even if not started by us (uses pkill)
+
         Returns:
             True if stopped successfully
         """
         if self._ollama_provider:
-            return self._ollama_provider.stop_server()
+            return self._ollama_provider.stop_server(force=force)
         return False
 
     def _check_ollama(self) -> bool:
@@ -288,6 +291,10 @@ class ModelMatcher:
     Match prompt analysis to available models.
 
     Uses semantic matching to find best models for prompt.
+
+    Note: This class does NOT actually use Ollama for matching - it uses
+    algorithmic scoring based on tags, popularity, etc. The ollama_selector
+    parameter is kept for backward compatibility but is not used.
     """
 
     def __init__(self, ollama_selector: Optional[OllamaModelSelector] = None):
@@ -295,9 +302,10 @@ class ModelMatcher:
         Initialize matcher.
 
         Args:
-            ollama_selector: Ollama selector (None = create new)
+            ollama_selector: Ollama selector (optional, not used for scoring)
         """
-        self.ollama_selector = ollama_selector or OllamaModelSelector()
+        # Don't create Ollama instance if not provided - we don't actually need it
+        self.ollama_selector = ollama_selector
 
     def match_base_model(
         self, analysis: PromptAnalysis, available_models: list

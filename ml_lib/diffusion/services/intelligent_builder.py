@@ -179,10 +179,8 @@ class IntelligentPipelineBuilder:
         else:
             self.registry = None
 
-        # Initialize orchestrator
-        model_paths = self._collect_model_paths()
+        # Initialize orchestrator with SQLite
         self.orchestrator = ModelOrchestrator(
-            model_paths=model_paths,
             enable_ollama=enable_ollama,
             ollama_model=ollama_model,
             resource_monitor=self.resource_monitor,
@@ -290,20 +288,6 @@ class IntelligentPipelineBuilder:
         else:
             return "cpu"
 
-    def _collect_model_paths(self) -> list[Path]:
-        """Collect all configured model paths for orchestrator."""
-        paths = set()
-
-        # Add all configured paths
-        paths.update(self.model_config.checkpoint_paths)
-        paths.update(self.model_config.lora_paths)
-        paths.update(self.model_config.vae_paths)
-        paths.update(self.model_config.controlnet_paths)
-        paths.update(self.model_config.embedding_paths)
-        paths.update(self.model_config.clip_paths)
-        paths.update(self.model_config.clip_vision_paths)
-
-        return list(paths)
 
     def generate(
         self,
@@ -414,6 +398,20 @@ class IntelligentPipelineBuilder:
                         f"Prompt analysis: style={prompt_analysis.style}, "
                         f"suggested_model={prompt_analysis.suggested_base_model}"
                     )
+
+                # Stop Ollama server to free GPU memory for generation (force=True)
+                if selector.stop_server(force=True):
+                    logger.info("Stopped Ollama server to free GPU memory for generation")
+                    # Wait a bit for process to fully terminate
+                    import time
+                    time.sleep(2)
+                    # Force CUDA cleanup
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
+                        torch.cuda.synchronize()
+                else:
+                    logger.warning("Failed to stop Ollama server, generation may use more memory")
+
             except Exception as e:
                 logger.warning(f"Ollama analysis failed, using fallback: {e}")
 
@@ -509,8 +507,20 @@ class IntelligentPipelineBuilder:
         selected_loras = []
         lora_weights = []
 
-        if prompt_analysis and loras and selected_base:
+        # Always try to select LoRAs if available, even without Ollama analysis
+        if loras and selected_base:
             try:
+                # If no prompt_analysis, create a fallback analysis
+                if not prompt_analysis:
+                    logger.info("Creating fallback analysis for LoRA selection")
+                    selector = OllamaModelSelector(
+                        ollama_model=self.ollama_model,
+                        ollama_url=self.ollama_url or "http://localhost:11434"
+                    )
+                    prompt_analysis = selector._fallback_analysis(config.prompt)
+                    # Don't need Ollama anymore, stop it immediately
+                    selector.stop_server(force=True)
+
                 matcher = ModelMatcher()
                 lora_matches = matcher.match_loras(
                     analysis=prompt_analysis,
@@ -700,6 +710,14 @@ class IntelligentPipelineBuilder:
                         except Exception as e:
                             logger.warning(f"Failed to load LoRA {lora_path.name}: {e}")
 
+            # Configure scheduler based on sampler
+            self._configure_scheduler(pipeline, selected.sampler, selected.scheduler)
+
+            # Enable VAE tiling for memory efficiency (especially for large images)
+            if hasattr(pipeline, 'vae') and hasattr(pipeline.vae, 'enable_tiling'):
+                pipeline.vae.enable_tiling()
+                logger.info("Enabled VAE tiling for memory efficiency")
+
             # Set safety checker (disable for speed, re-enable in production)
             if hasattr(pipeline, 'safety_checker'):
                 pipeline.safety_checker = None
@@ -710,6 +728,65 @@ class IntelligentPipelineBuilder:
         except Exception as e:
             logger.error(f"Failed to load pipeline: {e}")
             raise
+
+    def _configure_scheduler(self, pipeline, sampler: str, scheduler_type: str):
+        """Configure pipeline scheduler based on sampler and scheduler type."""
+        from diffusers import (
+            DPMSolverMultistepScheduler,
+            EulerAncestralDiscreteScheduler,
+            EulerDiscreteScheduler,
+            KDPM2DiscreteScheduler,
+            KDPM2AncestralDiscreteScheduler,
+            UniPCMultistepScheduler,
+        )
+
+        # Map sampler names to scheduler classes
+        sampler_map = {
+            "dpm++ 2m": DPMSolverMultistepScheduler,
+            "dpm++ 2m karras": DPMSolverMultistepScheduler,
+            "dpm++ 2m sde": DPMSolverMultistepScheduler,
+            "dpm++ 2m sde karras": DPMSolverMultistepScheduler,
+            "euler a": EulerAncestralDiscreteScheduler,
+            "euler": EulerDiscreteScheduler,
+            "dpm2": KDPM2DiscreteScheduler,
+            "dpm2 a": KDPM2AncestralDiscreteScheduler,
+            "dpm2 karras": KDPM2DiscreteScheduler,
+            "dpm2 a karras": KDPM2AncestralDiscreteScheduler,
+            "unipc": UniPCMultistepScheduler,
+        }
+
+        sampler_lower = sampler.lower()
+        scheduler_class = sampler_map.get(sampler_lower, DPMSolverMultistepScheduler)
+
+        try:
+            # Create scheduler config from existing scheduler
+            config = pipeline.scheduler.config
+
+            # Determine if we need Karras sigmas
+            use_karras = "karras" in sampler_lower or "karras" in scheduler_type.lower()
+
+            # Create new scheduler with appropriate settings
+            if scheduler_class == DPMSolverMultistepScheduler:
+                pipeline.scheduler = scheduler_class.from_config(
+                    config,
+                    algorithm_type="dpmsolver++",
+                    use_karras_sigmas=use_karras,
+                    solver_order=2,
+                )
+            elif scheduler_class in [EulerAncestralDiscreteScheduler, EulerDiscreteScheduler]:
+                # Euler samplers
+                pipeline.scheduler = scheduler_class.from_config(config)
+            elif scheduler_class in [KDPM2DiscreteScheduler, KDPM2AncestralDiscreteScheduler]:
+                # DPM2 samplers
+                pipeline.scheduler = scheduler_class.from_config(config, use_karras_sigmas=use_karras)
+            else:
+                # Default
+                pipeline.scheduler = scheduler_class.from_config(config)
+
+            logger.info(f"Configured scheduler: {sampler} (Karras: {use_karras})")
+
+        except Exception as e:
+            logger.warning(f"Failed to configure scheduler {sampler}: {e}, using default")
 
     def _optimize_memory(self, pipeline, optimization_level: OptimizationLevel):
         """Apply memory optimization to pipeline."""

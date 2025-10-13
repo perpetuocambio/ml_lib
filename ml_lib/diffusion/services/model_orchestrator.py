@@ -1,7 +1,7 @@
 """
 Model Orchestrator - Intelligent model selection and orchestration.
 
-Analyzes metadata from ComfyUI-style .metadata.json files to automatically:
+Uses SQLite database for model metadata to automatically:
 - Select optimal base model for prompt
 - Choose compatible VAE, encoders, LoRAs
 - Configure optimal generation parameters
@@ -10,7 +10,6 @@ Analyzes metadata from ComfyUI-style .metadata.json files to automatically:
 Completely abstracted from user - they only provide prompt + simple options.
 """
 
-import json
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -18,6 +17,7 @@ from typing import Optional
 
 from ml_lib.diffusion.models import BaseModel, ModelType
 from ml_lib.system.resource_monitor import ResourceMonitor
+from ml_lib.diffusion.storage.metadata_db import MetadataDatabase
 
 logger = logging.getLogger(__name__)
 
@@ -348,85 +348,133 @@ class ModelOrchestrator:
 
     def __init__(
         self,
-        model_paths: list[Path | str],
         enable_ollama: bool = False,
         ollama_model: str = "llama3.2",
         resource_monitor: Optional[ResourceMonitor] = None,
+        db_path: Optional[Path | str] = None,
     ):
         """
         Initialize orchestrator.
 
         Args:
-            model_paths: Paths to scan for models (e.g., ComfyUI models dir)
             enable_ollama: Enable intelligent selection via Ollama
             ollama_model: Ollama model to use for analysis
             resource_monitor: Resource monitor (None = create new)
+            db_path: Path to SQLite database (None = use default)
         """
-        self.model_paths = [Path(p) for p in model_paths]
         self.enable_ollama = enable_ollama
         self.ollama_model = ollama_model
         self.resource_monitor = resource_monitor or ResourceMonitor()
 
-        # Scan and index models
+        # Initialize database
+        self.db = MetadataDatabase(db_path) if db_path else MetadataDatabase()
+
+        # Cache for quick access
         self.metadata_index: dict[ModelType, list[ModelMetadataFile]] = {}
-        self._scan_metadata()
 
-        logger.info(
-            f"ModelOrchestrator initialized: "
-            f"{sum(len(m) for m in self.metadata_index.values())} models indexed"
+        # Load models from database
+        self._load_from_database()
+
+        total_models = sum(len(m) for m in self.metadata_index.values())
+
+        # If database is empty, try to auto-populate from ComfyUI
+        if total_models == 0:
+            logger.warning("Database empty, attempting auto-population from ComfyUI...")
+            self._auto_populate_database()
+            # Reload after population
+            self._load_from_database()
+            total_models = sum(len(m) for m in self.metadata_index.values())
+
+        logger.info(f"ModelOrchestrator initialized: {total_models} models indexed")
+
+    def _load_from_database(self) -> None:
+        """Load models from SQLite database into cache."""
+        # Get database stats
+        stats = self.db.get_stats()
+
+        if stats.get("total", 0) == 0:
+            logger.warning("Database is empty - run migration first")
+            return
+
+        # Load models by type
+        for model_type in ModelType:
+            try:
+                db_models = self.db.get_all_models_by_type(model_type)
+
+                if db_models:
+                    # Convert ModelMetadata to ModelMetadataFile
+                    self.metadata_index[model_type] = [
+                        self._convert_metadata_to_file(m) for m in db_models
+                    ]
+
+                    logger.debug(f"Loaded {len(db_models)} {model_type.value} models from database")
+
+            except Exception as e:
+                logger.error(f"Failed to load {model_type.value} models: {e}")
+
+    def _auto_populate_database(self) -> None:
+        """
+        Auto-populate database from ComfyUI installation.
+
+        This runs automatically if database is empty on first use.
+        """
+        try:
+            from ml_lib.diffusion.config import detect_comfyui_installation
+            from ml_lib.diffusion.storage.comfyui_migrator import ComfyUIMetadataMigrator
+
+            # Detect ComfyUI
+            comfyui_root = detect_comfyui_installation()
+            if not comfyui_root:
+                logger.warning("ComfyUI not found, cannot auto-populate database")
+                return
+
+            logger.info(f"Auto-populating database from ComfyUI: {comfyui_root}")
+
+            # Run migration
+            migrator = ComfyUIMetadataMigrator(self.db)
+            results = migrator.migrate_comfyui_installation(comfyui_root)
+
+            # Log results
+            total_success = sum(s for s, _ in results.values())
+            total_failed = sum(f for _, f in results.values())
+
+            logger.info(f"Auto-population complete: {total_success} models added, {total_failed} failed")
+
+        except Exception as e:
+            logger.error(f"Auto-population failed: {e}")
+
+    def _convert_metadata_to_file(self, metadata) -> ModelMetadataFile:
+        """Convert ModelMetadata from database to ModelMetadataFile."""
+        return ModelMetadataFile(
+            file_name=metadata.local_path.name if metadata.local_path else metadata.name,
+            model_name=metadata.name,
+            file_path=metadata.local_path or Path(""),
+            base_model=metadata.base_model.value,
+            model_type=metadata.type.value,
+            download_count=metadata.download_count,
+            rating=metadata.rating,
+            thumbs_up=0,  # Not stored in new schema
+            trigger_words=metadata.trigger_words,
+            trained_words=metadata.trigger_words,
+            tags=metadata.tags,
+            recommended_steps=None,  # TODO: Extract from metadata
+            recommended_cfg=None,
+            recommended_sampler=None,
+            recommended_scheduler=None,
+            recommended_clip_skip=None,
+            recommended_lora_weight=metadata.recommended_weight or 1.0,
+            size_bytes=metadata.size_bytes,
+            sha256=metadata.sha256,
         )
-
-    def _scan_metadata(self) -> None:
-        """Scan all model directories for .metadata.json files."""
-        for base_path in self.model_paths:
-            if not base_path.exists():
-                continue
-
-            # Find all .metadata.json files
-            for metadata_file in base_path.rglob("*.metadata.json"):
-                parsed = ModelMetadataFile.from_json_file(metadata_file)
-                if parsed:
-                    # Determine model type
-                    model_type = self._get_model_type_from_path(metadata_file)
-
-                    if model_type not in self.metadata_index:
-                        self.metadata_index[model_type] = []
-
-                    self.metadata_index[model_type].append(parsed)
-
-        # Log stats
-        for model_type, models in self.metadata_index.items():
-            logger.info(f"Found {len(models)} {model_type.value} models with metadata")
-
-    def _get_model_type_from_path(self, path: Path) -> ModelType:
-        """Determine model type from directory structure."""
-        path_str = str(path).lower()
-
-        if "/lora" in path_str:
-            return ModelType.LORA
-        elif "/checkpoint" in path_str:
-            return ModelType.BASE_MODEL
-        elif "/vae" in path_str:
-            return ModelType.VAE
-        elif "/controlnet" in path_str:
-            return ModelType.CONTROLNET
-        elif "/embedding" in path_str:
-            return ModelType.EMBEDDING
-        elif "/clip_vision" in path_str:
-            return ModelType.CLIP_VISION
-        elif "/clip" in path_str:
-            return ModelType.CLIP
-        else:
-            return ModelType.BASE_MODEL
 
     def get_stats(self) -> dict[str, any]:
         """Get orchestrator statistics."""
+        db_stats = self.db.get_stats()
         return {
-            "total_models": sum(len(m) for m in self.metadata_index.values()),
-            "by_type": {
-                model_type.value: len(models)
-                for model_type, models in self.metadata_index.items()
-            },
+            "total_models": db_stats.get("total", 0),
+            "local_models": db_stats.get("local_models", 0),
+            "by_type": db_stats.get("by_type", {}),
+            "by_base_model": db_stats.get("by_base_model", {}),
             "ollama_enabled": self.enable_ollama,
         }
 

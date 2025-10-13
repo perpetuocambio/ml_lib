@@ -465,25 +465,27 @@ JSON:"""
     def _optimize_for_pony(
         self, prompt: str, negative_prompt: str, quality: str
     ) -> tuple[str, str]:
-        """Optimize for Pony Diffusion V6."""
+        """Optimize for Pony Diffusion V6 with enhanced anatomy control."""
         # Quality score tags (MUST be first for Pony)
         quality_tags = {
-            "fast": "score_7_up, score_6_up",
-            "balanced": "score_9, score_8_up, score_7_up",
-            "high": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up",
-            "ultra": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, masterpiece",
+            "fast": "score_7_up, score_6_up, detailed",
+            "balanced": "score_9, score_8_up, score_7_up, high quality, detailed, sharp focus",
+            "high": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, masterpiece, highly detailed, sharp focus",
+            "ultra": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, masterpiece, amazing quality, absurdres, highly detailed, sharp focus, depth of field",
         }
 
         # Prepend quality tags
         quality_prefix = quality_tags.get(quality, quality_tags["balanced"])
         optimized_positive = f"{quality_prefix}, {prompt}"
 
-        # Add Pony-specific negative tags
-        pony_negatives = "score_4, score_5, score_6"
+        # Enhanced Pony-specific negative tags with anatomical fixes
+        pony_negatives = "score_4, score_5, score_6, low quality, worst quality, bad anatomy, bad proportions, extra limbs, extra legs, extra arms, fused fingers, too many fingers, missing limbs, malformed limbs, mutated, mutation, deformed, disfigured"
+
         if negative_prompt:
+            # Merge user's negative with Pony anatomical negatives
             optimized_negative = f"{pony_negatives}, {negative_prompt}"
         else:
-            optimized_negative = f"{pony_negatives}, low quality, worst quality, bad anatomy, bad hands, missing fingers, extra limbs"
+            optimized_negative = pony_negatives
 
         # Normalize weights (Pony supports up to 1.5)
         optimized_positive = self._normalize_weights(optimized_positive, max_weight=1.5)
@@ -493,24 +495,27 @@ JSON:"""
     def _optimize_for_sdxl(
         self, prompt: str, negative_prompt: str, quality: str
     ) -> tuple[str, str]:
-        """Optimize for SDXL."""
-        # Quality tags for SDXL
+        """Optimize for SDXL with enhanced quality and anatomy tags."""
+        # Quality tags for SDXL - emphasis on detail and realism
         quality_tags = {
             "fast": "high quality, detailed",
-            "balanced": "masterpiece, best quality, high quality, detailed",
-            "high": "masterpiece, best quality, amazing quality, very aesthetic, absurdres",
-            "ultra": "masterpiece, best quality, amazing quality, very aesthetic, absurdres, 8k uhd, extremely detailed, RAW photo",
+            "balanced": "masterpiece, best quality, high quality, highly detailed, sharp focus",
+            "high": "masterpiece, best quality, amazing quality, very aesthetic, absurdres, highly detailed, sharp focus, professional photography",
+            "ultra": "masterpiece, best quality, amazing quality, very aesthetic, absurdres, 8k uhd, extremely detailed, RAW photo, professional photography, sharp focus, depth of field",
         }
 
         # Append quality tags (SDXL understands natural language)
         quality_suffix = quality_tags.get(quality, quality_tags["balanced"])
         optimized_positive = f"{prompt}, {quality_suffix}"
 
-        # Default negative if not provided
+        # Enhanced negative prompt for better anatomy and quality
+        base_negative = "low quality, worst quality, low resolution, blurry, jpeg artifacts, ugly, duplicate, mutated, mutation, deformed, disfigured, bad anatomy, bad proportions, extra limbs, extra legs, extra arms, missing limbs, missing arms, missing legs, fused fingers, too many fingers, long neck, cross-eyed"
+
         if not negative_prompt:
-            optimized_negative = "low quality, worst quality, low resolution, blurry, bad anatomy, bad hands, missing fingers, extra digits, fewer digits, cropped, jpeg artifacts"
+            optimized_negative = base_negative
         else:
-            optimized_negative = negative_prompt
+            # Merge user's negative with base anatomical negatives
+            optimized_negative = f"{negative_prompt}, {base_negative}"
 
         # Normalize weights (SDXL sensitive to high weights, cap at 1.4)
         optimized_positive = self._normalize_weights(optimized_positive, max_weight=1.4)
