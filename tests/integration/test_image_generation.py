@@ -122,14 +122,14 @@ class TestIntelligentPipeline:
 
     @pytest.fixture
     def intelligent_pipeline(self):
-        """Create intelligent pipeline with Ollama."""
+        """Create intelligent pipeline with Ollama using dolphin3 (NSFW-capable)."""
         from ml_lib.diffusion.models.pipeline import OllamaConfig
 
         config = PipelineConfig(
             base_model="stabilityai/stable-diffusion-2-1-base",
             ollama_config=OllamaConfig(
                 base_url="http://localhost:11434",
-                model="llama3.2",
+                model="dolphin3",  # NSFW-capable model
                 enabled=True
             ),
             enable_learning=False,

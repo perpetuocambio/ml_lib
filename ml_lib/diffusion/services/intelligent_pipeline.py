@@ -12,7 +12,7 @@ import torch
 from PIL import Image
 from diffusers import DiffusionPipeline
 
-from ..entities import (
+from ..models.pipeline import (
     PipelineConfig,
     GenerationResult,
     GenerationMetadata,
