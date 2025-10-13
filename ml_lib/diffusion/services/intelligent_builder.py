@@ -80,6 +80,7 @@ class GenerationConfig:
     # Style hints (optional)
     style: Optional[str] = None  # "realistic", "anime", "artistic", etc.
     quality: str = "balanced"  # "fast", "balanced", "high", "ultra"
+    memory_mode: str = "auto" # "auto", "low", "balanced", "aggressive"
 
     # Output
     width: int = 1024
@@ -301,6 +302,7 @@ class IntelligentPipelineBuilder:
         negative_prompt: Optional[str] = None,
         style: Optional[str] = None,
         quality: str = "balanced",
+        memory_mode: str = "auto",
         width: int = 1024,
         height: int = 1024,
         num_images: int = 1,
@@ -344,6 +346,7 @@ class IntelligentPipelineBuilder:
             or "worst quality, low quality, blurry",
             style=style,
             quality=quality,
+            memory_mode=memory_mode,
             width=width,
             height=height,
             num_images=num_images,
@@ -531,7 +534,7 @@ class IntelligentPipelineBuilder:
 
         # Step 6: Determine optimization level
         opt_level = self._determine_optimization_level(
-            quality=config.quality, available_memory_gb=resources.available_gpu_memory_gb()
+            quality=config.quality, memory_mode=config.memory_mode, available_memory_gb=resources.available_gpu_memory_gb()
         )
 
         logger.info(
@@ -567,10 +570,18 @@ class IntelligentPipelineBuilder:
         )
 
     def _determine_optimization_level(
-        self, quality: str, available_memory_gb: float
+        self, quality: str, memory_mode: str, available_memory_gb: float
     ) -> OptimizationLevel:
         """Determine optimization level based on quality and available memory."""
-        # Map quality to memory requirements
+        # Direct mapping from memory_mode if specified
+        if memory_mode == "low":
+            return OptimizationLevel.BALANCED
+        if memory_mode == "balanced":
+            return OptimizationLevel.AGGRESSIVE
+        if memory_mode == "aggressive":
+            return OptimizationLevel.ULTRA
+
+        # Fallback to auto logic based on quality and available VRAM
         quality_memory_map = {
             "fast": 4.0,  # 4GB+ = NONE, else BALANCED
             "balanced": 8.0,  # 8GB+ = NONE, else BALANCED

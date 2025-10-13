@@ -138,7 +138,7 @@ class ImageGenerator:
         cfg_scale: Optional[float] = None,
         width: Optional[int] = None,
         height: Optional[int] = None,
-        seed: Optional[int] = None,
+        seed: Optional[int] = None
     ) -> Image.Image:
         """
         Generate an image from a text prompt.
@@ -154,45 +154,24 @@ class ImageGenerator:
 
         Returns:
             PIL Image of the generated image
-
-        Example:
-            >>> generator = ImageGenerator()
-            >>> image = generator.generate_from_prompt(
-            ...     "a beautiful sunset over mountains",
-            ...     steps=40,
-            ...     seed=123
-            ... )
-            >>> image.save("sunset.png")
         """
         self._init_pipeline()
 
-        return self._generate_internal(
-            prompt=prompt,
-            negative_prompt=negative_prompt
-            if negative_prompt is not None
-            else self.options.negative_prompt,
-            steps=steps if steps is not None else self.options.steps,
-            cfg_scale=cfg_scale if cfg_scale is not None else self.options.cfg_scale,
-            width=width if width is not None else self.options.width,
-            height=height if height is not None else self.options.height,
-            seed=seed if seed is not None else self.options.seed,
-        )
+        # Map facade arguments to the builder's generate method arguments
+        # This is an approximation.
+        quality = "balanced"
+        if steps:
+            if steps > 40:
+                quality = "high"
+            elif steps < 25:
+                quality = "fast"
 
-    def _generate_internal(
-        self,
-        prompt: str,
-        negative_prompt: str,
-        steps: int,
-        cfg_scale: float,
-        width: int,
-        height: int,
-        seed: Optional[int],
-    ) -> Image.Image:
-        """Internal method to perform generation using the pipeline."""
+        # The builder's generate method returns a list or a single image
         result = self._pipeline.generate(
             prompt=prompt,
             negative_prompt=negative_prompt or self.options.negative_prompt,
             quality=quality,
+            memory_mode=self.options.memory_mode,
             width=width or self.options.width,
             height=height or self.options.height,
             seed=seed or self.options.seed,
@@ -203,6 +182,8 @@ class ImageGenerator:
 
         # Ensure we return a single image, as per the facade's type hint
         if isinstance(result, list):
+            if not result:
+                raise RuntimeError("Image generation failed and returned no images.")
             return result[0]
         return result
 

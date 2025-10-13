@@ -28,14 +28,11 @@ print("   - LoRAs: Selección automática")
 print("")
 
 # Configurar opciones para generación inteligente
-options = GenerationOptions(
-    steps=30,
+generation_options = GenerationOptions(
     width=1024,
-    height=1344,
-    cfg_scale=7.5,
-    enable_loras=True,
-    enable_learning=True,
-    memory_mode="balanced",
+    height=1024,
+    steps=30,
+    memory_mode="aggressive",
 )
 
 # Crear generador con análisis inteligente
@@ -45,7 +42,7 @@ start_init = time.time()
 generator = ImageGenerator(
     model="auto",  # Selección automática de modelo
     device="cuda",
-    options=options,
+    options=generation_options,
     ollama_url="http://localhost:11434",
     ollama_model="dolphin3",
 )
