@@ -114,3 +114,7 @@ definidas esas clases:
 
 > no, ese es el test que tienes que hacer: no modiques el test, sino arregla los problemas que surgan hasta que el sistema funcione correctamente
 > ⎿ Session limit reached ∙ resets 3pm
+
+---
+
+Puede que tu problema es que no estas entendiendo que es controlnet, q es ipadapter,... esto es, no sabes los conceptos de los odelos de diffusion y puede que esto haya llevado a implementaciones erroneas y codificar clases que son más genericas e incorporarlas a lugares erroneas

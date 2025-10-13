@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Optional, Protocol
 
-from ml_lib.diffusion.models import IPAdapterConfig
+from ml_lib.diffusion.models.ip_adapter import IPAdapterConfig
 
 
 @dataclass

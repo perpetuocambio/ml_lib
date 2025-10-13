@@ -31,9 +31,9 @@ from ml_lib.diffusion.services import IntelligentPipelineBuilder
 from ml_lib.diffusion.models.pipeline import (
     PipelineConfig,
     MemorySettings,
-    OffloadStrategy,
     LoRAPreferences,
 )
+from ml_lib.diffusion.models.memory import OffloadStrategy
 from ml_lib.diffusion.models.value_objects import PromptAnalysisResult
 
 
@@ -81,7 +81,9 @@ class ImageGenerator:
         model: str = "stabilityai/stable-diffusion-xl-base-1.0",
         device: Literal["cuda", "cpu", "auto"] = "auto",
         cache_dir: Optional[Path] = None,
-        options: Optional[GenerationOptions] = None
+        options: Optional[GenerationOptions] = None,
+        ollama_model: Optional[str] = None,
+        ollama_url: Optional[str] = None,
     ):
         """
         Initialize the image generator.
@@ -91,11 +93,16 @@ class ImageGenerator:
             device: Device to run on ("cuda", "cpu", or "auto")
             cache_dir: Directory for caching models and data
             options: Default generation options
+            ollama_model: Name of Ollama model for prompt analysis (if any)
+            ollama_url: URL of the Ollama server
         """
         self.model = model
         self.device = device
         self.cache_dir = cache_dir or Path.home() / ".cache" / "ml_lib" / "diffusion"
         self.options = options or GenerationOptions()
+        self.ollama_model = ollama_model
+        self.ollama_url = ollama_url
+        self.enable_ollama = bool(ollama_model)
 
         # Lazy initialization - will be set on first use
         self._pipeline = None
@@ -119,16 +126,14 @@ class ImageGenerator:
                 offload_strategy = OffloadStrategy.BALANCED
 
             memory_settings = MemorySettings(
-                offload_strategy=offload_strategy,
+                offload_strategy=offload_strategy.value,
                 enable_quantization=True,
-                enable_vae_tiling=True,
                 max_vram_gb=None  # Auto-detect
             )
 
             lora_prefs = LoRAPreferences(
                 max_loras=5 if self.options.enable_loras else 0,
                 min_confidence=0.7,
-                prefer_local=True
             )
 
             config = PipelineConfig(

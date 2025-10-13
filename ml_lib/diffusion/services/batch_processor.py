@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Optional, Callable, Protocol
 import random
 
-from ..entities import (
+from ..models.pipeline import (
     BatchConfig,
     GenerationResult,
     VariationStrategy,

@@ -102,6 +102,22 @@ from ml_lib.diffusion.models.registry import (
     DownloadStatus,
 )
 
+# IP-Adapter models
+from ml_lib.diffusion.models.ip_adapter import (
+    IPAdapterVariant,
+    IPAdapterConfig,
+    ImageFeatures,
+    ReferenceImage,
+)
+
+# ControlNet models
+from ml_lib.diffusion.models.controlnet import (
+    ControlType,
+    ControlNetConfig,
+    ControlImage,
+    PreprocessorConfig,
+)
+
 __all__ = [
     # Value objects
     "Resolution",
@@ -178,4 +194,14 @@ __all__ = [
     "BaseModel",
     "SortBy",
     "DownloadStatus",
+    # IP-Adapter
+    "IPAdapterVariant",
+    "IPAdapterConfig",
+    "ImageFeatures",
+    "ReferenceImage",
+    # ControlNet
+    "ControlType",
+    "ControlNetConfig",
+    "ControlImage",
+    "PreprocessorConfig",
 ]

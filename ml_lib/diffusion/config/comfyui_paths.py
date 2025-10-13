@@ -11,7 +11,7 @@ from typing import Optional
 
 from ml_lib.diffusion.models import ModelType
 from ml_lib.diffusion.config.path_config import ModelPathConfig
-from ml_lib.diffusion.services import ModelRegistry
+
 
 logger = logging.getLogger(__name__)
 
@@ -276,6 +276,8 @@ class ComfyUIPathResolver:
             >>> registry = resolver.create_registry_from_comfyui()
             >>> print(f"Registered {len(registry.get_all_models())} models")
         """
+        from ml_lib.diffusion.services import ModelRegistry
+
         registry = ModelRegistry()
 
         if model_types is None:
@@ -355,6 +357,7 @@ def create_comfyui_registry(
         ...     search_paths=["/opt/comfyui", "/home/user/comfyui"]
         ... )
     """
+    from ml_lib.diffusion.services import ModelRegistry
     if comfyui_root is not None:
         resolver = ComfyUIPathResolver.from_comfyui(comfyui_root)
     else:

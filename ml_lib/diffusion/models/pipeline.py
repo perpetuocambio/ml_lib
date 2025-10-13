@@ -143,7 +143,7 @@ class MemorySettings:
 
     def __post_init__(self):
         """Validate settings."""
-        if self.max_vram_gb <= 0:
+        if self.max_vram_gb is not None and self.max_vram_gb <= 0:
             raise ValueError("max_vram_gb must be positive")
         if self.offload_strategy not in ("none", "balanced", "aggressive"):
             raise ValueError("offload_strategy must be 'none', 'balanced', or 'aggressive'")

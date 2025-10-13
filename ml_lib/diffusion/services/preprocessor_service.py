@@ -4,7 +4,7 @@ import logging
 import numpy as np
 from typing import Optional
 
-from ..entities import ControlType, ControlImage, PreprocessorConfig
+from ..models.controlnet import ControlType, ControlImage, PreprocessorConfig
 
 logger = logging.getLogger(__name__)
 

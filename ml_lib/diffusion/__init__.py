@@ -26,7 +26,8 @@ Advanced Usage:
 """
 
 # Public facade API (recommended for all users)
-from ml_lib.diffusion.facade import ImageGenerator, Generator, GenerationOptions
+# To avoid circular imports, users should import directly from the facade module, e.g.:
+# from ml_lib.diffusion.facade import ImageGenerator
 
 # Advanced API (for users who need fine-grained control)
 # Note: These are subject to change and may have breaking changes
@@ -38,11 +39,6 @@ __advanced_api__ = [
 ]
 
 __all__ = [
-    # Facade (recommended)
-    "ImageGenerator",
-    "Generator",
-    "GenerationOptions",
-
     # Advanced (use with caution)
     "__advanced_api__",
 ]

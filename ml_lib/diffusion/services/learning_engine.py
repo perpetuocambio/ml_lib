@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Optional
 import json
 
-from ml_lib.diffusion.models import (
+from ml_lib.diffusion.models.prompt import (
     PromptAnalysis,
     LoRARecommendation,
     OptimizedParameters,

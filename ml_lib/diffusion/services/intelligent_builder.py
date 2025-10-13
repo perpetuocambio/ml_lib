@@ -43,7 +43,7 @@ from PIL import Image
 
 from ml_lib.diffusion.config import detect_comfyui_installation, ModelPathConfig
 from ml_lib.diffusion.models import BaseModel, ModelType
-from ml_lib.diffusion.services import (
+from .memory_optimizer import (
     MemoryOptimizer,
     MemoryOptimizationConfig,
     OptimizationLevel,

@@ -22,14 +22,12 @@ from ..models.pipeline import (
     OperationMode,
 )
 from ml_lib.diffusion.models.value_objects import ParameterModifications
-from ml_lib.diffusion.services import (
-    ModelRegistry,
-    PromptAnalyzer,
-    ParameterOptimizer,
-    LearningEngine,
-    LoRARecommender,
-    ModelOffloader,
-)
+from ml_lib.diffusion.services.model_registry import ModelRegistry
+from ml_lib.diffusion.services.prompt_analyzer import PromptAnalyzer
+from ml_lib.diffusion.services.parameter_optimizer import ParameterOptimizer
+from ml_lib.diffusion.services.learning_engine import LearningEngine
+from ml_lib.diffusion.services.lora_recommender import LoRARecommender
+from ml_lib.diffusion.services.model_offloader import ModelOffloader
 from ml_lib.diffusion.handlers.memory_manager import MemoryManager
 from ml_lib.diffusion.services.memory_optimizer import (
     MemoryOptimizer,
@@ -39,7 +37,7 @@ from ml_lib.diffusion.services.memory_optimizer import (
 )
 from ml_lib.diffusion.services.learning_engine import GenerationFeedback
 from ml_lib.llm.providers import OllamaProvider
-from ml_lib.llm.client import LLMClient
+from ml_lib.llm.clients import LLMClient
 
 # Import from other intelligent modules
 # Note: These would need to be properly implemented/available

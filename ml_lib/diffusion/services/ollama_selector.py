@@ -61,17 +61,17 @@ class OllamaModelSelector:
     def __init__(
         self,
         ollama_model: str = "llama3.2",
-        ollama_host: str = "http://localhost:11434",
+        ollama_url: str = "http://localhost:11434",
     ):
         """
         Initialize Ollama selector.
 
         Args:
             ollama_model: Ollama model to use
-            ollama_host: Ollama API endpoint
+            ollama_url: Ollama API endpoint
         """
         self.ollama_model = ollama_model
-        self.ollama_host = ollama_host
+        self.ollama_url = ollama_url
         self._check_ollama()
 
     def _check_ollama(self) -> bool:
