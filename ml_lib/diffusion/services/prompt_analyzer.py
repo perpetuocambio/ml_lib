@@ -426,3 +426,150 @@ JSON:"""
             emphases.append(Emphasis(keyword=base_token, weight=weight))
 
         return EmphasisMap(emphases=emphases)
+
+    def optimize_for_model(
+        self,
+        prompt: str,
+        negative_prompt: str,
+        base_model_architecture: str,
+        quality: str = "balanced",
+    ) -> tuple[str, str]:
+        """
+        Optimize prompts for specific model architecture.
+
+        Adds quality tags, normalizes weights, and formats according to model requirements.
+        Works with or without Ollama.
+
+        Args:
+            prompt: User's positive prompt
+            negative_prompt: User's negative prompt
+            base_model_architecture: Model type (SDXL, Pony, SD15, etc.)
+            quality: Quality level (fast, balanced, high, ultra)
+
+        Returns:
+            Tuple of (optimized_positive, optimized_negative)
+        """
+        arch_lower = base_model_architecture.lower()
+
+        # Detect model type
+        if "pony" in arch_lower:
+            return self._optimize_for_pony(prompt, negative_prompt, quality)
+        elif "sdxl" in arch_lower or "xl" in arch_lower:
+            return self._optimize_for_sdxl(prompt, negative_prompt, quality)
+        elif "1.5" in arch_lower or "sd15" in arch_lower:
+            return self._optimize_for_sd15(prompt, negative_prompt, quality)
+        else:
+            # Default to SDXL optimization
+            return self._optimize_for_sdxl(prompt, negative_prompt, quality)
+
+    def _optimize_for_pony(
+        self, prompt: str, negative_prompt: str, quality: str
+    ) -> tuple[str, str]:
+        """Optimize for Pony Diffusion V6."""
+        # Quality score tags (MUST be first for Pony)
+        quality_tags = {
+            "fast": "score_7_up, score_6_up",
+            "balanced": "score_9, score_8_up, score_7_up",
+            "high": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up",
+            "ultra": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, masterpiece",
+        }
+
+        # Prepend quality tags
+        quality_prefix = quality_tags.get(quality, quality_tags["balanced"])
+        optimized_positive = f"{quality_prefix}, {prompt}"
+
+        # Add Pony-specific negative tags
+        pony_negatives = "score_4, score_5, score_6"
+        if negative_prompt:
+            optimized_negative = f"{pony_negatives}, {negative_prompt}"
+        else:
+            optimized_negative = f"{pony_negatives}, low quality, worst quality, bad anatomy, bad hands, missing fingers, extra limbs"
+
+        # Normalize weights (Pony supports up to 1.5)
+        optimized_positive = self._normalize_weights(optimized_positive, max_weight=1.5)
+
+        return optimized_positive, optimized_negative
+
+    def _optimize_for_sdxl(
+        self, prompt: str, negative_prompt: str, quality: str
+    ) -> tuple[str, str]:
+        """Optimize for SDXL."""
+        # Quality tags for SDXL
+        quality_tags = {
+            "fast": "high quality, detailed",
+            "balanced": "masterpiece, best quality, high quality, detailed",
+            "high": "masterpiece, best quality, amazing quality, very aesthetic, absurdres",
+            "ultra": "masterpiece, best quality, amazing quality, very aesthetic, absurdres, 8k uhd, extremely detailed, RAW photo",
+        }
+
+        # Append quality tags (SDXL understands natural language)
+        quality_suffix = quality_tags.get(quality, quality_tags["balanced"])
+        optimized_positive = f"{prompt}, {quality_suffix}"
+
+        # Default negative if not provided
+        if not negative_prompt:
+            optimized_negative = "low quality, worst quality, low resolution, blurry, bad anatomy, bad hands, missing fingers, extra digits, fewer digits, cropped, jpeg artifacts"
+        else:
+            optimized_negative = negative_prompt
+
+        # Normalize weights (SDXL sensitive to high weights, cap at 1.4)
+        optimized_positive = self._normalize_weights(optimized_positive, max_weight=1.4)
+
+        return optimized_positive, optimized_negative
+
+    def _optimize_for_sd15(
+        self, prompt: str, negative_prompt: str, quality: str
+    ) -> tuple[str, str]:
+        """Optimize for SD 1.5."""
+        # Quality tags for SD 1.5
+        quality_tags = {
+            "fast": "high quality",
+            "balanced": "masterpiece, best quality, high quality",
+            "high": "masterpiece, best quality, highly detailed, 8k",
+            "ultra": "masterpiece, best quality, ultra detailed, 8k uhd, professional",
+        }
+
+        # Prepend quality tags (SD 1.5 works better with quality tags first)
+        quality_prefix = quality_tags.get(quality, quality_tags["balanced"])
+        optimized_positive = f"{quality_prefix}, {prompt}"
+
+        # Default negative if not provided
+        if not negative_prompt:
+            optimized_negative = "low quality, worst quality, bad anatomy, bad hands, text, error, missing fingers, cropped, blurry, deformed, disfigured, poorly drawn, mutation"
+        else:
+            optimized_negative = f"low quality, worst quality, {negative_prompt}"
+
+        # Normalize weights (SD 1.5 tolerates higher weights)
+        optimized_positive = self._normalize_weights(optimized_positive, max_weight=1.5)
+
+        return optimized_positive, optimized_negative
+
+    def _normalize_weights(self, prompt: str, max_weight: float = 1.5) -> str:
+        """
+        Normalize weight syntax and cap extreme values.
+
+        Args:
+            prompt: Input prompt with potential weight syntax
+            max_weight: Maximum allowed weight value
+
+        Returns:
+            Normalized prompt
+        """
+        # Pattern to match (word:weight) syntax
+        weight_pattern = re.compile(r'\(([^)]+):(\d+\.?\d*)\)')
+
+        def normalize_match(match):
+            text = match.group(1)
+            weight = float(match.group(2))
+
+            # Cap weight
+            if weight > max_weight:
+                weight = max_weight
+
+            # Only include weight syntax if != 1.0
+            if abs(weight - 1.0) < 0.01:
+                return text
+
+            return f"({text}:{weight:.2f})"
+
+        return weight_pattern.sub(normalize_match, prompt)

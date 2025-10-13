@@ -5,6 +5,9 @@ Proveedor LLM para Ollama (local).
 import base64
 import json
 import logging
+import subprocess
+import time
+import atexit
 from pathlib import Path
 from typing import Protocol, Optional
 
@@ -49,11 +52,73 @@ class StorageInterface(Protocol):
 logger = logging.getLogger(__name__)
 
 
+class OllamaServerContext:
+    """
+    Context manager for Ollama server lifecycle.
+
+    Automatically starts server on enter and stops on exit for memory optimization.
+
+    Example:
+        >>> with OllamaServerContext() as provider:
+        ...     response = provider.generate_response(prompt)
+        ... # Server stopped automatically, freeing memory
+    """
+
+    def __init__(
+        self,
+        ollama_model: str = "dolphin3",
+        ollama_url: str = "http://localhost:11434",
+        auto_stop: bool = True,
+    ):
+        """
+        Initialize context.
+
+        Args:
+            ollama_model: Model name to use
+            ollama_url: Ollama API URL
+            auto_stop: Stop server on exit
+        """
+        self.ollama_model = ollama_model
+        self.ollama_url = ollama_url
+        self.auto_stop = auto_stop
+        self.provider: Optional[OllamaProvider] = None
+
+    def __enter__(self) -> "OllamaProvider":
+        """Start server and return provider."""
+        from ml_lib.llm.config.llm_provider_config import LLMProviderConfig
+
+        config = LLMProviderConfig(
+            model_name=self.ollama_model,
+            api_endpoint=self.ollama_url,
+            temperature=0.7,
+        )
+
+        self.provider = OllamaProvider(
+            configuration=config,
+            auto_start_server=True,
+            auto_stop_on_exit=False,  # We'll handle it in __exit__
+        )
+
+        # Ensure server is running
+        if not self.provider.ensure_server_running():
+            raise RuntimeError("Failed to start Ollama server")
+
+        return self.provider
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Stop server if configured."""
+        if self.auto_stop and self.provider:
+            self.provider.stop_server()
+
+        return False  # Don't suppress exceptions
+
+
 class OllamaProvider(LLMProvider):
     """
     Proveedor LLM para Ollama.
 
     Soporta modelos de texto y visión disponibles localmente via Ollama.
+    Incluye gestión automática del servidor Ollama para optimizar memoria.
     """
 
     def __init__(
@@ -61,15 +126,27 @@ class OllamaProvider(LLMProvider):
         configuration: LLMProviderConfig,
         http_client: HttpClientInterface | None = None,
         storage_client: StorageInterface | None = None,
+        auto_start_server: bool = True,
+        auto_stop_on_exit: bool = False,
     ):
         """
         Inicializa el proveedor Ollama.
 
         Args:
             configuration: Configuración del proveedor
+            http_client: Cliente HTTP personalizado (opcional)
+            storage_client: Cliente de almacenamiento personalizado (opcional)
+            auto_start_server: Auto-start servidor si no está corriendo
+            auto_stop_on_exit: Auto-stop servidor al salir del programa
         """
         super().__init__(configuration)
         self.api_url = configuration.api_endpoint or "http://localhost:11434"
+        self.auto_start_server = auto_start_server
+        self.auto_stop_on_exit = auto_stop_on_exit
+
+        # Server process management
+        self._server_process: Optional[subprocess.Popen] = None
+        self._server_started_by_us = False
 
         # If no http_client provided, use default requests implementation
         if http_client is None:
@@ -94,9 +171,118 @@ class OllamaProvider(LLMProvider):
         # Parser for API responses
         self._parser = OllamaResponseParser()
 
+        # Register cleanup on exit if requested
+        if self.auto_stop_on_exit:
+            atexit.register(self.stop_server)
+
+    def start_server(self, wait_time: float = 3.0, max_retries: int = 10) -> bool:
+        """
+        Inicia el servidor Ollama si no está corriendo.
+
+        Args:
+            wait_time: Tiempo de espera inicial en segundos
+            max_retries: Máximo número de reintentos para verificar
+
+        Returns:
+            True si el servidor está disponible, False en caso contrario
+        """
+        # Check if already running
+        if self.is_available():
+            logger.info("Ollama server is already running")
+            return True
+
+        logger.info("Starting Ollama server...")
+
+        try:
+            # Start ollama serve in background
+            self._server_process = subprocess.Popen(
+                ["ollama", "serve"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+            self._server_started_by_us = True
+
+            # Wait for server to be ready
+            time.sleep(wait_time)
+
+            # Verify server is responding
+            for attempt in range(max_retries):
+                if self.is_available():
+                    logger.info("✅ Ollama server started successfully")
+                    return True
+                logger.debug(f"Waiting for Ollama server... attempt {attempt + 1}/{max_retries}")
+                time.sleep(1.0)
+
+            logger.error("Ollama server failed to start after multiple attempts")
+            return False
+
+        except FileNotFoundError:
+            logger.error("'ollama' command not found. Please install Ollama first.")
+            return False
+        except Exception as e:
+            logger.error(f"Failed to start Ollama server: {e}")
+            return False
+
+    def stop_server(self, force: bool = False) -> bool:
+        """
+        Detiene el servidor Ollama si fue iniciado por nosotros.
+
+        Args:
+            force: Forzar stop incluso si no lo iniciamos nosotros
+
+        Returns:
+            True si se detuvo exitosamente, False en caso contrario
+        """
+        if not force and not self._server_started_by_us:
+            logger.debug("Server was not started by us, not stopping")
+            return False
+
+        if self._server_process is None:
+            logger.debug("No server process to stop")
+            return False
+
+        try:
+            logger.info("Stopping Ollama server...")
+            self._server_process.terminate()
+
+            # Wait for graceful shutdown
+            try:
+                self._server_process.wait(timeout=5.0)
+            except subprocess.TimeoutExpired:
+                logger.warning("Server did not terminate gracefully, killing...")
+                self._server_process.kill()
+                self._server_process.wait(timeout=2.0)
+
+            self._server_process = None
+            self._server_started_by_us = False
+
+            logger.info("✅ Ollama server stopped")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to stop Ollama server: {e}")
+            return False
+
+    def ensure_server_running(self) -> bool:
+        """
+        Asegura que el servidor esté corriendo, iniciándolo si es necesario.
+
+        Returns:
+            True si el servidor está disponible, False en caso contrario
+        """
+        if self.is_available():
+            return True
+
+        if self.auto_start_server:
+            return self.start_server()
+
+        return False
+
     def generate_response(self, prompt: LLMPrompt | DocumentPrompt) -> LLMResponse:
         """
         Genera una respuesta usando Ollama.
+        Auto-inicia el servidor si está configurado y no está corriendo.
 
         Args:
             prompt: Prompt estructurado para el LLM
@@ -104,6 +290,15 @@ class OllamaProvider(LLMProvider):
         Returns:
             LLMResponse: Respuesta estructurada del LLM
         """
+        # Ensure server is running
+        if not self.ensure_server_running():
+            return LLMResponse(
+                content="Error: Ollama server is not available and could not be started",
+                usage_tokens=0,
+                model_name=self.configuration.model_name,
+                confidence_score=0.0,
+            )
+
         try:
             # Preparar request para Ollama
             request_data = self._prepare_request(prompt)

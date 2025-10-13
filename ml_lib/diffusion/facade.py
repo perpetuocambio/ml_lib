@@ -82,8 +82,9 @@ class ImageGenerator:
         device: Literal["cuda", "cpu", "auto"] = "auto",
         cache_dir: Optional[Path] = None,
         options: Optional[GenerationOptions] = None,
-        ollama_model: Optional[str] = None,
+        ollama_model: str = "dolphin3",  # Activado por defecto
         ollama_url: Optional[str] = None,
+        enable_ollama: bool = True,  # Activado por defecto
     ):
         """
         Initialize the image generator.
@@ -93,8 +94,9 @@ class ImageGenerator:
             device: Device to run on ("cuda", "cpu", or "auto")
             cache_dir: Directory for caching models and data
             options: Default generation options
-            ollama_model: Name of Ollama model for prompt analysis (if any)
+            ollama_model: Name of Ollama model for intelligent selection (default: dolphin3)
             ollama_url: URL of the Ollama server
+            enable_ollama: Enable Ollama for intelligent model selection (default: True)
         """
         self.model = model
         self.device = device
@@ -102,7 +104,7 @@ class ImageGenerator:
         self.options = options or GenerationOptions()
         self.ollama_model = ollama_model
         self.ollama_url = ollama_url
-        self.enable_ollama = bool(ollama_model)
+        self.enable_ollama = enable_ollama
 
         # Lazy initialization - will be set on first use
         self._pipeline = None
@@ -205,22 +207,42 @@ class ImageGenerator:
             >>> print(analysis.concepts)
             >>> print(analysis.emphases)
         """
-        self._init_pipeline()
+        if not self.enable_ollama:
+            raise RuntimeError(
+                "Prompt analysis requires Ollama. "
+                "Initialize ImageGenerator with ollama_model parameter."
+            )
 
-        recommendations = self._pipeline.analyze_and_recommend(prompt)
-
-        # Convert PromptAnalysis to PromptAnalysisResult
-        prompt_analysis = recommendations.prompt_analysis
-
-        # Convert detected_concepts (dict[str, list[str]]) to ConceptMap
+        # Use OllamaModelSelector directly for analysis
+        from ml_lib.diffusion.services.ollama_selector import OllamaModelSelector
         from ml_lib.diffusion.models.value_objects import (
             ConceptMap,
             EmphasisMap,
             ReasoningMap,
             Concept,
             Emphasis,
-            Reasoning,
+            ReasoningEntry,
         )
+
+        selector = OllamaModelSelector(
+            ollama_model=self.ollama_model,
+            ollama_url=self.ollama_url
+        )
+
+        try:
+            prompt_analysis = selector.analyze_prompt(prompt)
+        except Exception as e:
+            # Return empty result on error
+            return PromptAnalysisResult(
+                concepts=ConceptMap([]),
+                emphases=EmphasisMap([]),
+                reasoning=ReasoningMap([
+                    ReasoningEntry(
+                        key="analysis_error",
+                        explanation=f"Failed to analyze prompt: {e}"
+                    )
+                ])
+            )
 
         # Build concepts from detected_concepts
         concepts_list = []
@@ -230,7 +252,7 @@ class ImageGenerator:
                     Concept(
                         name=concept_name,
                         category=category,
-                        confidence=0.8,  # Default confidence (PromptAnalysis doesn't track this)
+                        confidence=0.8,
                     )
                 )
 
@@ -243,7 +265,7 @@ class ImageGenerator:
                 Emphasis(
                     keyword=keyword,
                     weight=weight,
-                    position=0,  # PromptAnalysis doesn't track position
+                    position=0,
                 )
             )
 
@@ -251,30 +273,42 @@ class ImageGenerator:
 
         # Build reasoning map
         reasoning_list = []
-        if hasattr(recommendations, "explanation") and recommendations.explanation:
-            reasoning_list.append(
-                Reasoning(
-                    decision="prompt_analysis",
-                    reason=recommendations.explanation,
-                    confidence=0.85,
-                )
-            )
 
         # Add intent reasoning if available
         if prompt_analysis.intent:
             reasoning_list.append(
-                Reasoning(
-                    decision="intent_detection",
-                    reason=f"Detected style: {prompt_analysis.intent.artistic_style.value}, "
-                    f"Content: {prompt_analysis.intent.content_type.value}",
-                    confidence=prompt_analysis.intent.confidence,
+                ReasoningEntry(
+                    key="intent_detection",
+                    explanation=f"Detected style: {prompt_analysis.intent.artistic_style.value}, "
+                    f"Content: {prompt_analysis.intent.content_type.value} "
+                    f"(confidence: {prompt_analysis.intent.confidence:.2f})"
+                )
+            )
+
+        # Add suggested model reasoning
+        if prompt_analysis.suggested_base_model:
+            reasoning_list.append(
+                ReasoningEntry(
+                    key="model_suggestion",
+                    explanation=f"Recommended architecture: {prompt_analysis.suggested_base_model}"
+                )
+            )
+
+        # Ensure reasoning_list is not empty (ReasoningMap requires at least one entry)
+        if not reasoning_list:
+            reasoning_list.append(
+                ReasoningEntry(
+                    key="analysis_complete",
+                    explanation="Prompt analyzed successfully via Ollama"
                 )
             )
 
         reasoning_map = ReasoningMap(reasoning_list)
 
         return PromptAnalysisResult(
-            concepts=concept_map, emphases=emphasis_map, reasoning=reasoning_map
+            concepts=concept_map,
+            emphases=emphasis_map,
+            reasoning=reasoning_map
         )
 
     def provide_feedback(

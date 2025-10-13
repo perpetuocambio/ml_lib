@@ -58,6 +58,7 @@ from ml_lib.diffusion.services.ollama_selector import (
     OllamaModelSelector,
     ModelMatcher,
 )
+from ml_lib.diffusion.services.prompt_analyzer import PromptAnalyzer
 from ml_lib.system.resource_monitor import ResourceMonitor
 
 logger = logging.getLogger(__name__)
@@ -187,6 +188,14 @@ class IntelligentPipelineBuilder:
             resource_monitor=self.resource_monitor,
         )
 
+        # Initialize prompt analyzer for prompt optimization
+        # Note: optimize_for_model() doesn't use LLM, so we disable it for speed
+        self.prompt_analyzer = PromptAnalyzer(
+            ollama_url=ollama_url or "http://localhost:11434",
+            model_name=ollama_model,
+            use_llm=False,  # Prompt optimization uses rules, not LLM
+        )
+
         # Memory optimizer (configured per-generation)
         self.memory_optimizer: Optional[MemoryOptimizer] = None
 
@@ -199,7 +208,7 @@ class IntelligentPipelineBuilder:
     @classmethod
     def from_comfyui_auto(
         cls,
-        enable_ollama: bool = False,
+        enable_ollama: bool = True,  # Activado por defecto para selección inteligente
         ollama_model: Optional[str] = None,
         ollama_url: Optional[str] = None,
         search_paths: Optional[list[Path | str]] = None,
@@ -397,7 +406,7 @@ class IntelligentPipelineBuilder:
             try:
                 selector = OllamaModelSelector(
                     ollama_model=self.ollama_model,
-                    ollama_url=self.ollama_url
+                    ollama_url=self.ollama_url or "http://localhost:11434"
                 )
                 prompt_analysis = selector.analyze_prompt(config.prompt)
                 if prompt_analysis:
@@ -723,14 +732,25 @@ class IntelligentPipelineBuilder:
             return []
 
         try:
+            # Optimize prompts for the selected model architecture
+            optimized_positive, optimized_negative = self.prompt_analyzer.optimize_for_model(
+                prompt=config.prompt,
+                negative_prompt=config.negative_prompt,
+                base_model_architecture=selected.base_model_architecture.value,
+                quality=config.quality,
+            )
+
+            logger.info(f"Optimized positive prompt: {optimized_positive[:100]}...")
+            logger.debug(f"Optimized negative prompt: {optimized_negative[:100]}...")
+
             # Start memory monitoring
             with MemoryMonitor(self.memory_optimizer) as monitor:
                 start_time = time.time()
 
-                # Prepare generation kwargs
+                # Prepare generation kwargs with optimized prompts
                 generation_kwargs = {
-                    "prompt": config.prompt,
-                    "negative_prompt": config.negative_prompt,
+                    "prompt": optimized_positive,
+                    "negative_prompt": optimized_negative,
                     "num_inference_steps": selected.steps,
                     "guidance_scale": selected.cfg_scale,
                     "width": config.width,

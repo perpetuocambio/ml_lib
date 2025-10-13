@@ -56,12 +56,14 @@ class OllamaModelSelector:
     Intelligent model selector using Ollama.
 
     Analyzes prompt semantically to select optimal models.
+    Includes automatic server management for memory optimization.
     """
 
     def __init__(
         self,
         ollama_model: str = "llama3.2",
         ollama_url: str = "http://localhost:11434",
+        auto_manage_server: bool = True,
     ):
         """
         Initialize Ollama selector.
@@ -69,22 +71,72 @@ class OllamaModelSelector:
         Args:
             ollama_model: Ollama model to use
             ollama_url: Ollama API endpoint
+            auto_manage_server: Auto-start server if not running
         """
         self.ollama_model = ollama_model
         self.ollama_url = ollama_url
+        self.auto_manage_server = auto_manage_server
+        self._ollama_provider = None  # Lazy init
         self._check_ollama()
 
+    def _get_or_create_provider(self) -> "OllamaProvider":  # type: ignore
+        """Get or create Ollama provider with auto-start."""
+        if self._ollama_provider is None:
+            from ml_lib.llm.providers.ollama_provider import OllamaProvider
+            from ml_lib.llm.config.llm_provider_config import LLMProviderConfig, LLMProviderType
+
+            config = LLMProviderConfig(
+                provider_type=LLMProviderType.OLLAMA,
+                model_name=self.ollama_model,
+                api_endpoint=self.ollama_url,
+                default_temperature=0.7,
+            )
+
+            self._ollama_provider = OllamaProvider(
+                configuration=config,
+                auto_start_server=self.auto_manage_server,
+                auto_stop_on_exit=False,  # Manual control for memory optimization
+            )
+
+        return self._ollama_provider
+
+    def stop_server(self) -> bool:
+        """
+        Stop Ollama server to free memory.
+
+        Call this after analysis is complete to optimize memory usage.
+
+        Returns:
+            True if stopped successfully
+        """
+        if self._ollama_provider:
+            return self._ollama_provider.stop_server()
+        return False
+
     def _check_ollama(self) -> bool:
-        """Check if Ollama is available."""
+        """Check if Ollama is available, starting if necessary."""
         try:
             import requests
 
-            response = requests.get(f"{self.ollama_url}/api/tags", timeout=2)
-            if response.status_code == 200:
-                logger.info("Ollama connection successful")
-                return True
+            try:
+                response = requests.get(f"{self.ollama_url}/api/tags", timeout=2)
+                if response.status_code == 200:
+                    logger.info("Ollama connection successful")
+                    return True
+            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+                # Server not running
+                logger.debug("Ollama server not responding")
+
+                # Try to start if auto_manage enabled
+                if self.auto_manage_server:
+                    logger.info("Attempting to start Ollama server...")
+                    provider = self._get_or_create_provider()
+                    return provider.ensure_server_running()
+
+                return False
+
         except Exception as e:
-            logger.warning(f"Ollama not available: {e}")
+            logger.warning(f"Error checking Ollama: {e}")
             return False
 
         return False
