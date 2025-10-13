@@ -79,7 +79,7 @@ class OllamaModelSelector:
         try:
             import requests
 
-            response = requests.get(f"{self.ollama_host}/api/tags", timeout=2)
+            response = requests.get(f"{self.ollama_url}/api/tags", timeout=2)
             if response.status_code == 200:
                 logger.info("Ollama connection successful")
                 return True
@@ -107,7 +107,7 @@ class OllamaModelSelector:
 
             # Call Ollama
             response = requests.post(
-                f"{self.ollama_host}/api/generate",
+                f"{self.ollama_url}/api/generate",
                 json={"model": self.ollama_model, "prompt": analysis_prompt, "stream": False},
                 timeout=30,
             )

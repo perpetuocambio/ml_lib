@@ -135,7 +135,7 @@ class ModelMetadataFile:
             sha256 = data.get("sha256", "")
 
             # Extract CivitAI info if available
-            civitai = data.get("civitai", {})
+            civitai = data.get("civitai") or {}
 
             # Stats
             stats = civitai.get("stats", {})

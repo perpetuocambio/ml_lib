@@ -144,6 +144,7 @@ class IntelligentPipelineBuilder:
         model_config: ModelPathConfig,
         enable_ollama: bool = False,
         ollama_model: str = "dolphin3",
+        ollama_url: Optional[str] = None,
         device: Optional[str] = None,
         enable_auto_download: bool = False,
     ):
@@ -160,6 +161,7 @@ class IntelligentPipelineBuilder:
         self.model_config = model_config
         self.enable_ollama = enable_ollama
         self.ollama_model = ollama_model
+        self.ollama_url = ollama_url
         self.enable_auto_download = enable_auto_download
 
         # Initialize resource monitor
@@ -197,7 +199,10 @@ class IntelligentPipelineBuilder:
     def from_comfyui_auto(
         cls,
         enable_ollama: bool = False,
+        ollama_model: Optional[str] = None,
+        ollama_url: Optional[str] = None,
         search_paths: Optional[list[Path | str]] = None,
+        device: Optional[str] = None,
         enable_auto_download: bool = False,
     ) -> "IntelligentPipelineBuilder":
         """
@@ -225,6 +230,9 @@ class IntelligentPipelineBuilder:
         return cls(
             model_config=config,
             enable_ollama=enable_ollama,
+            ollama_model=ollama_model or "dolphin3",
+            ollama_url=ollama_url,
+            device=device,
             enable_auto_download=enable_auto_download,
         )
 
@@ -384,7 +392,10 @@ class IntelligentPipelineBuilder:
         prompt_analysis = None
         if self.enable_ollama:
             try:
-                selector = OllamaModelSelector(ollama_model=self.ollama_model)
+                selector = OllamaModelSelector(
+                    ollama_model=self.ollama_model,
+                    ollama_url=self.ollama_url
+                )
                 prompt_analysis = selector.analyze_prompt(config.prompt)
                 if prompt_analysis:
                     logger.info(

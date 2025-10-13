@@ -113,48 +113,21 @@ class ImageGenerator:
             return
 
         try:
-            # Map simple memory mode to complex config using explicit logic
-            if self.options.memory_mode == "auto":
-                offload_strategy = OffloadStrategy.BALANCED
-            elif self.options.memory_mode == "low":
-                offload_strategy = OffloadStrategy.AGGRESSIVE
-            elif self.options.memory_mode == "balanced":
-                offload_strategy = OffloadStrategy.BALANCED
-            elif self.options.memory_mode == "aggressive":
-                offload_strategy = OffloadStrategy.AGGRESSIVE
-            else:
-                offload_strategy = OffloadStrategy.BALANCED
-
-            memory_settings = MemorySettings(
-                offload_strategy=offload_strategy.value,
-                enable_quantization=True,
-                max_vram_gb=None  # Auto-detect
+            # The IntelligentPipelineBuilder is the pipeline now.
+            # It handles all the complex setup.
+            self._pipeline = IntelligentPipelineBuilder.from_comfyui_auto(
+                enable_ollama=self.enable_ollama,
+                ollama_model=self.ollama_model,
+                ollama_url=self.ollama_url,
+                device=self.device,
+                enable_auto_download=True,  # Assuming auto-download is desired
             )
-
-            lora_prefs = LoRAPreferences(
-                max_loras=5 if self.options.enable_loras else 0,
-                min_confidence=0.7,
-            )
-
-            config = PipelineConfig(
-                base_model=self.model,
-                memory_settings=memory_settings,
-                lora_preferences=lora_prefs,
-                enable_learning=self.options.enable_learning,
-                cache_dir=self.cache_dir
-            )
-
-            # Try ComfyUI first, fallback to direct diffusers
-            try:
-                self._pipeline = IntelligentPipelineBuilder.from_comfyui_auto(config)
-            except Exception:
-                self._pipeline = IntelligentPipelineBuilder.from_diffusers(config)
 
         except ImportError as e:
             raise RuntimeError(
                 f"Failed to initialize diffusion pipeline: {e}\n"
                 "Make sure you have installed the required dependencies:\n"
-                "  pip install diffusers torch transformers"
+                "  pip install diffusers torch transformers peft"
             )
 
     def generate_from_prompt(
@@ -165,7 +138,7 @@ class ImageGenerator:
         cfg_scale: Optional[float] = None,
         width: Optional[int] = None,
         height: Optional[int] = None,
-        seed: Optional[int] = None
+        seed: Optional[int] = None,
     ) -> Image.Image:
         """
         Generate an image from a text prompt.
@@ -195,12 +168,14 @@ class ImageGenerator:
 
         return self._generate_internal(
             prompt=prompt,
-            negative_prompt=negative_prompt if negative_prompt is not None else self.options.negative_prompt,
+            negative_prompt=negative_prompt
+            if negative_prompt is not None
+            else self.options.negative_prompt,
             steps=steps if steps is not None else self.options.steps,
             cfg_scale=cfg_scale if cfg_scale is not None else self.options.cfg_scale,
             width=width if width is not None else self.options.width,
             height=height if height is not None else self.options.height,
-            seed=seed if seed is not None else self.options.seed
+            seed=seed if seed is not None else self.options.seed,
         )
 
     def _generate_internal(
@@ -211,21 +186,25 @@ class ImageGenerator:
         cfg_scale: float,
         width: int,
         height: int,
-        seed: Optional[int]
+        seed: Optional[int],
     ) -> Image.Image:
         """Internal method to perform generation using the pipeline."""
         result = self._pipeline.generate(
             prompt=prompt,
-            negative_prompt=negative_prompt,
-            seed=seed,
-            # Overrides for the optimizer
-            num_steps=steps,
-            guidance_scale=cfg_scale,
-            width=width,
-            height=height
+            negative_prompt=negative_prompt or self.options.negative_prompt,
+            quality=quality,
+            width=width or self.options.width,
+            height=height or self.options.height,
+            seed=seed or self.options.seed,
+            # Pass through advanced overrides
+            steps=steps,
+            cfg_scale=cfg_scale,
         )
 
-        return result.image
+        # Ensure we return a single image, as per the facade's type hint
+        if isinstance(result, list):
+            return result[0]
+        return result
 
     def analyze_prompt(self, prompt: str) -> PromptAnalysisResult:
         """
@@ -270,7 +249,7 @@ class ImageGenerator:
                     Concept(
                         name=concept_name,
                         category=category,
-                        confidence=0.8  # Default confidence (PromptAnalysis doesn't track this)
+                        confidence=0.8,  # Default confidence (PromptAnalysis doesn't track this)
                     )
                 )
 
@@ -283,7 +262,7 @@ class ImageGenerator:
                 Emphasis(
                     keyword=keyword,
                     weight=weight,
-                    position=0  # PromptAnalysis doesn't track position
+                    position=0,  # PromptAnalysis doesn't track position
                 )
             )
 
@@ -291,12 +270,12 @@ class ImageGenerator:
 
         # Build reasoning map
         reasoning_list = []
-        if hasattr(recommendations, 'explanation') and recommendations.explanation:
+        if hasattr(recommendations, "explanation") and recommendations.explanation:
             reasoning_list.append(
                 Reasoning(
                     decision="prompt_analysis",
                     reason=recommendations.explanation,
-                    confidence=0.85
+                    confidence=0.85,
                 )
             )
 
@@ -306,24 +285,19 @@ class ImageGenerator:
                 Reasoning(
                     decision="intent_detection",
                     reason=f"Detected style: {prompt_analysis.intent.artistic_style.value}, "
-                           f"Content: {prompt_analysis.intent.content_type.value}",
-                    confidence=prompt_analysis.intent.confidence
+                    f"Content: {prompt_analysis.intent.content_type.value}",
+                    confidence=prompt_analysis.intent.confidence,
                 )
             )
 
         reasoning_map = ReasoningMap(reasoning_list)
 
         return PromptAnalysisResult(
-            concepts=concept_map,
-            emphases=emphasis_map,
-            reasoning=reasoning_map
+            concepts=concept_map, emphases=emphasis_map, reasoning=reasoning_map
         )
 
     def provide_feedback(
-        self,
-        generation_id: str,
-        rating: int,
-        comments: str = ""
+        self, generation_id: str, rating: int, comments: str = ""
     ) -> None:
         """
         Provide feedback on a generation to improve future results.
@@ -348,9 +322,7 @@ class ImageGenerator:
 
         self._init_pipeline()
         self._pipeline.provide_feedback(
-            generation_id=generation_id,
-            rating=rating,
-            comments=comments
+            generation_id=generation_id, rating=rating, comments=comments
         )
 
 
