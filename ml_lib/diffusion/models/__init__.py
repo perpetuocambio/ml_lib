@@ -22,6 +22,7 @@ from ml_lib.diffusion.models.value_objects import (
     LoRARecommendationResult,
     ParameterOptimizationResult,
     NegativePromptResult,
+    ProcessedPrompt,
 )
 
 # Core types
@@ -118,6 +119,18 @@ from ml_lib.diffusion.models.controlnet import (
     PreprocessorConfig,
 )
 
+# Content tags and NSFW classification
+from ml_lib.diffusion.models.content_tags import (
+    NSFWCategory,
+    PromptTokenPriority,
+    QualityTag,
+    TokenClassification,
+    PromptCompactionResult,
+    NSFWAnalysis,
+    classify_token,
+    analyze_nsfw_content,
+)
+
 __all__ = [
     # Value objects
     "Resolution",
@@ -140,6 +153,7 @@ __all__ = [
     "LoRARecommendationResult",
     "ParameterOptimizationResult",
     "NegativePromptResult",
+    "ProcessedPrompt",
     # Core types
     "AttributeType",
     "AttributeDefinition",
@@ -204,4 +218,13 @@ __all__ = [
     "ControlNetConfig",
     "ControlImage",
     "PreprocessorConfig",
+    # Content tags
+    "NSFWCategory",
+    "PromptTokenPriority",
+    "QualityTag",
+    "TokenClassification",
+    "PromptCompactionResult",
+    "NSFWAnalysis",
+    "classify_token",
+    "analyze_nsfw_content",
 ]

@@ -59,6 +59,9 @@ from ml_lib.diffusion.services.ollama_selector import (
     ModelMatcher,
 )
 from ml_lib.diffusion.services.prompt_analyzer import PromptAnalyzer
+from ml_lib.diffusion.services.prompt_compactor import PromptCompactor
+from ml_lib.diffusion.models.value_objects import ProcessedPrompt
+from ml_lib.diffusion.models.content_tags import PromptCompactionResult
 from ml_lib.system.resource_monitor import ResourceMonitor
 
 logger = logging.getLogger(__name__)
@@ -193,6 +196,9 @@ class IntelligentPipelineBuilder:
             model_name=ollama_model,
             use_llm=False,  # Prompt optimization uses rules, not LLM
         )
+
+        # Initialize prompt compactor for intelligent compaction
+        self.prompt_compactor = PromptCompactor()
 
         # Memory optimizer (configured per-generation)
         self.memory_optimizer: Optional[MemoryOptimizer] = None
@@ -809,7 +815,7 @@ class IntelligentPipelineBuilder:
             return []
 
         try:
-            # Optimize prompts for the selected model architecture
+            # Step 1: Optimize prompts for the selected model architecture
             optimized_positive, optimized_negative = self.prompt_analyzer.optimize_for_model(
                 prompt=config.prompt,
                 negative_prompt=config.negative_prompt,
@@ -820,13 +826,58 @@ class IntelligentPipelineBuilder:
             logger.info(f"Optimized positive prompt: {optimized_positive[:100]}...")
             logger.debug(f"Optimized negative prompt: {optimized_negative[:100]}...")
 
+            # Step 2: Compact prompt if needed (to fit CLIP's 77-token limit)
+            compaction_result = self.prompt_compactor.compact(
+                optimized_positive,
+                preserve_nsfw=True,
+                min_quality_tags=2,
+            )
+
+            # Step 3: Create ProcessedPrompt for user feedback
+            processed_prompt = ProcessedPrompt(
+                original=config.prompt,
+                final=compaction_result.compacted_prompt,
+                original_token_count=compaction_result.original_token_count,
+                final_token_count=compaction_result.compacted_token_count,
+                was_modified=compaction_result.was_compacted,
+                modifications=[],
+                removed_tokens=compaction_result.removed_tokens,
+                warnings=compaction_result.warnings,
+                architecture=selected.base_model_architecture.value,
+                quality_level=config.quality,
+            )
+
+            # Add modification descriptions
+            if compaction_result.was_compacted:
+                processed_prompt.add_modification(
+                    f"Added quality tags for {selected.base_model_architecture.value}"
+                )
+                processed_prompt.add_modification(
+                    f"Compacted from {compaction_result.original_token_count} to {compaction_result.compacted_token_count} tokens"
+                )
+
+            # Step 4: Log user feedback message
+            if processed_prompt.was_modified:
+                feedback_msg = processed_prompt.get_user_message(verbose=False)
+                logger.warning(f"\n{feedback_msg}")
+
+                # Additional critical warning if high-priority content was lost
+                if processed_prompt.has_critical_loss:
+                    logger.error(
+                        "CRITICAL: Essential content was removed during processing! "
+                        "Image may not match your expectations."
+                    )
+
+            # Use the final processed prompt for generation
+            final_positive_prompt = processed_prompt.final
+
             # Start memory monitoring
             with MemoryMonitor(self.memory_optimizer) as monitor:
                 start_time = time.time()
 
-                # Prepare generation kwargs with optimized prompts
+                # Prepare generation kwargs with processed prompts
                 generation_kwargs = {
-                    "prompt": optimized_positive,
+                    "prompt": final_positive_prompt,  # Use compacted prompt
                     "negative_prompt": optimized_negative,
                     "num_inference_steps": selected.steps,
                     "guidance_scale": selected.cfg_scale,

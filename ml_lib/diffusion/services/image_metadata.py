@@ -17,6 +17,7 @@ Features:
 """
 
 import json
+import logging
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -28,6 +29,8 @@ from PIL.ExifTags import TAGS
 from PIL.PngImagePlugin import PngInfo
 
 from ml_lib.diffusion.services.image_naming import ImageNamingConfig
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -357,8 +360,6 @@ class ImageMetadataWriter:
             exif[0x0132] = dt.strftime("%Y:%m:%d %H:%M:%S")
         except Exception as e:
             # Log parsing error but continue without timestamp in EXIF
-            import logging
-            logger = logging.getLogger(__name__)
             logger.debug(f"Could not parse timestamp for EXIF: {e}")
 
         # 0x9286 = UserComment (full metadata as JSON)

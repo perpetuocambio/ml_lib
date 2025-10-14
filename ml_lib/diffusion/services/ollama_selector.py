@@ -200,7 +200,8 @@ Provide your analysis in JSON format with these fields:
   "suggested_base_model": "SDXL/SD15/Flux/SD3",
   "suggested_steps": 20-50,
   "suggested_cfg": 3.0-12.0,
-  "recommended_lora_tags": ["tags", "to", "match", "loras"]
+  "recommended_lora_tags": ["tags", "to", "match", "loras"],
+  "nsfw_acts": ["explicit", "sexual", "acts", "if", "present"]
 }}
 
 Guidelines:
@@ -210,6 +211,17 @@ Guidelines:
 - Quality: "fast" for testing, "balanced" for general, "high" for quality, "ultra" for best
 - Extract key concepts that would match model tags
 - Suggest tags that would find relevant LoRAs (character types, styles, effects)
+
+IMPORTANT: For explicit/NSFW prompts, extract specific acts to nsfw_acts field:
+- fellatio, blowjob, oral → "oral"
+- anal, anal sex → "anal"
+- vaginal, sex, fucking → "sex"
+- cum, cumshot, facial, bukkake → "cum"
+- bondage, bdsm, tied, restrained → "bondage"
+- nude, naked, breasts, nipples → "nude"
+- masturbation, fingering → "masturbation"
+
+These NSFW tags are critical for finding relevant LoRAs!
 
 Respond ONLY with valid JSON, no other text."""
 
@@ -225,7 +237,7 @@ Respond ONLY with valid JSON, no other text."""
 
             data = json.loads(analysis_text.strip())
 
-            return PromptAnalysis(
+            analysis = PromptAnalysis(
                 style=data.get("style", "realistic"),
                 style_confidence=float(data.get("style_confidence", 0.7)),
                 content_type=data.get("content_type", "scene"),
@@ -238,6 +250,14 @@ Respond ONLY with valid JSON, no other text."""
                 suggested_cfg=float(data.get("suggested_cfg", 7.0)),
                 recommended_lora_tags=data.get("recommended_lora_tags", []),
             )
+
+            # Add nsfw_acts as attribute if present
+            if "nsfw_acts" in data:
+                analysis.nsfw_acts = data["nsfw_acts"]
+            else:
+                analysis.nsfw_acts = []
+
+            return analysis
 
         except Exception as e:
             logger.warning(f"Failed to parse Ollama response: {e}")
@@ -267,9 +287,48 @@ Respond ONLY with valid JSON, no other text."""
         elif any(word in prompt_lower for word in ["character", "girl", "boy"]):
             content_type = "character"
 
-        # Extract key concepts (simple word extraction)
+        # Extract NSFW keywords for better LoRA matching
+        nsfw_keywords = {
+            "oral", "fellatio", "blowjob", "deepthroat",
+            "anal", "vaginal", "sex", "fucking",
+            "cum", "cumshot", "facial", "bukkake", "creampie",
+            "penetration", "pussy", "cock", "penis", "dick",
+            "nude", "naked", "breasts", "nipples", "tits", "ass",
+            "threesome", "gangbang", "group",
+            "bdsm", "bondage", "tied", "restrained",
+            "masturbation", "handjob", "footjob", "titjob", "paizuri",
+            "missionary", "doggystyle", "cowgirl", "spitroast",
+            "ahegao", "orgasm", "aroused"
+        }
+
+        # Find NSFW acts in prompt
+        found_nsfw = [kw for kw in nsfw_keywords if kw in prompt_lower]
+
+        # Extract key concepts (prioritize NSFW + other important words)
         words = prompt_lower.split()
-        key_concepts = [w for w in words if len(w) > 4 and w.isalpha()][:5]
+        key_concepts = []
+
+        # Add found NSFW keywords first (highest priority)
+        key_concepts.extend(found_nsfw[:5])
+
+        # Add other meaningful words
+        other_concepts = [w for w in words if len(w) > 4 and w.isalpha() and w not in found_nsfw]
+        key_concepts.extend(other_concepts[:5])
+
+        # Build recommended LoRA tags (NSFW acts + style + character types)
+        recommended_lora_tags = []
+        recommended_lora_tags.extend(found_nsfw[:10])  # All NSFW acts found
+
+        # Add character/style tags
+        character_tags = []
+        for word in ["girl", "woman", "anime", "realistic", "photo"]:
+            if word in prompt_lower:
+                character_tags.append(word)
+        recommended_lora_tags.extend(character_tags)
+
+        # Add explicit/nsfw tag if any NSFW content found
+        if found_nsfw:
+            recommended_lora_tags.extend(["nsfw", "explicit", "sex"])
 
         return PromptAnalysis(
             style=style,
@@ -277,12 +336,12 @@ Respond ONLY with valid JSON, no other text."""
             content_type=content_type,
             content_confidence=0.6,
             suggested_quality="balanced",
-            key_concepts=key_concepts,
+            key_concepts=key_concepts[:10],  # Keep top 10
             trigger_words=[],
             suggested_base_model="SDXL",
             suggested_steps=30,
             suggested_cfg=7.0,
-            recommended_lora_tags=key_concepts,
+            recommended_lora_tags=list(set(recommended_lora_tags)),  # Remove duplicates
         )
 
 
@@ -428,29 +487,61 @@ class ModelMatcher:
         """Score LoRA match for analysis."""
         score = 0.0
 
-        # Popularity
-        score += min(lora.popularity_score / 5, 15.0)
+        # Extract NSFW keywords from analysis
+        nsfw_keywords = {
+            "oral", "fellatio", "blowjob", "deepthroat",
+            "anal", "vaginal", "sex", "fucking",
+            "cum", "cumshot", "facial", "bukkake", "creampie",
+            "penetration", "pussy", "cock", "penis", "dick",
+            "nude", "naked", "breasts", "nipples", "tits", "ass",
+            "threesome", "gangbang", "group",
+            "bdsm", "bondage", "tied", "restrained",
+            "nsfw", "explicit", "xxx", "pornographic"
+        }
 
-        # Tag matching
         lora_tags = [tag.lower() for tag in lora.tags]
+        lora_name_lower = lora.model_name.lower()
         recommended_tags = [tag.lower() for tag in analysis.recommended_lora_tags]
         key_concepts = [kw.lower() for kw in analysis.key_concepts]
 
+        # Check if prompt has NSFW content
+        has_nsfw_content = any(kw in " ".join(recommended_tags + key_concepts) for kw in nsfw_keywords)
+
+        # BONUS 1: NSFW LoRA matching (HIGH PRIORITY)
+        if has_nsfw_content:
+            # Check if LoRA has NSFW tags
+            lora_nsfw_tags = [tag for tag in lora_tags if any(nsfw in tag for nsfw in nsfw_keywords)]
+            nsfw_in_name = any(nsfw in lora_name_lower for nsfw in ["nsfw", "sex", "explicit", "xxx"])
+
+            if lora_nsfw_tags or nsfw_in_name:
+                score += 25.0  # BIG bonus for NSFW LoRAs matching NSFW prompts
+                logger.debug(f"NSFW bonus for {lora.model_name}: +25.0")
+
+            # Extra bonus for specific act matching
+            prompt_nsfw_acts = [kw for kw in key_concepts if kw in nsfw_keywords]
+            matching_acts = len(set(lora_tags) & set(prompt_nsfw_acts))
+            if matching_acts > 0:
+                score += matching_acts * 20.0
+                logger.debug(f"NSFW act matching for {lora.model_name}: +{matching_acts * 20.0}")
+
+        # Popularity (scaled down to make NSFW matching more important)
+        score += min(lora.popularity_score / 5, 10.0)
+
+        # Tag matching (general)
         all_search_terms = set(recommended_tags + key_concepts)
         matching_tags = len(set(lora_tags) & all_search_terms)
-        score += matching_tags * 15.0
+        score += matching_tags * 12.0
 
         # Trigger word matching
         trigger_words = [tw.lower() for tw in lora.trigger_words]
-        prompt_words = set(analysis.key_concepts)
+        prompt_words = set(key_concepts)
 
         if any(tw in prompt_words for tw in trigger_words):
-            score += 10.0
+            score += 8.0
 
         # Model name matching (sometimes model names are descriptive)
-        model_name_lower = lora.model_name.lower()
-        if any(concept in model_name_lower for concept in key_concepts):
-            score += 10.0
+        if any(concept in lora_name_lower for concept in key_concepts):
+            score += 8.0
 
         return score
 

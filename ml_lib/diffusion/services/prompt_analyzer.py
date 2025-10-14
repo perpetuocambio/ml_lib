@@ -438,7 +438,10 @@ JSON:"""
         Optimize prompts for specific model architecture.
 
         Adds quality tags, normalizes weights, and formats according to model requirements.
-        Works with or without Ollama.
+
+        Note: This method does NOT perform prompt compaction. If you need to compact
+        the prompt to CLIP's 77-token limit, use PromptCompactor directly after calling
+        this method.
 
         Args:
             prompt: User's positive prompt
@@ -451,16 +454,26 @@ JSON:"""
         """
         arch_lower = base_model_architecture.lower()
 
-        # Detect model type
+        # Detect model type and optimize
         if "pony" in arch_lower:
-            return self._optimize_for_pony(prompt, negative_prompt, quality)
+            optimized_positive, optimized_negative = self._optimize_for_pony(
+                prompt, negative_prompt, quality
+            )
         elif "sdxl" in arch_lower or "xl" in arch_lower:
-            return self._optimize_for_sdxl(prompt, negative_prompt, quality)
+            optimized_positive, optimized_negative = self._optimize_for_sdxl(
+                prompt, negative_prompt, quality
+            )
         elif "1.5" in arch_lower or "sd15" in arch_lower:
-            return self._optimize_for_sd15(prompt, negative_prompt, quality)
+            optimized_positive, optimized_negative = self._optimize_for_sd15(
+                prompt, negative_prompt, quality
+            )
         else:
             # Default to SDXL optimization
-            return self._optimize_for_sdxl(prompt, negative_prompt, quality)
+            optimized_positive, optimized_negative = self._optimize_for_sdxl(
+                prompt, negative_prompt, quality
+            )
+
+        return optimized_positive, optimized_negative
 
     def _optimize_for_pony(
         self, prompt: str, negative_prompt: str, quality: str

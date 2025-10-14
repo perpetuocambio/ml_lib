@@ -92,6 +92,11 @@ from .parameter_modifications import (
     ParameterModifications,
 )
 
+# Processed Prompt
+from .processed_prompt import (
+    ProcessedPrompt,
+)
+
 __all__ = [
     # Resolution
     "Resolution",
@@ -145,4 +150,6 @@ __all__ = [
     # Parameter Modifications
     "ParameterModificationEntry",
     "ParameterModifications",
+    # Processed Prompt
+    "ProcessedPrompt",
 ]

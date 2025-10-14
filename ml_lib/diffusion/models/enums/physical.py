@@ -634,6 +634,7 @@ class AgeRange(BasePromptEnum):
     ADULT = "adult"
     MILF = "milf"
     MATURE = "mature"
+    ELDERLY = "elderly"
 
     @property
     def keywords(self) -> list[str]:
@@ -646,6 +647,8 @@ class AgeRange(BasePromptEnum):
             return ["milf", "mature woman", "older woman", "experienced"]
         elif self == AgeRange.MATURE:
             return ["mature", "older", "senior"]
+        elif self == AgeRange.ELDERLY:
+            return ["elderly", "senior citizen", "aged", "geriatric"]
         else:
             return []
 
