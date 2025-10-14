@@ -4,6 +4,7 @@ SQLite database for model metadata storage.
 Replaces dependency on ComfyUI's metadata.json files with a centralized database.
 """
 
+import json
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -435,8 +436,6 @@ class MetadataDatabase(BaseDatabaseManager):
             True if successful
         """
         try:
-            import json
-
             with self.connection() as conn:
                 cursor = conn.cursor()
 
@@ -473,8 +472,6 @@ class MetadataDatabase(BaseDatabaseManager):
             Override dict or None
         """
         try:
-            import json
-
             with self.connection() as conn:
                 cursor = conn.cursor()
 

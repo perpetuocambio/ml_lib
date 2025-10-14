@@ -267,3 +267,29 @@ Todos
 ☒ Identificar problemas técnicos y de diseño
 ☒ Crear documento de auditoría completo
 ☐ Implementar mejoras identificadas
+🚀 Próximos Pasos (Fase 2)
+
+Según el plan de auditoría, las siguientes tareas de alta prioridad son:
+
+1. Integrar UserPreferencesDB (6-8 horas)
+
+   - Conectar al pipeline de generación
+   - Filtrado de modelos bloqueados
+   - Aplicación de preferencias de usuario
+
+2. Refactorizar dicts a clases (4-6 horas)
+
+   - NSFW_KEYWORDS → NSFWKeywordRegistry
+   - detected_acts → DetectedActs
+   - Otros 87 casos de dicts
+
+3. Sistema extensible de categorías (6-8 horas)
+
+   - ContentCategoryRegistry
+   - Soporte para fantasy, diseños, concept art
+   - Configuración vía YAML
+     y ya luego:
+     ☐ Corregir inline imports stdlib - restantes (8 archivos)
+     ☐ Documentar inline imports de heavy libs justificados
+     ☐ Revisar inline imports de proyecto (dependencias circulares)
+     ☐ Ejecutar tests finales
