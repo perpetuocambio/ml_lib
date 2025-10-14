@@ -154,6 +154,134 @@ CONTEXT_KEYWORDS = [
 ]
 
 
+class NSFWKeywordRegistry:
+    """
+    Registry of NSFW keywords organized by category.
+
+    Provides type-safe access to NSFW keywords with efficient lookups.
+    Encapsulates the keyword dictionary to enable future extensibility.
+    """
+
+    def __init__(self):
+        """Initialize registry with default NSFW keywords."""
+        self._keywords = NSFW_KEYWORDS
+
+    def get_keywords(self, category: NSFWCategory) -> list[str]:
+        """
+        Get keywords for a specific category.
+
+        Args:
+            category: NSFW category
+
+        Returns:
+            List of keywords for the category
+        """
+        return self._keywords.get(category, [])
+
+    def get_all_keywords(self) -> dict[NSFWCategory, list[str]]:
+        """
+        Get all keywords organized by category.
+
+        Returns:
+            Dictionary mapping categories to keywords
+        """
+        return self._keywords.copy()
+
+    def find_category_for_keyword(self, keyword: str) -> NSFWCategory | None:
+        """
+        Find which category a keyword belongs to.
+
+        Args:
+            keyword: Keyword to search for (case-insensitive)
+
+        Returns:
+            Category containing the keyword, or None if not found
+        """
+        keyword_lower = keyword.lower()
+        for category, keywords in self._keywords.items():
+            if keyword_lower in keywords:
+                return category
+        return None
+
+    def matches_any_keyword(self, text: str, category: NSFWCategory | None = None) -> bool:
+        """
+        Check if text contains any keyword.
+
+        Args:
+            text: Text to check (case-insensitive)
+            category: Optional category to restrict search to
+
+        Returns:
+            True if text contains any keyword from specified category (or any category if None)
+        """
+        text_lower = text.lower()
+
+        if category:
+            # Check only specific category
+            keywords = self._keywords.get(category, [])
+            return any(kw in text_lower for kw in keywords)
+        else:
+            # Check all categories
+            for keywords in self._keywords.values():
+                if any(kw in text_lower for kw in keywords):
+                    return True
+            return False
+
+    def find_matching_keywords(
+        self, text: str, category: NSFWCategory | None = None
+    ) -> list[str]:
+        """
+        Find all keywords that match in the text.
+
+        Args:
+            text: Text to search in (case-insensitive)
+            category: Optional category to restrict search to
+
+        Returns:
+            List of matched keywords
+        """
+        text_lower = text.lower()
+        matches = []
+
+        if category:
+            # Search only specific category
+            keywords = self._keywords.get(category, [])
+            matches.extend(kw for kw in keywords if kw in text_lower)
+        else:
+            # Search all categories
+            for keywords in self._keywords.values():
+                matches.extend(kw for kw in keywords if kw in text_lower)
+
+        return matches
+
+    def get_all_categories(self) -> list[NSFWCategory]:
+        """
+        Get list of all registered categories.
+
+        Returns:
+            List of NSFW categories
+        """
+        return list(self._keywords.keys())
+
+    def add_keyword(self, category: NSFWCategory, keyword: str):
+        """
+        Add a new keyword to a category.
+
+        Args:
+            category: Category to add keyword to
+            keyword: Keyword to add (will be lowercased)
+        """
+        keyword_lower = keyword.lower()
+        if category not in self._keywords:
+            self._keywords[category] = []
+        if keyword_lower not in self._keywords[category]:
+            self._keywords[category].append(keyword_lower)
+
+
+# Global singleton instance
+NSFW_REGISTRY = NSFWKeywordRegistry()
+
+
 @dataclass
 class TokenClassification:
     """Classification of a prompt token."""
@@ -219,6 +347,61 @@ class PromptCompactionResult:
 
 
 @dataclass
+class DetectedActs:
+    """
+    Collection of detected NSFW acts organized by category.
+
+    Value object that encapsulates detected acts with type-safe access.
+    """
+
+    _acts: dict[NSFWCategory, list[str]] = field(default_factory=dict)
+
+    def add_act(self, category: NSFWCategory, keyword: str):
+        """Add a detected act to a category."""
+        if category not in self._acts:
+            self._acts[category] = []
+        if keyword not in self._acts[category]:
+            self._acts[category].append(keyword)
+
+    def add_acts(self, category: NSFWCategory, keywords: list[str]):
+        """Add multiple detected acts to a category."""
+        for keyword in keywords:
+            self.add_act(category, keyword)
+
+    def get_acts(self, category: NSFWCategory) -> list[str]:
+        """Get acts for a specific category."""
+        return self._acts.get(category, [])
+
+    def get_all_acts(self) -> dict[NSFWCategory, list[str]]:
+        """Get all detected acts."""
+        return self._acts.copy()
+
+    def get_categories(self) -> list[NSFWCategory]:
+        """Get categories with detected acts."""
+        return list(self._acts.keys())
+
+    def has_acts_in_category(self, category: NSFWCategory) -> bool:
+        """Check if category has detected acts."""
+        return category in self._acts and len(self._acts[category]) > 0
+
+    def total_acts_count(self) -> int:
+        """Get total number of detected acts across all categories."""
+        return sum(len(acts) for acts in self._acts.values())
+
+    def is_empty(self) -> bool:
+        """Check if no acts detected."""
+        return len(self._acts) == 0
+
+    def __len__(self) -> int:
+        """Number of categories with detected acts."""
+        return len(self._acts)
+
+    def __iter__(self):
+        """Iterate over (category, acts) tuples."""
+        return iter(self._acts.items())
+
+
+@dataclass
 class NSFWAnalysis:
     """Analysis of NSFW content in a prompt."""
 
@@ -228,7 +411,7 @@ class NSFWAnalysis:
     categories: list[NSFWCategory] = field(default_factory=list)
 
     # Specific acts found
-    detected_acts: dict[NSFWCategory, list[str]] = field(default_factory=dict)
+    detected_acts: DetectedActs = field(default_factory=DetectedActs)
 
     # For LoRA matching
     recommended_lora_tags: list[str] = field(default_factory=list)
@@ -296,8 +479,8 @@ def classify_token(token: str) -> TokenClassification:
     priority = PromptTokenPriority.MEDIUM  # Default
 
     # Check NSFW categories (HIGH priority)
-    for nsfw_cat, keywords in NSFW_KEYWORDS.items():
-        if any(kw in clean_token for kw in keywords):
+    for nsfw_cat in NSFW_REGISTRY.get_all_categories():
+        if NSFW_REGISTRY.matches_any_keyword(clean_token, nsfw_cat):
             category = nsfw_cat
             priority = PromptTokenPriority.HIGH
             break
@@ -338,14 +521,14 @@ def analyze_nsfw_content(prompt: str) -> NSFWAnalysis:
     """
     prompt_lower = prompt.lower()
 
-    detected_acts: dict[NSFWCategory, list[str]] = {}
+    detected_acts = DetectedActs()
     categories: list[NSFWCategory] = []
 
     # Check each NSFW category
-    for category, keywords in NSFW_KEYWORDS.items():
-        found_keywords = [kw for kw in keywords if kw in prompt_lower]
+    for category in NSFW_REGISTRY.get_all_categories():
+        found_keywords = NSFW_REGISTRY.find_matching_keywords(prompt_lower, category)
         if found_keywords:
-            detected_acts[category] = found_keywords
+            detected_acts.add_acts(category, found_keywords)
             categories.append(category)
 
     # Determine if NSFW and confidence
@@ -355,7 +538,7 @@ def analyze_nsfw_content(prompt: str) -> NSFWAnalysis:
     if not is_nsfw:
         confidence = 0.0
     else:
-        total_keywords = sum(len(kws) for kws in detected_acts.values())
+        total_keywords = detected_acts.total_acts_count()
         # More keywords = higher confidence
         confidence = min(0.5 + (total_keywords * 0.1), 1.0)
 
@@ -364,8 +547,9 @@ def analyze_nsfw_content(prompt: str) -> NSFWAnalysis:
     for category in categories:
         recommended_tags.append(category.value)
         # Add most common keyword from this category
-        if detected_acts[category]:
-            recommended_tags.append(detected_acts[category][0])
+        category_acts = detected_acts.get_acts(category)
+        if category_acts:
+            recommended_tags.append(category_acts[0])
 
     # Add generic NSFW tags if explicit content
     if any(cat in {NSFWCategory.ORAL, NSFWCategory.ANAL, NSFWCategory.VAGINAL}

@@ -62,6 +62,7 @@ from ml_lib.diffusion.services.prompt_analyzer import PromptAnalyzer
 from ml_lib.diffusion.services.prompt_compactor import PromptCompactor
 from ml_lib.diffusion.models.value_objects import ProcessedPrompt
 from ml_lib.diffusion.models.content_tags import PromptCompactionResult
+from ml_lib.diffusion.storage.user_preferences_db import UserPreferencesDB, UserPreferences
 from ml_lib.system.resource_monitor import ResourceMonitor
 
 logger = logging.getLogger(__name__)
@@ -152,6 +153,8 @@ class IntelligentPipelineBuilder:
         ollama_url: Optional[str] = None,
         device: Optional[str] = None,
         enable_auto_download: bool = False,
+        user_preferences_db: Optional[UserPreferencesDB] = None,
+        user_id: Optional[str] = None,
     ):
         """
         Initialize builder.
@@ -162,12 +165,20 @@ class IntelligentPipelineBuilder:
             ollama_model: Ollama model for semantic analysis
             device: Device to use (None = auto-detect)
             enable_auto_download: Enable automatic model download from HF/CivitAI
+            user_preferences_db: User preferences database (optional)
+            user_id: User ID for preferences (required if user_preferences_db is provided)
         """
         self.model_config = model_config
         self.enable_ollama = enable_ollama
         self.ollama_model = ollama_model
         self.ollama_url = ollama_url
         self.enable_auto_download = enable_auto_download
+
+        # User preferences
+        self.user_prefs_db = user_preferences_db
+        self.user_id = user_id
+        if user_preferences_db and not user_id:
+            raise ValueError("user_id is required when user_preferences_db is provided")
 
         # Initialize resource monitor
         self.resource_monitor = ResourceMonitor()
@@ -579,6 +590,18 @@ class IntelligentPipelineBuilder:
             cfg_scale = config.cfg_scale or arch_info.default_cfg
             sampler = config.sampler or arch_info.default_sampler
 
+        # Step 8: Apply user preferences (filter blocked models, apply defaults)
+        if self.user_prefs_db and self.user_id:
+            base_model_path, selected_loras, lora_weights, steps, cfg_scale, sampler = self._apply_user_preferences(
+                base_model_path=base_model_path,
+                selected_loras=selected_loras,
+                lora_weights=lora_weights,
+                steps=steps,
+                cfg_scale=cfg_scale,
+                sampler=sampler,
+                config=config,
+            )
+
         # Return complete selection
         return SelectedModels(
             base_model_path=base_model_path,
@@ -593,6 +616,80 @@ class IntelligentPipelineBuilder:
             clip_skip=2,
             optimization_level=opt_level,
         )
+
+    def _apply_user_preferences(
+        self,
+        base_model_path: Path,
+        selected_loras: list[Path],
+        lora_weights: list[float],
+        steps: int,
+        cfg_scale: float,
+        sampler: str,
+        config: GenerationConfig,
+    ) -> tuple[Path, list[Path], list[float], int, float, str]:
+        """
+        Apply user preferences to model selection.
+
+        Filters out blocked models/LoRAs and applies user defaults.
+
+        Returns:
+            Tuple of (base_model_path, selected_loras, lora_weights, steps, cfg_scale, sampler)
+        """
+        if not self.user_prefs_db or not self.user_id:
+            return base_model_path, selected_loras, lora_weights, steps, cfg_scale, sampler
+
+        # Get user preferences
+        prefs = self.user_prefs_db.get_or_create_preferences(self.user_id)
+
+        # Check if base model is blocked
+        base_model_name = base_model_path.stem
+        if base_model_name in prefs.blocked_models:
+            logger.warning(f"Base model '{base_model_name}' is blocked by user preferences, finding alternative...")
+
+            # Try to find alternative from favorites
+            if prefs.favorite_base_models:
+                # Get all available base models
+                base_models = self.orchestrator.metadata_index.get(ModelType.BASE_MODEL, [])
+
+                # Find first favorite that's available
+                for fav_name in prefs.favorite_base_models:
+                    for model in base_models:
+                        if fav_name.lower() in model.model_name.lower() or fav_name.lower() in model.file_name.lower():
+                            base_model_path = model.file_path
+                            logger.info(f"Using favorite model instead: {model.model_name}")
+                            break
+                    else:
+                        continue
+                    break
+
+        # Filter blocked LoRAs
+        filtered_loras = []
+        filtered_weights = []
+        for lora_path, weight in zip(selected_loras, lora_weights):
+            lora_name = lora_path.stem
+            if lora_name not in prefs.blocked_loras:
+                filtered_loras.append(lora_path)
+                filtered_weights.append(weight)
+            else:
+                logger.info(f"Filtered out blocked LoRA: {lora_name}")
+
+        selected_loras = filtered_loras
+        lora_weights = filtered_weights
+
+        # Apply user's default parameters if not explicitly overridden
+        if not config.steps:
+            steps = prefs.default_steps
+            logger.debug(f"Using user's default steps: {steps}")
+
+        if not config.cfg_scale:
+            cfg_scale = prefs.default_cfg
+            logger.debug(f"Using user's default CFG: {cfg_scale}")
+
+        if not config.sampler:
+            sampler = prefs.default_sampler
+            logger.debug(f"Using user's default sampler: {sampler}")
+
+        return base_model_path, selected_loras, lora_weights, steps, cfg_scale, sampler
 
     def _determine_optimization_level(
         self, quality: str, memory_mode: str, available_memory_gb: float
@@ -920,12 +1017,53 @@ class IntelligentPipelineBuilder:
                     f"(peak VRAM: {peak_vram:.2f}GB)"
                 )
 
+                # Step 5: Record generation in user preferences database
+                if self.user_prefs_db and self.user_id and images:
+                    self._record_successful_generation(
+                        config=config,
+                        selected=selected,
+                    )
+
                 return images
 
         except Exception as e:
             logger.error(f"Generation failed: {e}")
             traceback.print_exc()
             return []
+
+    def _record_successful_generation(
+        self,
+        config: GenerationConfig,
+        selected: SelectedModels,
+    ):
+        """Record successful generation in user preferences database for learning."""
+        if not self.user_prefs_db or not self.user_id:
+            return
+
+        try:
+            # Extract model names from paths
+            base_model_name = selected.base_model_path.stem
+            lora_names = [lora_path.stem for lora_path in selected.lora_paths]
+
+            # Record generation
+            self.user_prefs_db.record_generation(
+                user_id=self.user_id,
+                prompt=config.prompt,
+                base_model=base_model_name,
+                loras=lora_names,
+                quality=config.quality,
+                steps=selected.steps,
+                cfg=selected.cfg_scale,
+                sampler=selected.sampler,
+                width=config.width,
+                height=config.height,
+                rating=None,  # User can rate later via API
+            )
+
+            logger.debug(f"Recorded generation for user {self.user_id}")
+
+        except Exception as e:
+            logger.warning(f"Failed to record generation: {e}")
 
     def _cleanup(self, pipeline):
         """Clean up resources."""

@@ -126,7 +126,10 @@ from ml_lib.diffusion.models.content_tags import (
     QualityTag,
     TokenClassification,
     PromptCompactionResult,
+    DetectedActs,
     NSFWAnalysis,
+    NSFWKeywordRegistry,
+    NSFW_REGISTRY,
     classify_token,
     analyze_nsfw_content,
 )
@@ -224,7 +227,10 @@ __all__ = [
     "QualityTag",
     "TokenClassification",
     "PromptCompactionResult",
+    "DetectedActs",
     "NSFWAnalysis",
+    "NSFWKeywordRegistry",
+    "NSFW_REGISTRY",
     "classify_token",
     "analyze_nsfw_content",
 ]
