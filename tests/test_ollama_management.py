@@ -25,12 +25,12 @@ print("=" * 80)
 print()
 
 print("Creating OllamaModelSelector with auto_manage_server=True...")
-from ml_lib.diffusion.services.ollama_selector import OllamaModelSelector
+from ml_lib.diffusion.prompt.ollama_selector import OllamaModelSelector
 
 selector = OllamaModelSelector(
     ollama_model="dolphin3",
     ollama_url="http://localhost:11434",
-    auto_manage_server=True
+    auto_manage_server=True,
 )
 
 print("✅ Selector created")
@@ -94,8 +94,7 @@ try:
 
         # Do analysis
         prompt = LLMPrompt(
-            content="Analyze: photorealistic portrait of elderly woman",
-            temperature=0.7
+            content="Analyze: photorealistic portrait of elderly woman", temperature=0.7
         )
 
         response = provider.generate_response(prompt)

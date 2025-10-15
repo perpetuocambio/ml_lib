@@ -14,7 +14,7 @@ from ml_lib.diffusion.services import (
     ParameterOptimizer,
     ModelRegistry,
 )
-from ml_lib.diffusion.services.parameter_optimizer import (
+from ml_lib.diffusion.generation.parameter_optimizer import (
     GenerationConstraints,
 )
 from ml_lib.diffusion.models import Priority
@@ -52,7 +52,9 @@ def example_prompt_analysis():
     # Display results
     logger.info(f"Prompt: {prompt}\n")
     logger.info("Analysis Results:")
-    logger.info(f"  Complexity: {analysis.complexity_category.value} ({analysis.complexity_score:.2f})")
+    logger.info(
+        f"  Complexity: {analysis.complexity_category.value} ({analysis.complexity_score:.2f})"
+    )
     logger.info(f"  Total concepts detected: {analysis.concept_count}")
 
     logger.info("\n  Detected Concepts by Category:")
@@ -182,13 +184,13 @@ def example_complete_workflow():
     logger.info("Step 1: Analyzing prompt...")
     analysis = analyzer.analyze(prompt)
     logger.info(f"  Complexity: {analysis.complexity_category.value}")
-    logger.info(f"  Style: {analysis.intent.artistic_style.value if analysis.intent else 'unknown'}")
+    logger.info(
+        f"  Style: {analysis.intent.artistic_style.value if analysis.intent else 'unknown'}"
+    )
 
     # Step 2: Recommend LoRAs
     logger.info("\nStep 2: Recommending LoRAs...")
-    loras = recommender.recommend(
-        analysis, base_model="sdxl-base-1.0", max_loras=3
-    )
+    loras = recommender.recommend(analysis, base_model="sdxl-base-1.0", max_loras=3)
     logger.info(f"  Selected {len(loras)} LoRAs:")
     for lora in loras:
         logger.info(f"    - {lora.lora_name} (α={lora.suggested_alpha:.2f})")
@@ -214,7 +216,9 @@ def example_complete_workflow():
 def main():
     """Run all examples."""
     logger.info("Intelligent Prompting System Examples")
-    logger.info("US 14.2: Semantic Analysis + LoRA Recommendation + Parameter Optimization\n")
+    logger.info(
+        "US 14.2: Semantic Analysis + LoRA Recommendation + Parameter Optimization\n"
+    )
 
     try:
         # Run examples

@@ -26,18 +26,6 @@ class PipelineProtocol(Protocol):
     def enable_xformers_memory_efficient_attention(self) -> None: ...
 
 
-class VAEProtocol(Protocol):
-    """Protocol for VAE component."""
-
-    def enable_tiling(self) -> None: ...
-
-    def enable_slicing(self) -> None: ...
-
-    def enable_layerwise_casting(
-        self, storage_dtype: object, compute_dtype: object
-    ) -> None: ...
-
-
 class UNetProtocol(Protocol):
     """Protocol for UNet component."""
 

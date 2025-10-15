@@ -11,7 +11,7 @@ import pytest
 from pathlib import Path
 from PIL import Image
 
-from ml_lib.diffusion.facade import ImageGenerator, GenerationOptions
+from ml_lib.diffusion.generation.facade import ImageGenerator, GenerationOptions
 
 
 @pytest.fixture
@@ -44,9 +44,7 @@ def nsfw_generator():
         memory_mode="balanced",
     )
     return ImageGenerator(
-        model="stabilityai/stable-diffusion-xl-base-1.0",
-        device="cuda",
-        options=options
+        model="stabilityai/stable-diffusion-xl-base-1.0", device="cuda", options=options
     )
 
 
@@ -70,9 +68,7 @@ class TestNSFWGeneration:
         )
 
         image = nsfw_generator.generate_from_prompt(
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            seed=42
+            prompt=prompt, negative_prompt=negative_prompt, seed=42
         )
 
         assert isinstance(image, Image.Image)
@@ -96,9 +92,7 @@ class TestNSFWGeneration:
         negative_prompt = "low quality, blurry, deformed, ugly, bad anatomy"
 
         image = nsfw_generator.generate_from_prompt(
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            seed=100
+            prompt=prompt, negative_prompt=negative_prompt, seed=100
         )
 
         assert isinstance(image, Image.Image)
@@ -121,9 +115,7 @@ class TestNSFWGeneration:
         negative_prompt = "low quality, deformed, modern, blurry"
 
         image = nsfw_generator.generate_from_prompt(
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            seed=200
+            prompt=prompt, negative_prompt=negative_prompt, seed=200
         )
 
         assert isinstance(image, Image.Image)
@@ -159,9 +151,7 @@ class TestNSFWCharacterGeneration:
         negative_prompt = "low quality, blurry, deformed, ugly, bad anatomy"
 
         image = nsfw_generator.generate_from_prompt(
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            seed=42
+            prompt=prompt, negative_prompt=negative_prompt, seed=42
         )
 
         assert isinstance(image, Image.Image)
@@ -185,9 +175,7 @@ class TestNSFWCharacterGeneration:
         negative_prompt = "low quality, blurry, deformed, ugly, bad anatomy"
 
         image = nsfw_generator.generate_from_prompt(
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            seed=150
+            prompt=prompt, negative_prompt=negative_prompt, seed=150
         )
 
         assert isinstance(image, Image.Image)
@@ -221,7 +209,7 @@ class TestNSFWQualityControl:
             prompt=prompt,
             negative_prompt=negative_prompt,
             cfg_scale=9.0,  # Higher CFG for better adherence
-            seed=42
+            seed=42,
         )
 
         assert isinstance(image, Image.Image)
@@ -253,9 +241,7 @@ class TestNSFWQualityControl:
             negative_prompt = "low quality, deformed, bad anatomy"
 
             image = nsfw_generator.generate_from_prompt(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                seed=42
+                prompt=prompt, negative_prompt=negative_prompt, seed=42
             )
 
             assert isinstance(image, Image.Image)
@@ -274,19 +260,15 @@ class TestNSFWMetadata:
         print("\n📝 Testing adult content metadata...")
 
         from ml_lib.diffusion.services import IntelligentPipelineBuilder
-        from ml_lib.diffusion.models.pipeline import PipelineConfig
+        from ml_lib.diffusion.generation.pipeline import PipelineConfig
 
-        config = PipelineConfig(
-            base_model="stabilityai/stable-diffusion-xl-base-1.0"
-        )
+        config = PipelineConfig(base_model="stabilityai/stable-diffusion-xl-base-1.0")
         pipeline = IntelligentPipelineBuilder.from_diffusers(config)
 
         prompt = "artistic nude portrait, professional photography"
 
         result = pipeline.generate(
-            prompt=prompt,
-            negative_prompt="low quality, deformed",
-            seed=42
+            prompt=prompt, negative_prompt="low quality, deformed", seed=42
         )
 
         # Check metadata
@@ -295,14 +277,16 @@ class TestNSFWMetadata:
         assert result.image is not None
 
         # Save with metadata
-        from ml_lib.diffusion.services.image_metadata import (
+        from ml_lib.diffusion.generation.image_metadata import (
             ImageMetadataWriter,
             ImageMetadataEmbedding,
         )
 
         metadata_embedding = ImageMetadataEmbedding(
             generation_id=result.id,
-            generation_timestamp=result.metadata.timestamp if hasattr(result.metadata, 'timestamp') else "2025-01-01T00:00:00Z",
+            generation_timestamp=result.metadata.timestamp
+            if hasattr(result.metadata, "timestamp")
+            else "2025-01-01T00:00:00Z",
             prompt=result.metadata.prompt,
             negative_prompt=result.metadata.negative_prompt,
             seed=result.metadata.seed,
@@ -341,8 +325,15 @@ class TestNSFWContentWarnings:
         print("\n⚠️  Testing content warning detection...")
 
         nsfw_keywords = [
-            "nude", "naked", "nsfw", "adult", "explicit",
-            "sexual", "erotic", "xxx", "porn"
+            "nude",
+            "naked",
+            "nsfw",
+            "adult",
+            "explicit",
+            "sexual",
+            "erotic",
+            "xxx",
+            "porn",
         ]
 
         test_prompts = [

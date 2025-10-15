@@ -14,8 +14,8 @@ import time
 # Add ml_lib to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from ml_lib.diffusion.facade import ImageGenerator, GenerationOptions
-from ml_lib.diffusion.models.registry import BaseModel
+from ml_lib.diffusion.generation.facade import ImageGenerator, GenerationOptions
+from ml_lib.diffusion.registry.registry import BaseModel
 
 # Setup output directory
 OUTPUT_DIR = Path(__file__).parent / "output"
@@ -143,7 +143,7 @@ try:
     print("")
     print(f"⏱️  Tiempo total: {time.time() - start_init:.2f}s")
     print(f"   - Inicialización: {init_time:.2f}s")
-    if 'analysis_time' in locals():
+    if "analysis_time" in locals():
         print(f"   - Análisis: {analysis_time:.2f}s")
     print(f"   - Generación: {gen_time:.2f}s")
     print("")
@@ -155,6 +155,7 @@ except Exception as e:
     print(f"❌ Error durante generación: {e}")
     print("")
     import traceback
+
     traceback.print_exc()
     sys.exit(1)
 

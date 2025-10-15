@@ -1,9 +1,10 @@
 """Test Ollama prompt analysis."""
 
 import logging
+
 logging.basicConfig(level=logging.INFO)
 
-from ml_lib.diffusion.services.ollama_selector import OllamaModelSelector
+from ml_lib.diffusion.prompt.ollama_selector import OllamaModelSelector
 
 PROMPT = """an old female elephant in the forest, anthro, blue eyes, orgasm face"""
 

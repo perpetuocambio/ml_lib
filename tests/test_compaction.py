@@ -5,7 +5,7 @@ from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
-from ml_lib.diffusion.services.intelligent_builder import IntelligentPipelineBuilder
+from ml_lib.diffusion.generation.intelligent_builder import IntelligentPipelineBuilder
 
 # Get first prompt from sanitized file
 prompt_file = Path(__file__).parent.parent / "data" / "prompt_sanitized.txt"
@@ -72,4 +72,5 @@ try:
 except Exception as e:
     print(f"❌ ERROR: {e}")
     import traceback
+
     traceback.print_exc()

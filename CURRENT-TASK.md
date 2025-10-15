@@ -293,3 +293,63 @@ Según el plan de auditoría, las siguientes tareas de alta prioridad son:
      ☐ Documentar inline imports de heavy libs justificados
      ☐ Revisar inline imports de proyecto (dependencias circulares)
      ☐ Ejecutar tests finales
+     Perfecto, voy a continuar con la Tarea 6: Crear ContentCategoryRegistry extensible.
+
+Esta es la tarea más compleja. El objetivo es crear un sistema que:
+
+1. No esté hardcodeado solo para NSFW
+2. Soporte múltiples dominios: fantasy, diseños, concept art, etc.
+3. Sea configurable vía YAML
+4. Permita registrar categorías dinámicamente
+
+Voy a crear una nueva arquitectura de registries. Primero, voy a crear el archivo para el registry base:
+⎿ Interrupted · What should Claude do instead?
+
+> no configurable via yaml, no, todo base de datos, hay que diseñar bien la base de datos, antes de ponerte con estsa tarea creo que es más
+> importante, hacer una revisión completa a nuestro sistema para ver cuan está acoplado a nsfw y además que bien o mal estan diseñadas las clases
+> incluidas las nsfw, me refiero, por ejemplo tenemos un generador de personajes, q deberia estar desacomplado del contenido nsfw, que si lo
+> incluimos, ok, perfecto pero sino debería genearar contenido safe for work, ahora mismo solo tenemos soporte para mujeres pero y si queremos
+> contenido de hombre en algún momento nsfw o no, luego revisar que todo el sistema despues de todas las optimizaciones están bien diseñados,
+> prefiero que generes otra auditoria que ha dado buen resultado para guiarte inlcuyendo por supuesto el contecategory regisry, pero en vez de
+> generar frankenstein es ver que tenemos un buen sistema creado
+
+● Excelente punto. Tienes toda la razón - antes de seguir construyendo, necesitamos auditar el acoplamiento NSFW y el diseño general del sistema.
+Voy a hacer una auditoría completa enfocada en:
+
+1. Acoplamiento NSFW - Dónde está hardcodeado y cómo desacoplar
+2. Diseño de clases - Character generator, análisis de prompts, etc.
+3. Extensibilidad - Soporte para hombres, contenido SFW, otros géneros
+4. Base de datos - Diseño para ContentCategoryRegistry y otros registries
+5. Arquitectura post-optimizaciones - Estado actual después de todas las refactorizaciones
+
+Voy a empezar buscando todos los acoplamientos NSFW:
+
+● Bash(find ml_lib/diffusion -name "\*.py" -type f | xargs grep -l "nsfw\|NSFW" | grep -v **pycache** | sort)
+⎿ ml_lib/diffusion/config/base.py  
+ ml_lib/diffusion/models/character.py
+ml_lib/diffusion/models/content_tags.py
+… +7 lines (ctrl+o to expand)
+
+● Bash(find ml_lib/diffusion -name "\*.py" -type f | wc -l)
+⎿ 87
+
+● 10 de 87 archivos tienen referencias NSFW. Ahora voy a analizar el character generator para ver el acoplamiento:
+
+● Search(pattern: "class.*Character|def.*character|female|male|gender", path: "ml_lib/diffusion", type: "py")
+⎿ Found 7 files (ctrl+o to expand)
+
+● Voy a crear un agente especializado para hacer la auditoría completa del sistema:
+
+● Task(Auditoría de acoplamiento NSFW)
+⎿ Done (13 tool uses · 0 tokens · 2m 32s)  
+ ⎿ Session limit reached ∙ resets 11pm
+/upgrade to increase your usage limit.
+
+Todos
+☒ Integrar UserPreferencesDB al pipeline de generación
+☒ Implementar filtrado de modelos bloqueados
+☒ Aplicar preferencias de usuario a generaciones
+☒ Refactorizar NSFW_KEYWORDS a NSFWKeywordRegistry
+☒ Refactorizar detected_acts a DetectedActs value object
+☐ Crear ContentCategoryRegistry extensible
+☐ Tests de integración completos

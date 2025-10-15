@@ -10,7 +10,7 @@ This example demonstrates:
 
 import logging
 import time
-from ml_lib.diffusion.handlers.memory_manager import MemoryManager
+from ml_lib.system.services.memory_manager import MemoryManager
 from ml_lib.diffusion.services import (
     ModelPool,
     ModelOffloader,
@@ -257,9 +257,7 @@ def example_complete_workflow():
             time.sleep(0.05)
             return "LoRADummy"
 
-        lora = model_pool.load(
-            "anime-lora", loader_fn=load_lora, estimated_size_gb=0.3
-        )
+        lora = model_pool.load("anime-lora", loader_fn=load_lora, estimated_size_gb=0.3)
 
     # 4. Report results
     logger.info("\nOperation Complete!")

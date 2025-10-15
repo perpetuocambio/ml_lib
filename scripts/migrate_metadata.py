@@ -13,14 +13,13 @@ from pathlib import Path
 # Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from ml_lib.diffusion.storage.metadata_db import MetadataDatabase
-from ml_lib.diffusion.storage.comfyui_migrator import ComfyUIMetadataMigrator
+from ml_lib.diffusion.models.metadata_db import MetadataDatabase
+from ml_lib.diffusion.sources.comfyui_migrator import ComfyUIMetadataMigrator
 from ml_lib.diffusion.config import detect_comfyui_installation
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 logger = logging.getLogger(__name__)
@@ -117,5 +116,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n\n❌ Migration failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

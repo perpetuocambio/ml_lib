@@ -12,11 +12,13 @@ print("=" * 80)
 try:
     from ml_lib.diffusion.services.prompt_analyzer import PromptAnalyzer
     from ml_lib.diffusion.services.prompt_compactor import PromptCompactor
-    from ml_lib.diffusion.models.content_tags import analyze_nsfw_content
+    from ml_lib.diffusion.prompt.content_tags import analyze_nsfw_content
+
     print("✅ Modules imported successfully")
 except Exception as e:
     print(f"❌ Import failed: {e}")
     import traceback
+
     traceback.print_exc()
     exit(1)
 
@@ -37,6 +39,7 @@ try:
 except Exception as e:
     print(f"❌ NSFW analysis failed: {e}")
     import traceback
+
     traceback.print_exc()
 
 # Test 3: Compact prompt
@@ -75,6 +78,7 @@ try:
 except Exception as e:
     print(f"❌ Prompt compaction failed: {e}")
     import traceback
+
     traceback.print_exc()
 
 # Test 4: Test with longer prompt (should trigger compaction)
@@ -91,7 +95,9 @@ try:
 
     print(f"Compacted: {len(result.compacted_prompt)} chars")
     print()
-    print(f"Token reduction: {result.original_token_count} → {result.compacted_token_count}")
+    print(
+        f"Token reduction: {result.original_token_count} → {result.compacted_token_count}"
+    )
     print(f"Compression ratio: {result.compression_ratio:.1%}")
     print()
     print("Compacted prompt:")
@@ -99,13 +105,16 @@ try:
 
     # Check what was preserved
     print(f"\n✅ NSFW content preserved: {result.nsfw_content_preserved}")
-    print(f"✅ NSFW categories found: {[cat.value for cat in result.nsfw_categories_found]}")
+    print(
+        f"✅ NSFW categories found: {[cat.value for cat in result.nsfw_categories_found]}"
+    )
 
     print("✅ Long prompt compaction successful")
 
 except Exception as e:
     print(f"❌ Long prompt compaction failed: {e}")
     import traceback
+
     traceback.print_exc()
 
 # Test 5: Test full optimization pipeline
@@ -123,7 +132,7 @@ try:
         prompt=simple_prompt,
         negative_prompt="low quality, worst quality",
         base_model_architecture="sdxl",
-        quality="high"
+        quality="high",
     )
 
     # Then compact if needed
@@ -133,13 +142,16 @@ try:
     print(result.compacted_prompt)
     print(f"\nOptimized negative:")
     print(optimized_negative)
-    print(f"\nCompaction stats: {result.original_token_count} → {result.compacted_token_count} tokens ({result.compression_ratio:.1%} kept)")
+    print(
+        f"\nCompaction stats: {result.original_token_count} → {result.compacted_token_count} tokens ({result.compression_ratio:.1%} kept)"
+    )
 
     print("\n✅ Full optimization successful")
 
 except Exception as e:
     print(f"❌ Full optimization failed: {e}")
     import traceback
+
     traceback.print_exc()
 
 print("\n" + "=" * 80)

@@ -11,7 +11,7 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
-from ml_lib.diffusion.services.intelligent_builder import IntelligentPipelineBuilder
+from ml_lib.diffusion.generation.intelligent_builder import IntelligentPipelineBuilder
 
 # User's problematic prompt
 PROMPT = """an old female elephant in the forest, (masterpiece, best quality:1.2), amazing quality, very aesthetic, 32k, absurdres, extremely realistic, (anthro:1.5), an old elderly (female anthro elephant:1.9), (trunk nose suck own puffy nipple:1.6), blue eyes, big gaping pussy with creampie, spread pussy, UZ_full_bush, excessive pussy hair, orgasm face, eyes rolling, deep anal penetration, (anal penetration:1.6), bukkake, Large and open vulva filled with semen, The wrinkled and sagging breasts partially shown, (very wrinkled body:0.8), eyes rolling, cum cover all body, cum on anus, cum on ass, masterpiece, 4k, ray tracing, intricate details, highly-detailed, hyper-realistic, 8k RAW Editorial Photo, (face focus:0.8), BREAK 1male human, out of frame, (white cock:0.8)"""

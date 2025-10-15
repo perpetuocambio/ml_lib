@@ -1,9 +1,10 @@
 """Simple test to verify Ollama integration works."""
 
 import logging
+
 logging.basicConfig(level=logging.INFO)
 
-from ml_lib.diffusion.services.ollama_selector import OllamaModelSelector
+from ml_lib.diffusion.prompt.ollama_selector import OllamaModelSelector
 
 print("=" * 80)
 print("TESTING OLLAMA INTEGRATION")
@@ -32,7 +33,9 @@ try:
     if analysis:
         print("✅ Analysis successful!")
         print(f"Style: {analysis.style} (confidence: {analysis.style_confidence:.2f})")
-        print(f"Content: {analysis.content_type} (confidence: {analysis.content_confidence:.2f})")
+        print(
+            f"Content: {analysis.content_type} (confidence: {analysis.content_confidence:.2f})"
+        )
         print(f"Suggested model: {analysis.suggested_base_model}")
         print(f"Key concepts: {analysis.key_concepts}")
         print(f"Recommended LoRA tags: {analysis.recommended_lora_tags}")
@@ -44,4 +47,5 @@ try:
 except Exception as e:
     print(f"❌ ERROR: {e}")
     import traceback
+
     traceback.print_exc()

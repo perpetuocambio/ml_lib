@@ -11,16 +11,18 @@ print("=" * 80)
 # Test 1: Import
 try:
     # Import directly from modules to avoid circular imports
-    from ml_lib.diffusion.models.value_objects.processed_prompt import ProcessedPrompt
-    from ml_lib.diffusion.models.content_tags import (
+    from ml_lib.diffusion.prompt.processed_prompt import ProcessedPrompt
+    from ml_lib.diffusion.prompt.content_tags import (
         TokenClassification,
         PromptTokenPriority,
         NSFWCategory,
     )
+
     print("✅ Imports successful")
 except Exception as e:
     print(f"❌ Import failed: {e}")
     import traceback
+
     traceback.print_exc()
     exit(1)
 
@@ -55,6 +57,7 @@ try:
 except Exception as e:
     print(f"❌ Test failed: {e}")
     import traceback
+
     traceback.print_exc()
 
 # Test 3: Create ProcessedPrompt with modifications
@@ -122,6 +125,7 @@ try:
 except Exception as e:
     print(f"❌ Test failed: {e}")
     import traceback
+
     traceback.print_exc()
 
 # Test 4: ProcessedPrompt with CRITICAL loss
@@ -177,6 +181,7 @@ try:
 except Exception as e:
     print(f"❌ Test failed: {e}")
     import traceback
+
     traceback.print_exc()
 
 # Test 5: to_dict() serialization
@@ -211,6 +216,7 @@ try:
 except Exception as e:
     print(f"❌ Test failed: {e}")
     import traceback
+
     traceback.print_exc()
 
 print("\n" + "=" * 80)

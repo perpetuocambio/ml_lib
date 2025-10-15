@@ -8,9 +8,9 @@ import pytest
 from pathlib import Path
 from PIL import Image
 
-from ml_lib.diffusion.facade import ImageGenerator, GenerationOptions
+from ml_lib.diffusion.generation.facade import ImageGenerator, GenerationOptions
 from ml_lib.diffusion.services import IntelligentPipelineBuilder
-from ml_lib.diffusion.models.pipeline import PipelineConfig
+from ml_lib.diffusion.generation.pipeline import PipelineConfig
 
 
 @pytest.fixture
@@ -32,9 +32,7 @@ def simple_generator():
         enable_learning=False,
     )
     return ImageGenerator(
-        model="stabilityai/stable-diffusion-2-1-base",
-        device="cuda",
-        options=options
+        model="stabilityai/stable-diffusion-2-1-base", device="cuda", options=options
     )
 
 
@@ -46,8 +44,7 @@ class TestBasicGeneration:
         print("\n🎨 Testing basic image generation...")
 
         image = simple_generator.generate_from_prompt(
-            prompt="a beautiful sunset over mountains",
-            seed=42
+            prompt="a beautiful sunset over mountains", seed=42
         )
 
         # Verify image properties
@@ -66,7 +63,7 @@ class TestBasicGeneration:
         image = simple_generator.generate_from_prompt(
             prompt="a beautiful woman with blue eyes",
             negative_prompt="ugly, deformed, low quality, blurry",
-            seed=42
+            seed=42,
         )
 
         assert isinstance(image, Image.Image)
@@ -85,7 +82,7 @@ class TestBasicGeneration:
             cfg_scale=9.0,
             width=768,
             height=512,
-            seed=123
+            seed=123,
         )
 
         assert isinstance(image, Image.Image)
@@ -109,9 +106,9 @@ class TestPromptAnalysis:
 
         # Verify analysis structure
         assert analysis is not None
-        assert hasattr(analysis, 'concepts')
-        assert hasattr(analysis, 'emphases')
-        assert hasattr(analysis, 'reasoning')
+        assert hasattr(analysis, "concepts")
+        assert hasattr(analysis, "emphases")
+        assert hasattr(analysis, "reasoning")
 
         print(f"✅ Concepts detected: {analysis.concept_count}")
         print(f"✅ Emphases found: {analysis.emphasis_count}")
@@ -123,14 +120,14 @@ class TestIntelligentPipeline:
     @pytest.fixture
     def intelligent_pipeline(self):
         """Create intelligent pipeline with Ollama using dolphin3 (NSFW-capable)."""
-        from ml_lib.diffusion.models.pipeline import OllamaConfig
+        from ml_lib.diffusion.generation.pipeline import OllamaConfig
 
         config = PipelineConfig(
             base_model="stabilityai/stable-diffusion-2-1-base",
             ollama_config=OllamaConfig(
                 base_url="http://localhost:11434",
                 model="dolphin3",  # NSFW-capable model
-                enabled=True
+                enabled=True,
             ),
             enable_learning=False,
         )
@@ -142,8 +139,7 @@ class TestIntelligentPipeline:
         print("\n🤖 Testing intelligent generation with Ollama...")
 
         result = intelligent_pipeline.generate(
-            prompt="a portrait of a wise old wizard with a long white beard",
-            seed=42
+            prompt="a portrait of a wise old wizard with a long white beard", seed=42
         )
 
         # Verify result structure
@@ -176,7 +172,9 @@ class TestIntelligentPipeline:
         print(f"✅ Recommendations generated")
         print(f"📊 Suggested steps: {recommendations.suggested_params.num_steps}")
         print(f"📊 Suggested CFG: {recommendations.suggested_params.guidance_scale}")
-        print(f"📊 Suggested resolution: {recommendations.suggested_params.width}x{recommendations.suggested_params.height}")
+        print(
+            f"📊 Suggested resolution: {recommendations.suggested_params.width}x{recommendations.suggested_params.height}"
+        )
 
 
 class TestMemoryOptimization:
@@ -196,14 +194,10 @@ class TestMemoryOptimization:
         )
 
         generator = ImageGenerator(
-            model="stabilityai/stable-diffusion-2-1-base",
-            options=options
+            model="stabilityai/stable-diffusion-2-1-base", options=options
         )
 
-        image = generator.generate_from_prompt(
-            prompt="a simple landscape",
-            seed=42
-        )
+        image = generator.generate_from_prompt(prompt="a simple landscape", seed=42)
 
         assert isinstance(image, Image.Image)
 

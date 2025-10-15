@@ -5,7 +5,7 @@ from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
-from ml_lib.diffusion.services.intelligent_builder import IntelligentPipelineBuilder
+from ml_lib.diffusion.generation.intelligent_builder import IntelligentPipelineBuilder
 
 # Use the first prompt from sanitized list (explicit fellatio/cum content)
 TEST_PROMPT = "score_9, score_8_up, score_7_up, score_6_up, ((excessive cum, huge facial, cum on nose, thick ropes of cum)), 1 girl, granny, freckles, sexy, blushing, slim, kneeling, big facial, big cumshot, cum drip, small ass, smiling, soles, slight open mouth, head tilted up, portrait, bedroom, detailed drawing, partially illuminated, blurry background, face focus, from above, looking up at viewer, s1_dram, watercolor \\(medium\\), traditional media, (((cock on face, veiny cock))), ((wrinkled face, wrinkles buttoms, wrinkles tits, puffy nipples, creampie anal, creampie pussy, double penetration, 3 male offside camara, only cock visible. Mother Gothel))"

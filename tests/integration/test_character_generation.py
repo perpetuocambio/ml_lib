@@ -9,7 +9,7 @@ import pytest
 from pathlib import Path
 from PIL import Image
 
-from ml_lib.diffusion.facade import ImageGenerator, GenerationOptions
+from ml_lib.diffusion.generation.facade import ImageGenerator, GenerationOptions
 
 
 @pytest.fixture
@@ -33,9 +33,7 @@ def character_generator():
         memory_mode="balanced",
     )
     return ImageGenerator(
-        model="stabilityai/stable-diffusion-xl-base-1.0",
-        device="cuda",
-        options=options
+        model="stabilityai/stable-diffusion-xl-base-1.0", device="cuda", options=options
     )
 
 
@@ -55,7 +53,7 @@ class TestCharacterGeneration:
         image = character_generator.generate_from_prompt(
             prompt=character_prompt,
             negative_prompt="low quality, blurry, deformed, ugly, bad anatomy",
-            seed=42
+            seed=42,
         )
 
         assert isinstance(image, Image.Image)
@@ -70,18 +68,25 @@ class TestCharacterGeneration:
         print("\n🎨 Testing character with art style...")
 
         styles = [
-            ("anime", "anime style girl with pink hair, cute expression, school uniform"),
-            ("realistic", "photorealistic portrait of a man with beard, professional photo"),
-            ("fantasy", "fantasy elf character with pointed ears, mystical clothing, magical atmosphere"),
+            (
+                "anime",
+                "anime style girl with pink hair, cute expression, school uniform",
+            ),
+            (
+                "realistic",
+                "photorealistic portrait of a man with beard, professional photo",
+            ),
+            (
+                "fantasy",
+                "fantasy elf character with pointed ears, mystical clothing, magical atmosphere",
+            ),
         ]
 
         for style_name, prompt in styles:
             print(f"  Generating {style_name} character...")
 
             image = character_generator.generate_from_prompt(
-                prompt=prompt,
-                negative_prompt="low quality, deformed, blurry",
-                seed=42
+                prompt=prompt, negative_prompt="low quality, deformed, blurry", seed=42
             )
 
             assert isinstance(image, Image.Image)
@@ -109,7 +114,7 @@ class TestCharacterGeneration:
             image = character_generator.generate_from_prompt(
                 prompt=prompt,
                 negative_prompt="low quality, blurry, deformed",
-                seed=100 + i
+                seed=100 + i,
             )
 
             assert isinstance(image, Image.Image)
@@ -165,7 +170,7 @@ class TestCharacterGeneratorIntegration:
         image = character_generator.generate_from_prompt(
             prompt=prompt,
             negative_prompt="low quality, blurry, deformed, ugly, bad anatomy",
-            seed=42
+            seed=42,
         )
 
         assert isinstance(image, Image.Image)
@@ -198,7 +203,7 @@ class TestCharacterGeneratorIntegration:
             image = character_generator.generate_from_prompt(
                 prompt=prompt + ", high quality, fantasy art",
                 negative_prompt="low quality, blurry, deformed",
-                seed=42
+                seed=42,
             )
 
             assert isinstance(image, Image.Image)
@@ -228,7 +233,7 @@ class TestBatchCharacterGeneration:
             image = character_generator.generate_from_prompt(
                 prompt=f"portrait of {description}, detailed face, fantasy art",
                 negative_prompt="low quality, blurry, deformed",
-                seed=42
+                seed=42,
             )
 
             assert isinstance(image, Image.Image)
@@ -251,8 +256,7 @@ class TestCharacterWithFeedback:
             enable_learning=True,
         )
         generator = ImageGenerator(
-            model="stabilityai/stable-diffusion-2-1-base",
-            options=options
+            model="stabilityai/stable-diffusion-2-1-base", options=options
         )
 
         prompt = "portrait of a young adventurer"
@@ -269,7 +273,7 @@ class TestCharacterWithFeedback:
             generator.provide_feedback(
                 generation_id="test_001",
                 rating=2,
-                comments="Face details not good enough"
+                comments="Face details not good enough",
             )
             print("  ✅ Feedback recorded")
         except RuntimeError as e:

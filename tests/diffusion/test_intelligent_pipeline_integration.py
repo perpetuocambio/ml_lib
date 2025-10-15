@@ -90,7 +90,9 @@ class TestIntelligentPipelineIntegration:
         assert pipeline.config.constraints.priority == Priority.QUALITY
         assert pipeline.diffusion_pipeline is None  # Not loaded yet
 
-    def test_simple_generation_workflow(self, pipeline_config, mock_subsystems, monkeypatch):
+    def test_simple_generation_workflow(
+        self, pipeline_config, mock_subsystems, monkeypatch
+    ):
         """
         Test end-to-end generation workflow.
 
@@ -104,11 +106,17 @@ class TestIntelligentPipelineIntegration:
 
         # Mock subsystem methods
         if hasattr(pipeline, "prompt_analyzer") and pipeline.prompt_analyzer:
-            pipeline.prompt_analyzer.analyze = Mock(return_value=mock_subsystems["analysis"])
+            pipeline.prompt_analyzer.analyze = Mock(
+                return_value=mock_subsystems["analysis"]
+            )
         if hasattr(pipeline, "lora_recommender") and pipeline.lora_recommender:
-            pipeline.lora_recommender.recommend = Mock(return_value=mock_subsystems["lora_recs"])
+            pipeline.lora_recommender.recommend = Mock(
+                return_value=mock_subsystems["lora_recs"]
+            )
         if hasattr(pipeline, "param_optimizer") and pipeline.param_optimizer:
-            pipeline.param_optimizer.optimize = Mock(return_value=mock_subsystems["params"])
+            pipeline.param_optimizer.optimize = Mock(
+                return_value=mock_subsystems["params"]
+            )
 
         # Mock image generation
         def mock_generate_image(*args, **kwargs):
@@ -146,11 +154,17 @@ class TestIntelligentPipelineIntegration:
 
         # Mock subsystems
         if hasattr(pipeline, "prompt_analyzer") and pipeline.prompt_analyzer:
-            pipeline.prompt_analyzer.analyze = Mock(return_value=mock_subsystems["analysis"])
+            pipeline.prompt_analyzer.analyze = Mock(
+                return_value=mock_subsystems["analysis"]
+            )
         if hasattr(pipeline, "lora_recommender") and pipeline.lora_recommender:
-            pipeline.lora_recommender.recommend = Mock(return_value=mock_subsystems["lora_recs"])
+            pipeline.lora_recommender.recommend = Mock(
+                return_value=mock_subsystems["lora_recs"]
+            )
         if hasattr(pipeline, "param_optimizer") and pipeline.param_optimizer:
-            pipeline.param_optimizer.optimize = Mock(return_value=mock_subsystems["params"])
+            pipeline.param_optimizer.optimize = Mock(
+                return_value=mock_subsystems["params"]
+            )
 
         # Get recommendations
         recommendations = pipeline.analyze_and_recommend("anime girl")
@@ -181,11 +195,17 @@ class TestIntelligentPipelineIntegration:
 
         # Mock subsystems
         if hasattr(pipeline, "prompt_analyzer") and pipeline.prompt_analyzer:
-            pipeline.prompt_analyzer.analyze = Mock(return_value=mock_subsystems["analysis"])
+            pipeline.prompt_analyzer.analyze = Mock(
+                return_value=mock_subsystems["analysis"]
+            )
         if hasattr(pipeline, "lora_recommender") and pipeline.lora_recommender:
-            pipeline.lora_recommender.recommend = Mock(return_value=mock_subsystems["lora_recs"])
+            pipeline.lora_recommender.recommend = Mock(
+                return_value=mock_subsystems["lora_recs"]
+            )
         if hasattr(pipeline, "param_optimizer") and pipeline.param_optimizer:
-            pipeline.param_optimizer.optimize = Mock(return_value=mock_subsystems["params"])
+            pipeline.param_optimizer.optimize = Mock(
+                return_value=mock_subsystems["params"]
+            )
 
         pipeline._generate_image = Mock(return_value=Image.new("RGB", (1024, 1024)))
 
@@ -216,7 +236,7 @@ class TestIntelligentPipelineIntegration:
         from ml_lib.diffusion.intelligent.pipeline.services.feedback_collector import (
             UserFeedback,
         )
-        from ml_lib.diffusion.services.learning_engine import (
+        from ml_lib.diffusion.generation.learning_engine import (
             LearningEngine,
         )
         from datetime import datetime
