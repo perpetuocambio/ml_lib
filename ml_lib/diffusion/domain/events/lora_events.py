@@ -33,15 +33,16 @@ class LoRAsRecommendedEvent(IDomainEvent):
         await event_bus.publish(event)
     """
 
-    event_id: str = field(default_factory=lambda: str(uuid4()))
-    occurred_at: datetime = field(default_factory=datetime.now)
-
-    # Domain data
+    # Domain data (no defaults first)
     prompt: str
     base_model: str
     lora_ids: list[str]
     recommendation_count: int
     confidence_threshold: float
+
+    # Metadata (with defaults last)
+    event_id: str = field(default_factory=lambda: str(uuid4()))
+    occurred_at: datetime = field(default_factory=datetime.now)
 
     @classmethod
     def create(
@@ -95,14 +96,15 @@ class TopLoRARecommendedEvent(IDomainEvent):
         )
     """
 
-    event_id: str = field(default_factory=lambda: str(uuid4()))
-    occurred_at: datetime = field(default_factory=datetime.now)
-
-    # Domain data
+    # Domain data (no defaults first)
     prompt: str
     base_model: str
     lora_id: str
     confidence: float
+
+    # Metadata (with defaults last)
+    event_id: str = field(default_factory=lambda: str(uuid4()))
+    occurred_at: datetime = field(default_factory=datetime.now)
 
     @classmethod
     def create(
@@ -141,13 +143,14 @@ class LoRALoadedEvent(IDomainEvent):
         )
     """
 
-    event_id: str = field(default_factory=lambda: str(uuid4()))
-    occurred_at: datetime = field(default_factory=datetime.now)
-
-    # Domain data
+    # Domain data (no defaults first)
     lora_id: str
     lora_name: str
     base_model: str
+
+    # Metadata (with defaults last)
+    event_id: str = field(default_factory=lambda: str(uuid4()))
+    occurred_at: datetime = field(default_factory=datetime.now)
 
     @classmethod
     def create(
@@ -185,14 +188,15 @@ class LoRAFilteredEvent(IDomainEvent):
         )
     """
 
-    event_id: str = field(default_factory=lambda: str(uuid4()))
-    occurred_at: datetime = field(default_factory=datetime.now)
-
-    # Domain data
+    # Domain data (no defaults first)
     original_count: int
     filtered_count: int
     confidence_threshold: float
     base_model: str
+
+    # Metadata (with defaults last)
+    event_id: str = field(default_factory=lambda: str(uuid4()))
+    occurred_at: datetime = field(default_factory=datetime.now)
 
     @classmethod
     def create(

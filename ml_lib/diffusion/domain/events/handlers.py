@@ -269,14 +269,13 @@ class PromptAnalyticsHandler(IEventHandler[PromptAnalyzedEvent]):
         }
 
 
-class MultiEventHandler(
-    IEventHandler[ImageGeneratedEvent],
-    IEventHandler[ImageGenerationFailedEvent],
-):
+class MultiEventHandler:
     """
     Example handler that subscribes to multiple event types.
 
-    Demonstrates that a single handler can implement multiple IEventHandler interfaces.
+    Note: This handler doesn't use IEventHandler typing to avoid
+    duplicate base class issues. It implements the handle() method
+    for multiple event types dynamically.
 
     Use cases:
     - Consolidated monitoring

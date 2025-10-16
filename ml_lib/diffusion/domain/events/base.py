@@ -37,15 +37,14 @@ class IDomainEvent:
     Example:
         @dataclass(frozen=True)
         class ImageGeneratedEvent(IDomainEvent):
-            event_id: str = field(default_factory=lambda: str(uuid4()))
-            occurred_at: datetime = field(default_factory=datetime.now)
             image_path: str
             prompt: str
             loras_used: list[str]
+            # Inherits event_id and occurred_at with defaults from base
     """
 
-    event_id: str
-    occurred_at: datetime
+    # Protocol/interface - no actual implementation
+    pass
 
     @classmethod
     def create(cls, **kwargs):

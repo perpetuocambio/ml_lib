@@ -28,16 +28,16 @@ class ImageGenerationRequestedEvent(IDomainEvent):
         )
     """
 
-    event_id: str = field(default_factory=lambda: str(uuid4()))
-    occurred_at: datetime = field(default_factory=datetime.now)
-
-    # Domain data
+    # Domain data (no defaults first)
     prompt: str
     negative_prompt: str
     base_model: str
     loras_requested: list[str]
     seed: int | None
 
+    # Metadata (with defaults last)
+    event_id: str = field(default_factory=lambda: str(uuid4()))
+    occurred_at: datetime = field(default_factory=datetime.now)
     @classmethod
     def create(
         cls,
@@ -81,10 +81,7 @@ class ImageGeneratedEvent(IDomainEvent):
         )
     """
 
-    event_id: str = field(default_factory=lambda: str(uuid4()))
-    occurred_at: datetime = field(default_factory=datetime.now)
-
-    # Domain data
+    # Domain data (no defaults first)
     image_path: str
     prompt: str
     base_model: str
@@ -92,6 +89,9 @@ class ImageGeneratedEvent(IDomainEvent):
     generation_time_seconds: float
     seed: int
 
+    # Metadata (with defaults last)
+    event_id: str = field(default_factory=lambda: str(uuid4()))
+    occurred_at: datetime = field(default_factory=datetime.now)
     @classmethod
     def create(
         cls,
@@ -135,16 +135,16 @@ class ImageGenerationFailedEvent(IDomainEvent):
         )
     """
 
-    event_id: str = field(default_factory=lambda: str(uuid4()))
-    occurred_at: datetime = field(default_factory=datetime.now)
-
-    # Domain data
+    # Domain data (no defaults first)
     prompt: str
     base_model: str
     error_message: str
     error_type: str
     loras_attempted: list[str]
 
+    # Metadata (with defaults last)
+    event_id: str = field(default_factory=lambda: str(uuid4()))
+    occurred_at: datetime = field(default_factory=datetime.now)
     @classmethod
     def create(
         cls,
@@ -185,16 +185,16 @@ class PromptAnalyzedEvent(IDomainEvent):
         )
     """
 
-    event_id: str = field(default_factory=lambda: str(uuid4()))
-    occurred_at: datetime = field(default_factory=datetime.now)
-
-    # Domain data
+    # Domain data (no defaults first)
     original_prompt: str
     optimized_prompt: str
     detected_intent: str
     complexity_score: float
     token_count: int
 
+    # Metadata (with defaults last)
+    event_id: str = field(default_factory=lambda: str(uuid4()))
+    occurred_at: datetime = field(default_factory=datetime.now)
     @classmethod
     def create(
         cls,
