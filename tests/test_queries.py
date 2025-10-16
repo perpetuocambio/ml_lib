@@ -15,8 +15,8 @@ from ml_lib.diffusion.application.queries import (
 )
 
 from ml_lib.diffusion.domain.entities.lora import LoRA
-from ml_lib.diffusion.infrastructure.repositories.in_memory_lora_repository import (
-    InMemoryLoRARepository,
+from ml_lib.diffusion.infrastructure.persistence.in_memory_model_repository import (
+    InMemoryModelRepository,
 )
 from ml_lib.diffusion.domain.services.lora_recommendation_service import (
     LoRARecommendationService,
@@ -26,7 +26,7 @@ from ml_lib.diffusion.domain.services.lora_recommendation_service import (
 @pytest.fixture
 def repository():
     """Create repository with sample LoRAs."""
-    repo = InMemoryLoRARepository()
+    repo = InMemoryModelRepository()
 
     # Add sample LoRAs for different models
     loras = [
@@ -200,7 +200,7 @@ def test_get_all_loras_query_success(query_bus):
 
 def test_get_all_loras_query_empty_repository():
     """Test get all with empty repository."""
-    empty_repo = InMemoryLoRARepository()
+    empty_repo = InMemoryModelRepository()
     service = LoRARecommendationService(empty_repo)
     handler = GetAllLoRAsHandler(service)
 

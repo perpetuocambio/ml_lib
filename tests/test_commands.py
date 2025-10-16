@@ -16,8 +16,8 @@ from ml_lib.diffusion.application.commands import (
     FilterConfidentRecommendationsHandler,
 )
 from ml_lib.diffusion.domain.entities.lora import LoRA, LoRARecommendation
-from ml_lib.diffusion.infrastructure.repositories.in_memory_lora_repository import (
-    InMemoryLoRARepository,
+from ml_lib.diffusion.infrastructure.persistence.in_memory_model_repository import (
+    InMemoryModelRepository,
 )
 from ml_lib.diffusion.domain.services.lora_recommendation_service import (
     LoRARecommendationService,
@@ -26,40 +26,40 @@ from ml_lib.diffusion.domain.events import EventBus
 
 
 @pytest.fixture
-def repository():
+def repository(tmp_path):
     """Create repository with sample LoRAs."""
-    repo = InMemoryLoRARepository()
+    repo = InMemoryModelRepository()
 
     # Add sample LoRAs
     loras = [
-        LoRA(
-            id="anime-style",
-            name="Anime Style",
+        LoRA.create(
+            name="anime_style",
+            path=tmp_path / "anime.safetensors",
             base_model="SDXL",
+            weight=0.8,
             trigger_words=["anime", "manga"],
-            strength=0.8,
-            filename="anime.safetensors",
+            tags=["anime"],
         ),
-        LoRA(
-            id="portrait-detail",
-            name="Portrait Detail",
+        LoRA.create(
+            name="portrait_detail",
+            path=tmp_path / "portrait.safetensors",
             base_model="SDXL",
+            weight=0.7,
             trigger_words=["portrait", "detailed face"],
-            strength=0.7,
-            filename="portrait.safetensors",
+            tags=["portrait"],
         ),
-        LoRA(
-            id="cyberpunk",
-            name="Cyberpunk",
+        LoRA.create(
+            name="cyberpunk",
+            path=tmp_path / "cyberpunk.safetensors",
             base_model="SDXL",
+            weight=0.9,
             trigger_words=["cyberpunk", "neon"],
-            strength=0.9,
-            filename="cyberpunk.safetensors",
+            tags=["cyberpunk"],
         ),
     ]
 
     for lora in loras:
-        repo.add_lora(lora)
+        repo.add(lora)
 
     return repo
 
@@ -332,7 +332,8 @@ def test_recommend_top_lora_command_validation_empty_model(command_bus):
 def test_recommend_top_lora_command_not_found(lora_service):
     """Test not found when no matching LoRA."""
     # Empty repository
-    empty_repo = InMemoryLoRARepository()
+    empty_repo = InMemoryModelRepository()
+    # Empty repo needs no LoRAs
     empty_service = LoRARecommendationService(empty_repo)
     handler = RecommendTopLoRAHandler(empty_service)
 
