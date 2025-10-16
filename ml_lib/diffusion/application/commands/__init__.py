@@ -30,6 +30,12 @@ from ml_lib.diffusion.application.commands.lora_commands import (
     RecommendTopLoRAHandler,
     FilterConfidentRecommendationsHandler,
 )
+from ml_lib.diffusion.application.commands.image_generation_commands import (
+    GenerateImageCommand,
+    QuickGenerateCommand,
+    GenerateImageHandler,
+    QuickGenerateHandler,
+)
 
 __all__ = [
     # Base interfaces
@@ -48,4 +54,10 @@ __all__ = [
     "RecommendLoRAsHandler",
     "RecommendTopLoRAHandler",
     "FilterConfidentRecommendationsHandler",
+    # Image generation commands
+    "GenerateImageCommand",
+    "QuickGenerateCommand",
+    # Image generation handlers
+    "GenerateImageHandler",
+    "QuickGenerateHandler",
 ]
