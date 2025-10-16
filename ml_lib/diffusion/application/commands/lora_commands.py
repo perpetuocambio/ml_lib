@@ -4,6 +4,8 @@ Commands for LoRA recommendation use cases.
 """
 
 from dataclasses import dataclass
+import asyncio
+from typing import Optional
 from ml_lib.diffusion.application.commands.base import (
     ICommand,
     ICommandHandler,
@@ -13,6 +15,12 @@ from ml_lib.diffusion.domain.services.lora_recommendation_service import (
     LoRARecommendationService,
 )
 from ml_lib.diffusion.domain.entities.lora import LoRARecommendation
+from ml_lib.diffusion.domain.events.base import IEventBus
+from ml_lib.diffusion.domain.events.lora_events import (
+    LoRAsRecommendedEvent,
+    TopLoRARecommendedEvent,
+    LoRAFilteredEvent,
+)
 
 
 @dataclass(frozen=True)
@@ -57,16 +65,23 @@ class RecommendLoRAsHandler(ICommandHandler[RecommendLoRAsCommand]):
     Handler for RecommendLoRAsCommand.
 
     Coordinates with domain service to recommend LoRAs.
+    Publishes LoRAsRecommendedEvent when successful.
     """
 
-    def __init__(self, service: LoRARecommendationService):
+    def __init__(
+        self,
+        service: LoRARecommendationService,
+        event_bus: Optional[IEventBus] = None
+    ):
         """
         Initialize handler.
 
         Args:
             service: LoRA recommendation domain service
+            event_bus: Optional event bus for publishing events
         """
         self.service = service
+        self.event_bus = event_bus
 
     def handle(self, command: RecommendLoRAsCommand) -> CommandResult:
         """
@@ -104,6 +119,18 @@ class RecommendLoRAsHandler(ICommandHandler[RecommendLoRAsCommand]):
                 min_confidence=command.min_confidence,
             )
 
+            # Publish event (if event bus available)
+            if self.event_bus is not None:
+                event = LoRAsRecommendedEvent.create(
+                    prompt=command.prompt,
+                    base_model=command.base_model,
+                    lora_ids=[rec.lora.id for rec in recommendations],
+                    recommendation_count=len(recommendations),
+                    confidence_threshold=command.min_confidence,
+                )
+                # Fire and forget (async event publishing)
+                asyncio.create_task(self.event_bus.publish(event))
+
             # Return result
             return CommandResult.success(
                 data=recommendations,
@@ -123,16 +150,23 @@ class RecommendTopLoRAHandler(ICommandHandler[RecommendTopLoRACommand]):
     Handler for RecommendTopLoRACommand.
 
     Gets single best LoRA recommendation.
+    Publishes TopLoRARecommendedEvent when successful.
     """
 
-    def __init__(self, service: LoRARecommendationService):
+    def __init__(
+        self,
+        service: LoRARecommendationService,
+        event_bus: Optional[IEventBus] = None
+    ):
         """
         Initialize handler.
 
         Args:
             service: LoRA recommendation domain service
+            event_bus: Optional event bus for publishing events
         """
         self.service = service
+        self.event_bus = event_bus
 
     def handle(self, command: RecommendTopLoRACommand) -> CommandResult:
         """
@@ -163,6 +197,17 @@ class RecommendTopLoRAHandler(ICommandHandler[RecommendTopLoRACommand]):
                     "No suitable LoRA found for this prompt and base model"
                 )
 
+            # Publish event (if event bus available)
+            if self.event_bus is not None:
+                event = TopLoRARecommendedEvent.create(
+                    prompt=command.prompt,
+                    base_model=command.base_model,
+                    lora_id=recommendation.lora.id,
+                    confidence=recommendation.confidence,
+                )
+                # Fire and forget (async event publishing)
+                asyncio.create_task(self.event_bus.publish(event))
+
             # Return result
             return CommandResult.success(
                 data=recommendation,
@@ -184,16 +229,23 @@ class FilterConfidentRecommendationsHandler(
     Handler for FilterConfidentRecommendationsCommand.
 
     Filters recommendations to only confident ones.
+    Publishes LoRAFilteredEvent when successful.
     """
 
-    def __init__(self, service: LoRARecommendationService):
+    def __init__(
+        self,
+        service: LoRARecommendationService,
+        event_bus: Optional[IEventBus] = None
+    ):
         """
         Initialize handler.
 
         Args:
             service: LoRA recommendation domain service
+            event_bus: Optional event bus for publishing events
         """
         self.service = service
+        self.event_bus = event_bus
 
     def handle(
         self, command: FilterConfidentRecommendationsCommand
@@ -216,6 +268,19 @@ class FilterConfidentRecommendationsHandler(
             confident = self.service.filter_confident_recommendations(
                 command.recommendations
             )
+
+            # Publish event (if event bus available)
+            if self.event_bus is not None and len(command.recommendations) > 0:
+                # Get base model from first recommendation
+                base_model = command.recommendations[0].lora.base_model.value
+                event = LoRAFilteredEvent.create(
+                    original_count=len(command.recommendations),
+                    filtered_count=len(confident),
+                    confidence_threshold=self.service.CONFIDENCE_THRESHOLD,
+                    base_model=base_model,
+                )
+                # Fire and forget (async event publishing)
+                asyncio.create_task(self.event_bus.publish(event))
 
             # Return result
             return CommandResult.success(
