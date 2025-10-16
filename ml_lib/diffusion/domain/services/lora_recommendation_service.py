@@ -38,6 +38,9 @@ class LoRARecommendationService:
     This is much cleaner than the original LoRARecommender service.
     """
 
+    # Confidence threshold for "confident" recommendations
+    CONFIDENCE_THRESHOLD: float = 0.7
+
     def __init__(self, repository: ILoRARepository):
         """
         Initialize service.

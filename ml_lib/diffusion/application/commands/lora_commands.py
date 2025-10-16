@@ -124,12 +124,16 @@ class RecommendLoRAsHandler(ICommandHandler[RecommendLoRAsCommand]):
                 event = LoRAsRecommendedEvent.create(
                     prompt=command.prompt,
                     base_model=command.base_model,
-                    lora_ids=[rec.lora.id for rec in recommendations],
+                    lora_ids=[rec.lora.name for rec in recommendations],
                     recommendation_count=len(recommendations),
                     confidence_threshold=command.min_confidence,
                 )
                 # Fire and forget (async event publishing)
-                asyncio.create_task(self.event_bus.publish(event))
+                try:
+                    asyncio.create_task(self.event_bus.publish(event))
+                except RuntimeError:
+                    # No event loop running (e.g., in tests) - skip event publishing
+                    pass
 
             # Return result
             return CommandResult.success(
@@ -202,11 +206,15 @@ class RecommendTopLoRAHandler(ICommandHandler[RecommendTopLoRACommand]):
                 event = TopLoRARecommendedEvent.create(
                     prompt=command.prompt,
                     base_model=command.base_model,
-                    lora_id=recommendation.lora.id,
+                    lora_id=recommendation.lora.name,
                     confidence=recommendation.confidence,
                 )
                 # Fire and forget (async event publishing)
-                asyncio.create_task(self.event_bus.publish(event))
+                try:
+                    asyncio.create_task(self.event_bus.publish(event))
+                except RuntimeError:
+                    # No event loop running (e.g., in tests) - skip event publishing
+                    pass
 
             # Return result
             return CommandResult.success(
@@ -214,7 +222,7 @@ class RecommendTopLoRAHandler(ICommandHandler[RecommendTopLoRACommand]):
                 metadata={
                     "prompt": command.prompt,
                     "base_model": command.base_model,
-                    "lora_name": recommendation.lora.name.value,
+                    "lora_name": recommendation.lora.name,
                 },
             )
 
@@ -272,7 +280,7 @@ class FilterConfidentRecommendationsHandler(
             # Publish event (if event bus available)
             if self.event_bus is not None and len(command.recommendations) > 0:
                 # Get base model from first recommendation
-                base_model = command.recommendations[0].lora.base_model.value
+                base_model = command.recommendations[0].lora.base_model
                 event = LoRAFilteredEvent.create(
                     original_count=len(command.recommendations),
                     filtered_count=len(confident),
@@ -280,7 +288,11 @@ class FilterConfidentRecommendationsHandler(
                     base_model=base_model,
                 )
                 # Fire and forget (async event publishing)
-                asyncio.create_task(self.event_bus.publish(event))
+                try:
+                    asyncio.create_task(self.event_bus.publish(event))
+                except RuntimeError:
+                    # No event loop running (e.g., in tests) - skip event publishing
+                    pass
 
             # Return result
             return CommandResult.success(

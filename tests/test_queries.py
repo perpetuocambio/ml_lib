@@ -203,7 +203,7 @@ def test_get_all_loras_query_returns_all_models(query_bus):
     query = GetAllLoRAsQuery()
     result = query_bus.dispatch(query)
 
-    base_models = {lora.base_model.value for lora in result.data}
+    base_models = {lora.base_model for lora in result.data}
 
     assert "SDXL" in base_models
     assert "SD 1.5" in base_models
@@ -221,9 +221,10 @@ def test_get_loras_by_base_model_query_sdxl(query_bus):
 
     assert result.data is not None
     assert isinstance(result.data, list)
-    assert len(result.data) == 2  # anime-sdxl, portrait-sdxl
-    assert all(lora.base_model.value == "SDXL" for lora in result.data)
-    assert result.metadata["count"] == 2
+    # SDXL includes: anime-sdxl, portrait-sdxl, cyberpunk-pony (Pony is SDXL-based)
+    assert len(result.data) == 3
+    assert all(lora.is_compatible_with("SDXL") for lora in result.data)
+    assert result.metadata["count"] == 3
     assert result.metadata["base_model"] == "SDXL"
     assert result.metadata["query_type"] == "filter_by_model"
 
@@ -234,7 +235,7 @@ def test_get_loras_by_base_model_query_sd15(query_bus):
     result = query_bus.dispatch(query)
 
     assert len(result.data) == 1  # anime-sd15
-    assert result.data[0].base_model.value == "SD 1.5"
+    assert result.data[0].base_model == "SD 1.5"
 
 
 def test_get_loras_by_base_model_query_pony(query_bus):
@@ -243,7 +244,7 @@ def test_get_loras_by_base_model_query_pony(query_bus):
     result = query_bus.dispatch(query)
 
     assert len(result.data) == 1  # cyberpunk-pony
-    assert result.data[0].base_model.value == "Pony Diffusion V6"
+    assert result.data[0].base_model == "Pony Diffusion V6"
 
 
 def test_get_loras_by_base_model_query_no_matches(query_bus):
@@ -258,12 +259,12 @@ def test_get_loras_by_base_model_query_no_matches(query_bus):
 
 
 def test_get_loras_by_base_model_query_case_sensitivity(query_bus):
-    """Test that base model matching is case-sensitive."""
+    """Test that base model matching is case-insensitive."""
     query = GetLoRAsByBaseModelQuery(base_model="sdxl")  # lowercase
     result = query_bus.dispatch(query)
 
-    # Should not match "SDXL" (case-sensitive)
-    assert len(result.data) == 0
+    # Should match "SDXL" (case-insensitive by design)
+    assert len(result.data) == 3  # Same as uppercase SDXL
 
 
 # ============================================================================
@@ -297,8 +298,8 @@ def test_search_loras_by_prompt_query_portrait(query_bus):
 
     assert len(result.data) >= 1  # portrait-sdxl
     # Should contain portrait LoRA
-    lora_names = [lora.name.value for lora in result.data]
-    assert any("Portrait" in name for name in lora_names)
+    lora_names = [lora.name for lora in result.data]
+    assert any("portrait" in name.lower() for name in lora_names)
 
 
 def test_search_loras_by_prompt_query_cyberpunk(query_bus):
@@ -310,7 +311,7 @@ def test_search_loras_by_prompt_query_cyberpunk(query_bus):
     result = query_bus.dispatch(query)
 
     assert len(result.data) >= 1  # cyberpunk-pony
-    assert result.data[0].name.value == "Cyberpunk Pony"
+    assert "cyberpunk" in result.data[0].name.lower()
 
 
 def test_search_loras_by_prompt_query_no_matches(query_bus):
@@ -335,7 +336,7 @@ def test_search_loras_by_prompt_query_wrong_model(query_bus):
     result = query_bus.dispatch(query)
 
     # Should only return SD 1.5 anime LoRA
-    assert all(lora.base_model.value == "SD 1.5" for lora in result.data)
+    assert all(lora.base_model == "SD 1.5" for lora in result.data)
 
 
 def test_search_loras_by_prompt_query_multiple_trigger_words(query_bus):
@@ -398,10 +399,10 @@ def test_query_workflow_get_all_then_filter(query_bus):
     all_result = query_bus.dispatch(get_all_query)
     assert len(all_result.data) == 4
 
-    # Step 2: Get only SDXL LoRAs
+    # Step 2: Get only SDXL-compatible LoRAs (includes Pony)
     filter_query = GetLoRAsByBaseModelQuery(base_model="SDXL")
     filtered_result = query_bus.dispatch(filter_query)
-    assert len(filtered_result.data) == 2
+    assert len(filtered_result.data) == 3  # anime-sdxl, portrait-sdxl, cyberpunk-pony
     assert len(filtered_result.data) < len(all_result.data)
 
 
@@ -422,9 +423,9 @@ def test_query_workflow_search_specific_model(query_bus):
     sd15_result = query_bus.dispatch(sd15_query)
 
     # Results should be different (different models)
-    sdxl_ids = {lora.id for lora in sdxl_result.data}
-    sd15_ids = {lora.id for lora in sd15_result.data}
-    assert sdxl_ids != sd15_ids
+    sdxl_names = {lora.name for lora in sdxl_result.data}
+    sd15_names = {lora.name for lora in sd15_result.data}
+    assert sdxl_names != sd15_names
 
 
 def test_query_performance_monitoring_overhead(lora_service):

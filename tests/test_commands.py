@@ -137,7 +137,7 @@ def test_command_bus_no_handler_registered(command_bus):
     command = DummyCommand(value="test")
     result = command_bus.dispatch(command)
 
-    assert result.status == CommandStatus.FAILURE
+    assert result.status == CommandStatus.FAILED
     assert "No handler registered" in result.error
 
 
@@ -265,11 +265,8 @@ def test_recommend_loras_command_with_event_bus(lora_service, event_bus):
 
     result = handler.handle(command)
 
-    # Wait for async event processing
-    asyncio.sleep(0.1)
-
     assert result.is_success
-    # Event should be published (fire-and-forget async)
+    # Event publishing is async fire-and-forget, so we can't easily test it in sync test
 
 
 # ============================================================================
@@ -432,6 +429,7 @@ def test_command_result_is_success():
 
     failure = CommandResult.failure("error")
     assert not failure.is_success
+    assert failure.status == CommandStatus.FAILED
 
     validation_error = CommandResult.validation_error("invalid")
     assert not validation_error.is_success
@@ -453,7 +451,7 @@ def test_command_result_factory_methods():
 
     # Failure
     failure = CommandResult.failure("error message")
-    assert failure.status == CommandStatus.FAILURE
+    assert failure.status == CommandStatus.FAILED
     assert failure.error == "error message"
     assert failure.data is None
 
