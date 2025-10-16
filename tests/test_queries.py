@@ -24,50 +24,35 @@ from ml_lib.diffusion.domain.services.lora_recommendation_service import (
 
 
 @pytest.fixture
-def repository():
+def repository(tmp_path):
     """Create repository with sample LoRAs."""
     repo = InMemoryModelRepository()
 
-    # Add sample LoRAs for different models
-    loras = [
+    # Create sample LoRA files for different models
+    lora_files = [
         # SDXL LoRAs
-        LoRA(
-            id="anime-sdxl",
-            name="Anime Style SDXL",
-            base_model="SDXL",
-            trigger_words=["anime", "manga"],
-            strength=0.8,
-            filename="anime-sdxl.safetensors",
-        ),
-        LoRA(
-            id="portrait-sdxl",
-            name="Portrait Detail SDXL",
-            base_model="SDXL",
-            trigger_words=["portrait", "face"],
-            strength=0.7,
-            filename="portrait-sdxl.safetensors",
-        ),
+        ("anime_sdxl", "anime-sdxl.safetensors", "SDXL", 0.8, ["anime", "manga"], ["anime", "style"]),
+        ("portrait_sdxl", "portrait-sdxl.safetensors", "SDXL", 0.7, ["portrait", "face"], ["portrait"]),
         # SD 1.5 LoRAs
-        LoRA(
-            id="anime-sd15",
-            name="Anime Style SD15",
-            base_model="SD 1.5",
-            trigger_words=["anime"],
-            strength=0.8,
-            filename="anime-sd15.safetensors",
-        ),
+        ("anime_sd15", "anime-sd15.safetensors", "SD 1.5", 0.8, ["anime"], ["anime"]),
         # Pony V6 LoRAs
-        LoRA(
-            id="cyberpunk-pony",
-            name="Cyberpunk Pony",
-            base_model="Pony Diffusion V6",
-            trigger_words=["cyberpunk", "neon"],
-            strength=0.9,
-            filename="cyberpunk-pony.safetensors",
-        ),
+        ("cyberpunk_pony", "cyberpunk-pony.safetensors", "Pony Diffusion V6", 0.9, ["cyberpunk", "neon"], ["cyberpunk", "scifi"]),
     ]
 
-    for lora in loras:
+    # Add sample LoRAs
+    for name, filename, base_model, weight, trigger_words, tags in lora_files:
+        # Create fake file
+        lora_path = tmp_path / filename
+        lora_path.write_text("fake lora content")
+
+        lora = LoRA.create(
+            name=name,
+            path=lora_path,
+            base_model=base_model,
+            weight=weight,
+            trigger_words=trigger_words,
+            tags=tags,
+        )
         repo.add_lora(lora)
 
     return repo

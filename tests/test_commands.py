@@ -30,36 +30,28 @@ def repository(tmp_path):
     """Create repository with sample LoRAs."""
     repo = InMemoryModelRepository()
 
-    # Add sample LoRAs
-    loras = [
-        LoRA.create(
-            name="anime_style",
-            path=tmp_path / "anime.safetensors",
-            base_model="SDXL",
-            weight=0.8,
-            trigger_words=["anime", "manga"],
-            tags=["anime"],
-        ),
-        LoRA.create(
-            name="portrait_detail",
-            path=tmp_path / "portrait.safetensors",
-            base_model="SDXL",
-            weight=0.7,
-            trigger_words=["portrait", "detailed face"],
-            tags=["portrait"],
-        ),
-        LoRA.create(
-            name="cyberpunk",
-            path=tmp_path / "cyberpunk.safetensors",
-            base_model="SDXL",
-            weight=0.9,
-            trigger_words=["cyberpunk", "neon"],
-            tags=["cyberpunk"],
-        ),
+    # Create sample LoRA files
+    lora_files = [
+        ("anime_style", "anime.safetensors", "SDXL", 0.8, ["anime", "manga"], ["anime"]),
+        ("portrait_detail", "portrait.safetensors", "SDXL", 0.7, ["portrait", "detailed face"], ["portrait"]),
+        ("cyberpunk", "cyberpunk.safetensors", "SDXL", 0.9, ["cyberpunk", "neon"], ["cyberpunk"]),
     ]
 
-    for lora in loras:
-        repo.add(lora)
+    # Add sample LoRAs
+    for name, filename, base_model, weight, trigger_words, tags in lora_files:
+        # Create fake file
+        lora_path = tmp_path / filename
+        lora_path.write_text("fake lora content")
+
+        lora = LoRA.create(
+            name=name,
+            path=lora_path,
+            base_model=base_model,
+            weight=weight,
+            trigger_words=trigger_words,
+            tags=tags,
+        )
+        repo.add_lora(lora)
 
     return repo
 
