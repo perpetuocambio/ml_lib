@@ -96,6 +96,61 @@ Client → Query → QueryBus → Handler → Repository (Direct Read)
 **Pendiente:**
 - Tests para Queries (próxima sesión)
 
+### Fase 8: Observer Pattern & Events ✅ **COMPLETADA** (100%)
+
+**Logros:**
+- Observer Pattern completo con Domain Events
+- EventBus async con error isolation
+- 8 Domain Events (4 LoRA + 4 Image)
+- 6 Example Event Handlers
+- Documentación completa Observer Pattern
+
+**Arquitectura:**
+```
+Domain Service → Event.create() → EventBus.publish() → Handler.handle()
+```
+
+**Events Implementados:**
+
+LoRA Events:
+- `LoRAsRecommendedEvent` - LoRAs recommended for prompt
+- `TopLoRARecommendedEvent` - Best single LoRA
+- `LoRALoadedEvent` - LoRA loaded from repo
+- `LoRAFilteredEvent` - LoRAs filtered by confidence
+
+Image Events:
+- `ImageGenerationRequestedEvent` - Generation requested
+- `ImageGeneratedEvent` - Generation completed
+- `ImageGenerationFailedEvent` - Generation failed
+- `PromptAnalyzedEvent` - Prompt analyzed
+
+**Handlers Implementados:**
+- `LoggingEventHandler` - Audit trail logging
+- `MetricsEventHandler` - Performance metrics
+- `ErrorLoggingHandler` - Failure tracking
+- `CachingHandler` - Cache optimization
+- `PromptAnalyticsHandler` - Prompt patterns
+- `MultiEventHandler` - Multi-event subscription
+
+**Commits:**
+1. Observer Pattern Domain Events & Event Bus
+
+**Archivos (6):**
+- `domain/events/base.py` - Interfaces (200 líneas)
+- `domain/events/bus.py` - EventBus async (200 líneas)
+- `domain/events/lora_events.py` - LoRA events (200 líneas)
+- `domain/events/image_events.py` - Image events (200 líneas)
+- `domain/events/handlers.py` - Example handlers (300 líneas)
+- `EVENTS.md` - Observer Pattern guide (800+ líneas)
+
+**Beneficios:**
+- ✅ Loose coupling entre componentes
+- ✅ Multiple handlers por event (0 to N)
+- ✅ Async event processing
+- ✅ Error isolation
+- ✅ Pub/Sub architecture
+- ✅ Event-driven workflows
+
 ---
 
 ## 📊 Métricas Actuales
@@ -130,7 +185,14 @@ Client → Query → QueryBus → Handler → Repository (Direct Read)
 - 1 CQRS documentation
 - 1 exports
 
-**Total Líneas Nuevas (Fases 5-7):** ~4,308 líneas
+**Archivos Fase 8:** 6
+- 1 base interfaces (events)
+- 1 event bus
+- 2 event modules (8 events total)
+- 1 handlers module (6 handlers)
+- 1 Observer Pattern documentation
+
+**Total Líneas Nuevas (Fases 5-8):** ~6,211 líneas
 
 ---
 
@@ -153,6 +215,7 @@ Client → Query → QueryBus → Handler → Repository (Direct Read)
 │  - Entities (Rich Domain Objects)       │
 │  - Value Objects                        │
 │  - Domain Services                      │
+│  - Domain Events (Observer Pattern)     │
 │  - Repositories (Interfaces)            │
 │  - Strategies (Interfaces)              │
 └─────────────────────────────────────────┘
@@ -186,11 +249,16 @@ Client → Query → QueryBus → Handler → Repository (Direct Read)
    - 3 queries con handlers
    - QueryBus con monitoring
 
-5. **Factory Pattern** (Fase 5)
+5. **Observer Pattern** (Fase 8)
+   - Domain Events (8 events)
+   - Event Handlers (6 handlers)
+   - EventBus async con Pub/Sub
+
+6. **Factory Pattern** (Fase 5)
    - OptimizationStrategyFactory
    - Extensible model selection
 
-6. **Dependency Injection**
+7. **Dependency Injection**
    - Constructor injection en todos los services
    - Inversión de dependencias (SOLID-D)
 
@@ -208,12 +276,6 @@ Client → Query → QueryBus → Handler → Repository (Direct Read)
 
 ## 🎯 Próximas Fases
 
-### Fase 8: Observer Pattern & Events
-- Event system
-- Domain events
-- Event handlers
-- Pub/Sub architecture
-
 ### Fase 9: Integration Tests
 - End-to-end tests
 - Command integration tests
@@ -230,15 +292,15 @@ Client → Query → QueryBus → Handler → Repository (Direct Read)
 
 ## 📈 Progreso General
 
-**60% → 72%** ⬅️ Actualizado
+**60% → 78%** ⬅️ Actualizado
 
 ### Desglose:
 - Fundamentos: 15% ✅
-- Domain Layer: 20% ✅
-- Application Layer: 22% ✅ (+12% esta sesión)
+- Domain Layer: 25% ✅ (+5% con Events)
+- Application Layer: 22% ✅
 - Tests & Quality: 15% (70% completado)
-- Documentation: 10% (60% completado)
-- Remaining: 28%
+- Documentation: 12% (70% completado)
+- Remaining: 22%
 
 ---
 
@@ -248,7 +310,8 @@ Client → Query → QueryBus → Handler → Repository (Direct Read)
 - **Fase 5:** ~2,518 líneas (Strategy Pattern)
 - **Fase 6:** ~870 líneas (Command Pattern)
 - **Fase 7:** ~920 líneas (Query Pattern)
-- **Total:** ~4,308 líneas de código limpio
+- **Fase 8:** ~1,903 líneas (Observer Pattern)
+- **Total:** ~6,211 líneas de código limpio
 
 ### Tests:
 - 105 tests de strategies
@@ -263,6 +326,7 @@ Client → Query → QueryBus → Handler → Repository (Direct Read)
 5. Command Pattern base
 6. Image Generation commands + docs
 7. Query Pattern CQRS read-side
+8. Observer Pattern Domain Events & Event Bus
 
 ### Refactors:
 - PromptAnalyzer: 594 → 330 líneas (-44%)
@@ -272,12 +336,13 @@ Client → Query → QueryBus → Handler → Repository (Direct Read)
 
 ## 🎊 Achievements
 
-- ✅ **3 Design Patterns completados** (Strategy + Command + Query)
-- ✅ **19 implementations** (11 strategies + 5 commands + 3 queries)
+- ✅ **4 Design Patterns completados** (Strategy + Command + Query + Observer)
+- ✅ **33 implementations** (11 strategies + 5 commands + 3 queries + 8 events + 6 handlers)
 - ✅ **CQRS completo** (Commands + Queries)
+- ✅ **Event-Driven Architecture** (Observer Pattern + Domain Events)
 - ✅ **Clean Architecture** aplicada consistentemente
 - ✅ **SOLID principles** en todo el código
-- ✅ **Documentation** comprehensiva (USAGE.md + CQRS.md)
+- ✅ **Documentation** comprehensiva (USAGE.md + CQRS.md + EVENTS.md)
 - ✅ **Zero breaking changes** (backward compatible)
 
 El proyecto avanza con arquitectura enterprise-grade y patrones de diseño profesionales! 🚀
