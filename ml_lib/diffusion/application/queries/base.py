@@ -4,7 +4,7 @@ Defines the core Query Pattern interfaces following CQRS principles.
 Queries are read-only operations with no side effects.
 """
 
-from typing import Protocol, TypeVar, Generic, runtime_checkable
+from typing import Protocol, TypeVar, Generic, runtime_checkable, Any
 from dataclasses import dataclass
 
 
@@ -20,11 +20,11 @@ class QueryResult:
         metadata: Optional metadata (e.g., cache hit, query time)
     """
 
-    data: any
-    metadata: dict[str, any] | None = None
+    data: Any
+    metadata: dict[str, Any] | None = None
 
     @classmethod
-    def success(cls, data: any, metadata: dict | None = None) -> "QueryResult":
+    def success(cls, data: Any, metadata: dict | None = None) -> "QueryResult":
         """Create successful query result."""
         return cls(data=data, metadata=metadata)
 

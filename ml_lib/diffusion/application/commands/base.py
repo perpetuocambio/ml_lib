@@ -3,7 +3,7 @@
 Defines the core Command Pattern interfaces following CQRS principles.
 """
 
-from typing import Protocol, TypeVar, Generic, runtime_checkable
+from typing import Protocol, TypeVar, Generic, runtime_checkable, Any
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -30,9 +30,9 @@ class CommandResult:
     """
 
     status: CommandStatus
-    data: any = None
+    data: Any = None
     error: str | None = None
-    metadata: dict[str, any] | None = None
+    metadata: dict[str, Any] | None = None
 
     @property
     def is_success(self) -> bool:
@@ -45,7 +45,7 @@ class CommandResult:
         return self.status != CommandStatus.SUCCESS
 
     @classmethod
-    def success(cls, data: any = None, metadata: dict | None = None) -> "CommandResult":
+    def success(cls, data: Any = None, metadata: dict | None = None) -> "CommandResult":
         """Create success result."""
         return cls(status=CommandStatus.SUCCESS, data=data, metadata=metadata)
 
