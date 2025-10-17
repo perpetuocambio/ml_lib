@@ -85,10 +85,7 @@ from ml_lib.diffusion.models.character import (
     GenerationPreferences,
 )
 
-# LoRA models
-from ml_lib.diffusion.models.lora import (
-    LoRAInfo,
-)
+# LoRA models (LoRAInfo moved to pipeline.py, already imported above)
 
 # Registry models
 from ml_lib.diffusion.models.registry import (
