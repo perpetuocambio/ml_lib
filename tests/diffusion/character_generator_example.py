@@ -9,7 +9,7 @@ This example demonstrates:
 """
 
 import logging
-from ml_lib.diffusion.services.character_generator import CharacterGenerator, GenerationPreferences
+from ml_lib.diffusion.domain.services.character_generator import CharacterGenerator, GenerationPreferences
 
 # Setup logging
 logging.basicConfig(
@@ -52,7 +52,7 @@ def example_explicit_character():
     logger.info("Example 2: Explicit Pose Character")
     logger.info("=" * 60)
 
-    from ml_lib.diffusion.services.character_generator import GenerationPreferences
+    from ml_lib.diffusion.domain.services.character_generator import GenerationPreferences
 
     generator = CharacterGenerator()
 
@@ -77,7 +77,7 @@ def example_age_constrained():
     logger.info("Example 3: Age-Constrained Character (50-60)")
     logger.info("=" * 60)
 
-    from ml_lib.diffusion.services.character_generator import GenerationPreferences
+    from ml_lib.diffusion.domain.services.character_generator import GenerationPreferences
 
     generator = CharacterGenerator()
 

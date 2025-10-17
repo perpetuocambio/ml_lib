@@ -216,7 +216,7 @@ class TestIntelligentPipelineIntegration:
         from ml_lib.diffusion.intelligent.pipeline.services.feedback_collector import (
             UserFeedback,
         )
-        from ml_lib.diffusion.services.learning_engine import (
+        from ml_lib.diffusion.domain.services.learning_engine import (
             LearningEngine,
         )
         from datetime import datetime

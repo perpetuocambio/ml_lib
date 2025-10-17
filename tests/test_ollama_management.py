@@ -25,7 +25,7 @@ print("=" * 80)
 print()
 
 print("Creating OllamaModelSelector with auto_manage_server=True...")
-from ml_lib.diffusion.services.ollama_selector import OllamaModelSelector
+from ml_lib.diffusion.domain.services.ollama_selector import OllamaModelSelector
 
 selector = OllamaModelSelector(
     ollama_model="dolphin3",

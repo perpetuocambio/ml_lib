@@ -13,7 +13,7 @@ from ml_lib.diffusion.model_enums import (
     Source,
     ModelFormat,
 )
-from ml_lib.diffusion.storage.metadata_db import MetadataDatabase
+from ml_lib.diffusion.infrastructure.storage.metadata_db import MetadataDatabase
 
 logger = logging.getLogger(__name__)
 

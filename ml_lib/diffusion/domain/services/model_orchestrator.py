@@ -17,7 +17,7 @@ from typing import Optional
 
 from ml_lib.diffusion.models import BaseModel, ModelType
 from ml_lib.system.resource_monitor import ResourceMonitor
-from ml_lib.diffusion.storage.metadata_db import MetadataDatabase
+from ml_lib.diffusion.infrastructure.storage.metadata_db import MetadataDatabase
 
 logger = logging.getLogger(__name__)
 
@@ -420,7 +420,7 @@ class ModelOrchestrator:
         """
         try:
             from ml_lib.diffusion.config import detect_comfyui_installation
-            from ml_lib.diffusion.storage.comfyui_migrator import ComfyUIMetadataMigrator
+            from ml_lib.diffusion.infrastructure.storage.comfyui_migrator import ComfyUIMetadataMigrator
 
             # Detect ComfyUI
             comfyui_root = detect_comfyui_installation()

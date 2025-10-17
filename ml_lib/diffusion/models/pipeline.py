@@ -10,15 +10,15 @@ from typing import Optional
 from PIL import Image
 import json
 
-from ml_lib.diffusion.services.image_metadata import (
+from ml_lib.diffusion.domain.services.image_metadata import (
     ImageMetadataEmbedding,
     ImageMetadataWriter,
     create_generation_id,
     create_timestamp,
 )
-from ml_lib.diffusion.services.image_naming import ImageNamingConfig
+from ml_lib.diffusion.domain.services.image_naming import ImageNamingConfig
 from ml_lib.diffusion.models.prompt import PromptAnalysis, OptimizedParameters
-from ml_lib.diffusion.interfaces.recommender_protocol import LoRARecommendation
+from ml_lib.diffusion.domain.interfaces.recommender_protocol import LoRARecommendation
 
 # METADATA STRUCTURES (from metadata_dict.py)
 
@@ -520,7 +520,7 @@ class GenerationResult:
             >>> # Result: /outputs/20250111_143022_a3f2e9d4.png
             >>>
             >>> # Save with descriptive auto-naming
-            >>> from ml_lib.diffusion.services.image_naming import ImageNamingConfig
+            >>> from ml_lib.diffusion.domain.services.image_naming import ImageNamingConfig
             >>> result.save(
             ...     "/outputs",
             ...     use_auto_naming=True,

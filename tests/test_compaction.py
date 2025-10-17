@@ -5,7 +5,7 @@ from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
-from ml_lib.diffusion.services.intelligent_builder import IntelligentPipelineBuilder
+from ml_lib.diffusion.domain.services.intelligent_builder import IntelligentPipelineBuilder
 
 # Get first prompt from sanitized file
 prompt_file = Path(__file__).parent.parent / "data" / "prompt_sanitized.txt"

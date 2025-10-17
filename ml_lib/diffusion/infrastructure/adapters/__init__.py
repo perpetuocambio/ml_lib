@@ -1,17 +1,17 @@
 """Handler modules for diffusion operations."""
 
-from ml_lib.diffusion.handlers.attribute_collection import AttributeCollection
-from ml_lib.diffusion.handlers.random_selector import RandomAttributeSelector
-from ml_lib.diffusion.handlers.memory_manager import MemoryManager
+from ml_lib.diffusion.domain.services.attribute_collection import AttributeCollection
+from ml_lib.diffusion.domain.services.random_selector import RandomAttributeSelector
+from ml_lib.diffusion.infrastructure.memory_manager import MemoryManager
 # CharacterGenerator removed - was dependent on deleted ConfigLoader
-from ml_lib.diffusion.handlers.clip_vision_handler import (
+from ml_lib.diffusion.infrastructure.adapters.clip_vision_adapter import (
     CLIPVisionEncoder,
     CLIPVisionModelType,
     load_clip_vision,
 )
-from ml_lib.diffusion.handlers.ip_adapter_handler import IPAdapterService
-from ml_lib.diffusion.handlers.controlnet_handler import ControlNetHandler
-from ml_lib.diffusion.handlers.adapter_registry import (
+from ml_lib.diffusion.infrastructure.adapters.ip_adapter import IPAdapterService
+from ml_lib.diffusion.infrastructure.adapters.controlnet_adapter import ControlNetHandler
+from ml_lib.diffusion.domain.services.adapter_registry import (
     AdapterRegistry,
     AdapterType,
     AdapterRegistration,

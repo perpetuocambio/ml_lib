@@ -9,7 +9,7 @@ real-world statistical distributions.
 
 import random
 
-from ml_lib.diffusion.handlers.attribute_collection import AttributeCollection
+from ml_lib.diffusion.domain.services.attribute_collection import AttributeCollection
 from ml_lib.diffusion.models import AttributeDefinition
 
 

@@ -17,7 +17,7 @@ import uuid
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from ml_lib.diffusion.services import CharacterGenerator
+from ml_lib.diffusion.domain.services import CharacterGenerator
 from ml_lib.diffusion.intelligent.pipeline.services.intelligent_builder import (
     IntelligentPipelineBuilder,
     GenerationConfig,

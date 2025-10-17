@@ -8,13 +8,13 @@ This example demonstrates:
 """
 
 import logging
-from ml_lib.diffusion.services import (
+from ml_lib.diffusion.domain.services import (
     PromptAnalyzer,
     LoRARecommender,
     ParameterOptimizer,
     ModelRegistry,
 )
-from ml_lib.diffusion.services.parameter_optimizer import (
+from ml_lib.diffusion.domain.services.parameter_optimizer import (
     GenerationConstraints,
 )
 from ml_lib.diffusion.models import Priority

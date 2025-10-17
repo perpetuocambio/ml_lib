@@ -2,7 +2,7 @@
 
 from typing import Protocol, runtime_checkable
 
-from ml_lib.diffusion.services.learning_engine import GenerationFeedback
+from ml_lib.diffusion.domain.services.learning_engine import GenerationFeedback
 
 
 @runtime_checkable

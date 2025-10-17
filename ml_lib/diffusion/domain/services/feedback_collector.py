@@ -313,7 +313,7 @@ class FeedbackCollector:
             session: Generation session
         """
         # Import here to avoid circular dependency
-        from ml_lib.diffusion.services.learning_engine import GenerationFeedback
+        from ml_lib.diffusion.domain.services.learning_engine import GenerationFeedback
 
         # Track LoRA modifications
         user_modified_loras = None

@@ -183,7 +183,7 @@ from ml_lib.diffusion.infrastructure.persistence.migration_helper import (
     RepositoryMigrationHelper,
 )
 # TODO: Import your legacy ModelRegistry
-# from ml_lib.diffusion.services.model_registry import ModelRegistry
+# from ml_lib.diffusion.domain.services.model_registry import ModelRegistry
 
 import logging
 

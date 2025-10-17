@@ -14,10 +14,10 @@ from ml_lib.diffusion.models import (
     ModelType,
     BaseModel,
 )
-from ml_lib.diffusion.services.huggingface_service import (
+from ml_lib.diffusion.domain.services.huggingface_service import (
     HuggingFaceHubService,
 )
-from ml_lib.diffusion.services.civitai_service import (
+from ml_lib.diffusion.domain.services.civitai_service import (
     CivitAIService,
 )
 

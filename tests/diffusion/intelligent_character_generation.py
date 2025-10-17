@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Example usage of the intelligent character generator."""
 
-from ml_lib.diffusion.services import CharacterGenerator
+from ml_lib.diffusion.domain.services import CharacterGenerator
 from ml_lib.diffusion.models import GeneratedCharacter
 
 

@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 
 from ml_lib.diffusion.model_enums import ModelType, BaseModel, Source
 from ml_lib.diffusion.model_metadata import ModelMetadata
-from ml_lib.diffusion.storage.metadata_db import MetadataDatabase
+from ml_lib.diffusion.infrastructure.storage.metadata_db import MetadataDatabase
 
 logger = logging.getLogger(__name__)
 

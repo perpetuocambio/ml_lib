@@ -273,7 +273,7 @@ class TestNSFWMetadata:
         """Test that adult content is properly tagged in metadata."""
         print("\n📝 Testing adult content metadata...")
 
-        from ml_lib.diffusion.services import IntelligentPipelineBuilder
+        from ml_lib.diffusion.domain.services import IntelligentPipelineBuilder
         from ml_lib.diffusion.models.pipeline import PipelineConfig
 
         config = PipelineConfig(
@@ -295,7 +295,7 @@ class TestNSFWMetadata:
         assert result.image is not None
 
         # Save with metadata
-        from ml_lib.diffusion.services.image_metadata import (
+        from ml_lib.diffusion.domain.services.image_metadata import (
             ImageMetadataWriter,
             ImageMetadataEmbedding,
         )

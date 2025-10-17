@@ -3,7 +3,7 @@
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from ml_lib.diffusion.services.ollama_selector import OllamaModelSelector
+from ml_lib.diffusion.domain.services.ollama_selector import OllamaModelSelector
 
 print("=" * 80)
 print("TESTING OLLAMA INTEGRATION")

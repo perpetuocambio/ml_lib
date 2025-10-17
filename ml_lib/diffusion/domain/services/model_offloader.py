@@ -3,7 +3,7 @@
 import logging
 from typing import Protocol
 
-from ml_lib.diffusion.handlers.memory_manager import MemoryManager
+from ml_lib.diffusion.infrastructure.memory_manager import MemoryManager
 from ml_lib.diffusion.models import (
     OffloadConfig,
     OffloadStrategy,

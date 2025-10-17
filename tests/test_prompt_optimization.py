@@ -15,7 +15,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from ml_lib.diffusion.services.prompt_analyzer import PromptAnalyzer
+from ml_lib.diffusion.domain.services.prompt_analyzer import PromptAnalyzer
 
 # Setup logging
 logging.basicConfig(

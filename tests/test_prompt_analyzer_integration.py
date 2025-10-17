@@ -6,7 +6,7 @@ Tests the full integration of PromptAnalyzer with all strategies working togethe
 import pytest
 from unittest.mock import Mock
 
-from ml_lib.diffusion.services.prompt_analyzer import PromptAnalyzer
+from ml_lib.diffusion.domain.services.prompt_analyzer import PromptAnalyzer
 from ml_lib.diffusion.domain.strategies import (
     RuleBasedConceptExtraction,
     RuleBasedIntentDetection,

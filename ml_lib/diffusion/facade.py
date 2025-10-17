@@ -27,7 +27,7 @@ from typing import Optional, Literal
 from dataclasses import dataclass
 from PIL import Image
 
-from ml_lib.diffusion.services import IntelligentPipelineBuilder
+from ml_lib.diffusion.domain.services import IntelligentPipelineBuilder
 from ml_lib.diffusion.models.pipeline import (
     PipelineConfig,
     MemorySettings,
@@ -214,7 +214,7 @@ class ImageGenerator:
             )
 
         # Use OllamaModelSelector directly for analysis
-        from ml_lib.diffusion.services.ollama_selector import OllamaModelSelector
+        from ml_lib.diffusion.domain.services.ollama_selector import OllamaModelSelector
         from ml_lib.diffusion.models.value_objects import (
             ConceptMap,
             EmphasisMap,

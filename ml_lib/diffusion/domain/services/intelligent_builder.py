@@ -48,21 +48,21 @@ from .memory_optimizer import (
     MemoryOptimizationConfig,
     OptimizationLevel,
 )
-from ml_lib.diffusion.services.memory_optimizer import MemoryMonitor
-from ml_lib.diffusion.services.model_orchestrator import (
+from ml_lib.diffusion.domain.services.memory_optimizer import MemoryMonitor
+from ml_lib.diffusion.domain.services.model_orchestrator import (
     ModelOrchestrator,
     DiffusionArchitecture,
 )
-from ml_lib.diffusion.services.model_registry import ModelRegistry
-from ml_lib.diffusion.services.ollama_selector import (
+from ml_lib.diffusion.domain.services.model_registry import ModelRegistry
+from ml_lib.diffusion.domain.services.ollama_selector import (
     OllamaModelSelector,
     ModelMatcher,
 )
-from ml_lib.diffusion.services.prompt_analyzer import PromptAnalyzer
-from ml_lib.diffusion.services.prompt_compactor import PromptCompactor
+from ml_lib.diffusion.domain.services.prompt_analyzer import PromptAnalyzer
+from ml_lib.diffusion.domain.services.prompt_compactor import PromptCompactor
 from ml_lib.diffusion.models.value_objects import ProcessedPrompt
 from ml_lib.diffusion.models.content_tags import PromptCompactionResult
-from ml_lib.diffusion.storage.user_preferences_db import UserPreferencesDB, UserPreferences
+from ml_lib.diffusion.infrastructure.storage.user_preferences_db import UserPreferencesDB, UserPreferences
 from ml_lib.system.resource_monitor import ResourceMonitor
 
 logger = logging.getLogger(__name__)

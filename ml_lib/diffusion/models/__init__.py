@@ -76,14 +76,9 @@ from ml_lib.diffusion.models.prompt import (
     LoRARecommendation,
 )
 
-# Character models
-from ml_lib.diffusion.models.character import (
-    GeneratedCharacter,
-    SelectedAttributes,
-    ValidationResult,
-    CompatibilityMap,
-    GenerationPreferences,
-)
+# Character models (moved to domain/entities/character.py)
+# Import from there directly to avoid circular imports:
+# from ml_lib.diffusion.domain.entities.character import GeneratedCharacter, ...
 
 # LoRA models (LoRAInfo moved to pipeline.py, already imported above)
 
@@ -190,12 +185,12 @@ __all__ = [
     "OptimizedParameters",
     "Priority",
     "LoRARecommendation",
-    # Character
-    "GeneratedCharacter",
-    "SelectedAttributes",
-    "ValidationResult",
-    "CompatibilityMap",
-    "GenerationPreferences",
+    # Character (moved to domain/entities/character.py - import from there)
+    # "GeneratedCharacter",
+    # "SelectedAttributes",
+    # "ValidationResult",
+    # "CompatibilityMap",
+    # "GenerationPreferences",
     # LoRA
     "LoRAInfo",
     # Registry

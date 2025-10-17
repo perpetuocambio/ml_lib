@@ -8,7 +8,7 @@ This example demonstrates:
 """
 
 import logging
-from ml_lib.diffusion.services import (
+from ml_lib.diffusion.domain.services import (
     HuggingFaceHubService,
     CivitAIService,
     ModelRegistry,

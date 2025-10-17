@@ -9,7 +9,7 @@ from pathlib import Path
 from PIL import Image
 
 from ml_lib.diffusion.facade import ImageGenerator, GenerationOptions
-from ml_lib.diffusion.services import IntelligentPipelineBuilder
+from ml_lib.diffusion.domain.services import IntelligentPipelineBuilder
 from ml_lib.diffusion.models.pipeline import PipelineConfig
 
 

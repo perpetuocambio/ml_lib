@@ -276,7 +276,7 @@ class ComfyUIPathResolver:
             >>> registry = resolver.create_registry_from_comfyui()
             >>> print(f"Registered {len(registry.get_all_models())} models")
         """
-        from ml_lib.diffusion.services import ModelRegistry
+        from ml_lib.diffusion.domain.services import ModelRegistry
 
         registry = ModelRegistry()
 
@@ -357,7 +357,7 @@ def create_comfyui_registry(
         ...     search_paths=["/opt/comfyui", "/home/user/comfyui"]
         ... )
     """
-    from ml_lib.diffusion.services import ModelRegistry
+    from ml_lib.diffusion.domain.services import ModelRegistry
     if comfyui_root is not None:
         resolver = ComfyUIPathResolver.from_comfyui(comfyui_root)
     else:

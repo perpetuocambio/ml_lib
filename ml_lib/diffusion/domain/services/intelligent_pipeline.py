@@ -22,20 +22,20 @@ from ..models.pipeline import (
     OperationMode,
 )
 from ml_lib.diffusion.models.value_objects import ParameterModifications
-from ml_lib.diffusion.services.model_registry import ModelRegistry
-from ml_lib.diffusion.services.prompt_analyzer import PromptAnalyzer
-from ml_lib.diffusion.services.parameter_optimizer import ParameterOptimizer
-from ml_lib.diffusion.services.learning_engine import LearningEngine
-from ml_lib.diffusion.services.lora_recommender import LoRARecommender
-from ml_lib.diffusion.services.model_offloader import ModelOffloader
-from ml_lib.diffusion.handlers.memory_manager import MemoryManager
-from ml_lib.diffusion.services.memory_optimizer import (
+from ml_lib.diffusion.domain.services.model_registry import ModelRegistry
+from ml_lib.diffusion.domain.services.prompt_analyzer import PromptAnalyzer
+from ml_lib.diffusion.domain.services.parameter_optimizer import ParameterOptimizer
+from ml_lib.diffusion.domain.services.learning_engine import LearningEngine
+from ml_lib.diffusion.domain.services.lora_recommender import LoRARecommender
+from ml_lib.diffusion.domain.services.model_offloader import ModelOffloader
+from ml_lib.diffusion.infrastructure.memory_manager import MemoryManager
+from ml_lib.diffusion.domain.services.memory_optimizer import (
     MemoryOptimizer,
     MemoryOptimizationConfig,
     OptimizationLevel,
     MemoryMonitor,
 )
-from ml_lib.diffusion.services.learning_engine import GenerationFeedback
+from ml_lib.diffusion.domain.services.learning_engine import GenerationFeedback
 from ml_lib.llm.providers import OllamaProvider
 from ml_lib.llm.clients import LLMClient
 

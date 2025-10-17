@@ -5,7 +5,7 @@ import unittest
 import logging
 from pathlib import Path
 
-from ml_lib.diffusion.services import (
+from ml_lib.diffusion.domain.services import (
     EnhancedCharacterGenerator,
     EnhancedConfigLoader,
 )
