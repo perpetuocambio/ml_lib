@@ -1,0 +1,407 @@
+---
+name: Strict Python Typing Standards
+description: Enforce strict typing rules for ML API Python code - mandatory type hints, no Dict/Tuple/Any/object, class-based design, absolute imports only
+---
+
+# Strict Python Typing Standards
+
+## Reglas OBLIGATORIAS - Sin excepciones
+
+### 1. TIPADO OBLIGATORIO en TODO
+**Cada parámetro y retorno DEBE tener type hint explícito.**
+
+```python
+# ✅ CORRECTO
+def process_image(image_data: ImageData, config: ProcessingConfig) -> ProcessedResult:
+    result: ProcessedResult = ProcessedResult()
+    return result
+
+# ❌ PROHIBIDO - Sin type hints
+def process_image(image_data, config):
+    return result
+```
+
+### 2. PROHIBIDO: Dict, Tuple, Any, object
+
+**Nunca uses tipos genéricos. Crea clases específicas.**
+
+```python
+# ❌ PROHIBIDO
+def get_config() -> Dict[str, Any]:
+    return {"model": "stable-diffusion", "steps": 50}
+
+def process_batch(items: List[Tuple[str, int]]) -> Dict:
+    pass
+
+# ✅ CORRECTO - Clases específicas
+from dataclasses import dataclass
+
+@dataclass
+class ModelConfig:
+    model_name: str
+    steps: int
+    guidance_scale: float
+
+def get_config() -> ModelConfig:
+    return ModelConfig(
+        model_name="stable-diffusion",
+        steps=50,
+        guidance_scale=7.5
+    )
+
+@dataclass
+class BatchItem:
+    prompt: str
+    priority: int
+
+def process_batch(items: List[BatchItem]) -> BatchResult:
+    pass
+```
+
+### 3. PROHIBIDO: Imports relativos e inline
+
+```python
+# ❌ PROHIBIDO - Import relativo
+from .models import DiffusionModel
+from ..utils import image_processor
+
+# ❌ PROHIBIDO - Import inline
+def generate_image():
+    from app.models.diffusion import DiffusionModel
+    model = DiffusionModel()
+
+# ✅ CORRECTO - Imports absolutos al inicio
+from app.models.diffusion import DiffusionModel
+from app.utils.image_processor import ImageProcessor
+
+def generate_image():
+    model: DiffusionModel = DiffusionModel()
+```
+
+### 4. PROHIBIDO: Nombres de clase entre comillas
+
+```python
+# ❌ PROHIBIDO - Forward reference con string
+class ImageGenerator:
+    def set_model(self, model: "DiffusionModel") -> None:
+        pass
+
+# ✅ CORRECTO - Import absoluto y tipo directo
+from app.models.diffusion import DiffusionModel
+
+class ImageGenerator:
+    def set_model(self, model: DiffusionModel) -> None:
+        pass
+```
+
+### 5. PROHIBIDO: TYPE_CHECKING
+
+```python
+# ❌ PROHIBIDO - Conditional imports
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app.models.diffusion import DiffusionModel
+
+# ✅ CORRECTO - Import directo
+from app.models.diffusion import DiffusionModel
+```
+
+## Clean Architecture - Orientación a Clases
+
+### Patrón obligatorio para datos
+
+**Usa dataclasses o Pydantic BaseModel, nunca Dict/Tuple**
+
+```python
+from dataclasses import dataclass
+from typing import List, Optional
+
+@dataclass
+class ImageGenerationRequest:
+    prompt: str
+    negative_prompt: Optional[str]
+    width: int
+    height: int
+    steps: int
+    guidance_scale: float
+    seed: Optional[int]
+
+@dataclass
+class GeneratedImage:
+    image_bytes: bytes
+    width: int
+    height: int
+    seed_used: int
+    generation_time_ms: float
+
+@dataclass
+class ImageGenerationResult:
+    success: bool
+    images: List[GeneratedImage]
+    error_message: Optional[str]
+```
+
+### Patrón obligatorio para servicios
+
+```python
+from abc import ABC, abstractmethod
+
+class ImageGenerationService(ABC):
+    @abstractmethod
+    def generate(self, request: ImageGenerationRequest) -> ImageGenerationResult:
+        pass
+
+class StableDiffusionService(ImageGenerationService):
+    def __init__(self, model: DiffusionModel, config: ServiceConfig) -> None:
+        self._model: DiffusionModel = model
+        self._config: ServiceConfig = config
+    
+    def generate(self, request: ImageGenerationRequest) -> ImageGenerationResult:
+        images: List[GeneratedImage] = []
+        # Implementación
+        return ImageGenerationResult(
+            success=True,
+            images=images,
+            error_message=None
+        )
+```
+
+## Casos complejos resueltos
+
+### Opcional: usa Optional, no None type
+
+```python
+# ❌ PROHIBIDO
+def process(data: str | None) -> int | None:
+    pass
+
+# ✅ CORRECTO
+from typing import Optional
+
+def process(data: Optional[str]) -> Optional[int]:
+    pass
+```
+
+### Listas/Conjuntos: especifica contenido
+
+```python
+# ❌ PROHIBIDO
+def get_ids() -> list:
+    return [1, 2, 3]
+
+# ✅ CORRECTO
+from typing import List
+
+def get_ids() -> List[int]:
+    return [1, 2, 3]
+```
+
+### Callbacks: usa Protocol o Callable con tipos
+
+```python
+from typing import Protocol, Callable
+
+# Opción 1: Protocol (preferido para interfaces complejas)
+class ImageProcessor(Protocol):
+    def process(self, image: ImageData) -> ProcessedImage:
+        ...
+
+def apply_processing(
+    image: ImageData,
+    processor: ImageProcessor
+) -> ProcessedImage:
+    return processor.process(image)
+
+# Opción 2: Callable (para funciones simples)
+ProcessingFunction = Callable[[ImageData], ProcessedImage]
+
+def apply_processing(
+    image: ImageData,
+    processor: ProcessingFunction
+) -> ProcessedImage:
+    return processor(image)
+```
+
+### Union types: crea clase base o usa Literal
+
+```python
+# ❌ EVITAR (si es posible)
+from typing import Union
+def process(data: Union[ImageData, TextData]) -> Result:
+    pass
+
+# ✅ MEJOR - Clase base común
+class InputData(ABC):
+    @abstractmethod
+    def validate(self) -> bool:
+        pass
+
+class ImageData(InputData):
+    pass
+
+class TextData(InputData):
+    pass
+
+def process(data: InputData) -> Result:
+    pass
+
+# ✅ ALTERNATIVA - Literal para valores específicos
+from typing import Literal
+
+ModelType = Literal["stable-diffusion", "dalle", "midjourney"]
+
+def load_model(model_type: ModelType) -> Model:
+    pass
+```
+
+## Variables de clase e instancia
+
+```python
+class DiffusionModel:
+    # Variables de clase tipadas
+    DEFAULT_STEPS: int = 50
+    MAX_BATCH_SIZE: int = 8
+    
+    def __init__(self, config: ModelConfig) -> None:
+        # Variables de instancia tipadas
+        self._config: ModelConfig = config
+        self._loaded: bool = False
+        self._device: str = "cuda"
+    
+    def load(self) -> None:
+        self._loaded = True
+    
+    def generate(self, request: GenerationRequest) -> GenerationResult:
+        result: GenerationResult = GenerationResult()
+        return result
+```
+
+## Conversión de código legacy
+
+### Antes (PROHIBIDO)
+```python
+def process_request(data):
+    config = {"model": "sd", "steps": 50}
+    result = model.generate(data, config)
+    return {"success": True, "data": result}
+```
+
+### Después (CORRECTO)
+```python
+@dataclass
+class GenerationConfig:
+    model: str
+    steps: int
+
+@dataclass
+class ProcessResult:
+    success: bool
+    data: GeneratedImage
+
+def process_request(data: InputData) -> ProcessResult:
+    config: GenerationConfig = GenerationConfig(model="sd", steps=50)
+    result: GeneratedImage = model.generate(data, config)
+    return ProcessResult(success=True, data=result)
+```
+
+## Validación automática
+
+Cuando termines de escribir código, verifica:
+
+1. ¿Cada función tiene type hints en TODOS sus parámetros y retorno?
+2. ¿Hay algún Dict, Tuple, Any, object? → Crear clase específica
+3. ¿Hay imports relativos (from .) o inline? → Convertir a absolutos
+4. ¿Hay nombres entre comillas? → Remover y usar import directo
+5. ¿Hay TYPE_CHECKING? → Remover y usar imports directos
+6. ¿Las variables locales importantes tienen type hint explícito?
+
+## Ejemplos completos
+
+### Endpoint FastAPI correcto
+
+```python
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+
+from app.services.image_generation import ImageGenerationService
+from app.models.requests import ImageGenerationRequest
+from app.models.responses import ImageGenerationResponse
+
+router: APIRouter = APIRouter()
+
+class GenerateImageEndpoint:
+    def __init__(self, service: ImageGenerationService) -> None:
+        self._service: ImageGenerationService = service
+    
+    async def generate(
+        self,
+        request: ImageGenerationRequest
+    ) -> ImageGenerationResponse:
+        try:
+            result: ImageGenerationResult = self._service.generate(request)
+            
+            if not result.success:
+                raise HTTPException(
+                    status_code=400,
+                    detail=result.error_message
+                )
+            
+            return ImageGenerationResponse(
+                job_id=result.job_id,
+                status="processing",
+                estimated_time=result.estimated_time
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=422, detail=str(e))
+```
+
+### Repository pattern correcto
+
+```python
+from abc import ABC, abstractmethod
+from typing import List, Optional
+
+class ImageRepository(ABC):
+    @abstractmethod
+    def save(self, image: GeneratedImage) -> str:
+        pass
+    
+    @abstractmethod
+    def find_by_id(self, image_id: str) -> Optional[GeneratedImage]:
+        pass
+    
+    @abstractmethod
+    def find_by_job(self, job_id: str) -> List[GeneratedImage]:
+        pass
+
+class S3ImageRepository(ImageRepository):
+    def __init__(self, bucket_name: str, client: S3Client) -> None:
+        self._bucket: str = bucket_name
+        self._client: S3Client = client
+    
+    def save(self, image: GeneratedImage) -> str:
+        image_id: str = self._generate_id()
+        # Implementación
+        return image_id
+    
+    def find_by_id(self, image_id: str) -> Optional[GeneratedImage]:
+        # Implementación
+        result: Optional[GeneratedImage] = None
+        return result
+    
+    def find_by_job(self, job_id: str) -> List[GeneratedImage]:
+        images: List[GeneratedImage] = []
+        # Implementación
+        return images
+```
+
+## Resumen de reglas
+
+1. **Type hints obligatorios**: En CADA parámetro y retorno
+2. **No Dict/Tuple/Any/object**: Crear clases específicas siempre
+3. **No imports relativos**: Solo absolutos desde raíz del proyecto
+4. **No imports inline**: Todos al inicio del archivo
+5. **No strings en tipos**: Sin comillas en type hints
+6. **No TYPE_CHECKING**: Imports directos siempre
+7. **Orientación a clases**: Usar dataclasses/Pydantic para datos
+8. **Variables tipadas**: Variables importantes con type hint explícito
