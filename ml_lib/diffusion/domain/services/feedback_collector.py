@@ -7,7 +7,7 @@ from typing import Optional, Protocol
 from dataclasses import dataclass, field
 import json
 
-from ml_lib.diffusion.models.value_objects import (
+from ml_lib.diffusion.domain.value_objects_models.value_objects import (
     GenerationParameters,
     ParameterModification,
     ParameterModifications,

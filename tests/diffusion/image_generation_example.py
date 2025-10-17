@@ -29,7 +29,7 @@ from ml_lib.diffusion.domain.services import (
     ParameterOptimizer,
     ModelRegistry,
 )
-from ml_lib.diffusion.models import GeneratedCharacter, Priority
+from ml_lib.diffusion.domain.value_objects_models import GeneratedCharacter, Priority
 from ml_lib.diffusion.domain.services.parameter_optimizer import GenerationConstraints
 
 # Setup logging

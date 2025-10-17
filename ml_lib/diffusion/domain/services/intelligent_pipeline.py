@@ -21,7 +21,7 @@ from ..models.pipeline import (
     Recommendations,
     OperationMode,
 )
-from ml_lib.diffusion.models.value_objects import ParameterModifications
+from ml_lib.diffusion.domain.value_objects_models.value_objects import ParameterModifications
 from ml_lib.diffusion.domain.services.model_registry import ModelRegistry
 from ml_lib.diffusion.domain.services.prompt_analyzer import PromptAnalyzer
 from ml_lib.diffusion.domain.services.parameter_optimizer import ParameterOptimizer

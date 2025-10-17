@@ -15,7 +15,7 @@ import time
 sys.path.insert(0, str(Path(__file__).parent))
 
 from ml_lib.diffusion.facade import ImageGenerator, GenerationOptions
-from ml_lib.diffusion.models.registry import BaseModel
+from ml_lib.diffusion.domain.value_objects_models.registry import BaseModel
 
 # Setup output directory
 OUTPUT_DIR = Path(__file__).parent / "output"

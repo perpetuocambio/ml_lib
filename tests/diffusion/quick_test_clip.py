@@ -11,8 +11,8 @@ print("=" * 60)
 # Test 1: Imports
 print("\n1. Testing imports...")
 try:
-    from ml_lib.diffusion.config import detect_comfyui_installation, ModelPathConfig
-    from ml_lib.diffusion.models import ModelType
+    from ml_lib.diffusion.infrastructure.config import detect_comfyui_installation, ModelPathConfig
+    from ml_lib.diffusion.domain.value_objects_models import ModelType
     from ml_lib.diffusion.intelligent.ip_adapter.services import CLIPVisionEncoder
     print("✅ Imports successful")
 except Exception as e:

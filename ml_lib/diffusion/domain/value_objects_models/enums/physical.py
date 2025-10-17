@@ -1,6 +1,6 @@
 """Physical character attributes enums - Consolidated from ml_lib/diffusion/intelligent/prompting/enums/physical/."""
 
-from ml_lib.diffusion.models.enums.base import BasePromptEnum
+from ml_lib.diffusion.domain.value_objects_models.enums.base import BasePromptEnum
 
 
 class SkinTone(BasePromptEnum):

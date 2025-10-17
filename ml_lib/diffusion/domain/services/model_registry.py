@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from ml_lib.diffusion.models import (
+from ml_lib.diffusion.domain.value_objects_models import (
     ModelMetadata,
     ModelFilter,
     Source,

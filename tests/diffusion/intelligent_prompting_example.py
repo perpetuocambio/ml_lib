@@ -17,7 +17,7 @@ from ml_lib.diffusion.domain.services import (
 from ml_lib.diffusion.domain.services.parameter_optimizer import (
     GenerationConstraints,
 )
-from ml_lib.diffusion.models import Priority
+from ml_lib.diffusion.domain.value_objects_models import Priority
 
 # Setup logging
 logging.basicConfig(

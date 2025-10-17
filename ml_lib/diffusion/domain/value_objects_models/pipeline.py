@@ -17,7 +17,7 @@ from ml_lib.diffusion.domain.services.image_metadata import (
     create_timestamp,
 )
 from ml_lib.diffusion.domain.services.image_naming import ImageNamingConfig
-from ml_lib.diffusion.models.prompt import PromptAnalysis, OptimizedParameters
+from ml_lib.diffusion.domain.value_objects_models.prompt import PromptAnalysis, OptimizedParameters
 from ml_lib.diffusion.domain.interfaces.recommender_protocol import LoRARecommendation
 
 # METADATA STRUCTURES (from metadata_dict.py)

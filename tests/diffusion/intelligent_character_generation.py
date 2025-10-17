@@ -2,7 +2,7 @@
 """Example usage of the intelligent character generator."""
 
 from ml_lib.diffusion.domain.services import CharacterGenerator
-from ml_lib.diffusion.models import GeneratedCharacter
+from ml_lib.diffusion.domain.value_objects_models import GeneratedCharacter
 
 
 def main():

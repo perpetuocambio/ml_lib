@@ -10,7 +10,7 @@ real-world statistical distributions.
 import random
 
 from ml_lib.diffusion.domain.services.attribute_collection import AttributeCollection
-from ml_lib.diffusion.models import AttributeDefinition
+from ml_lib.diffusion.domain.value_objects_models import AttributeDefinition
 
 
 class RandomAttributeSelector:

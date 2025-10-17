@@ -4,13 +4,13 @@ import logging
 import numpy as np
 from dataclasses import dataclass
 
-from ml_lib.diffusion.models import (
+from ml_lib.diffusion.domain.value_objects_models import (
     PromptAnalysis,
     OptimizedParameters,
     Priority,
     ArtisticStyle,
 )
-from ml_lib.diffusion.models.value_objects import Resolution
+from ml_lib.diffusion.domain.value_objects_models.value_objects import Resolution
 
 logger = logging.getLogger(__name__)
 

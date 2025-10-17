@@ -6,11 +6,11 @@ import time
 from collections import defaultdict
 from typing import Callable, Optional, TypeVar
 
-from ml_lib.diffusion.models import (
+from ml_lib.diffusion.domain.value_objects_models import (
     LoadedModel,
     EvictionPolicy,
 )
-from ml_lib.diffusion.models.value_objects import (
+from ml_lib.diffusion.domain.value_objects_models.value_objects import (
     PoolStatistics,
     ModelProtocol,
 )

@@ -35,7 +35,7 @@ def set_default_config(config: DiffusionConfig) -> None:
         config: The new default configuration.
 
     Example:
-        >>> from ml_lib.diffusion.config import DiffusionConfig, set_default_config
+        >>> from ml_lib.diffusion.infrastructure.config import DiffusionConfig, set_default_config
         >>> custom_config = DiffusionConfig(safety_level=SafetyLevel.RELAXED)
         >>> set_default_config(custom_config)
     """

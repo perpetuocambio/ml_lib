@@ -6,12 +6,12 @@ from typing import Optional, Union
 import numpy as np
 from PIL import Image
 
-from ml_lib.diffusion.models import (
+from ml_lib.diffusion.domain.value_objects_models import (
     IPAdapterConfig,
     ReferenceImage,
     ImageFeatures,
 )
-from ml_lib.diffusion.models.value_objects import (
+from ml_lib.diffusion.domain.value_objects_models.value_objects import (
     LoadedIPAdapterInfo,
     ModelRegistryProtocol,
     PipelineProtocol,

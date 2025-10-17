@@ -3,7 +3,7 @@
 from typing import Dict, List, Optional
 import random
 
-from ml_lib.diffusion.models import AttributeType, AttributeDefinition
+from ml_lib.diffusion.domain.value_objects_models import AttributeType, AttributeDefinition
 
 class AttributeCollection:
     """Collection of related attributes of the same type."""

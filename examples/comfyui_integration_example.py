@@ -11,12 +11,12 @@ from pathlib import Path
 # Add ml_lib to path if running standalone
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from ml_lib.diffusion.config import (
+from ml_lib.diffusion.infrastructure.config import (
     ComfyUIPathResolver,
     create_comfyui_registry,
     detect_comfyui_installation,
 )
-from ml_lib.diffusion.models import ModelType
+from ml_lib.diffusion.domain.value_objects_models import ModelType
 
 
 def example_1_detect_and_stats():
@@ -149,7 +149,7 @@ def example_4_intelligent_pipeline():
         from ml_lib.diffusion.intelligent.pipeline.services import (
             IntelligentGenerationPipeline,
         )
-        from ml_lib.diffusion.models import (
+        from ml_lib.diffusion.domain.value_objects_models import (
             PipelineConfig,
         )
 
@@ -212,7 +212,7 @@ def example_5_quick_start():
     print(f"\n✅ Registry created with {len(registry.get_all_models())} models")
     print(f"   LoRAs: {len(registry.get_all_loras()):,}")
     print("\n💡 Usage:")
-    print("   from ml_lib.diffusion.config import create_comfyui_registry")
+    print("   from ml_lib.diffusion.infrastructure.config import create_comfyui_registry")
     print("   registry = create_comfyui_registry()")
     print("   pipeline = IntelligentGenerationPipeline(model_registry=registry)")
 

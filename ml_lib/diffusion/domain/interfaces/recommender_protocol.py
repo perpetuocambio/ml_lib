@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
-from ml_lib.diffusion.models.prompt import PromptAnalysis
-from ml_lib.diffusion.models.registry import ModelMetadata
+from ml_lib.diffusion.domain.value_objects_models.prompt import PromptAnalysis
+from ml_lib.diffusion.domain.value_objects_models.registry import ModelMetadata
 
 
 @dataclass

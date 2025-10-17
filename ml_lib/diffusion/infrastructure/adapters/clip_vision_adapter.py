@@ -16,8 +16,8 @@ from PIL import Image
 from safetensors.torch import load_file
 from transformers import CLIPVisionModel, CLIPImageProcessor
 
-from ml_lib.diffusion.models import ImageFeatures
-from ml_lib.diffusion.config import detect_comfyui_installation
+from ml_lib.diffusion.domain.value_objects_models import ImageFeatures
+from ml_lib.diffusion.infrastructure.config import detect_comfyui_installation
 
 logger = logging.getLogger(__name__)
 

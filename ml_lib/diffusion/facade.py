@@ -28,13 +28,13 @@ from dataclasses import dataclass
 from PIL import Image
 
 from ml_lib.diffusion.domain.services import IntelligentPipelineBuilder
-from ml_lib.diffusion.models.pipeline import (
+from ml_lib.diffusion.domain.value_objects_models.pipeline import (
     PipelineConfig,
     MemorySettings,
     LoRAPreferences,
 )
-from ml_lib.diffusion.models.memory import OffloadStrategy
-from ml_lib.diffusion.models.value_objects import PromptAnalysisResult
+from ml_lib.diffusion.domain.value_objects_models.memory import OffloadStrategy
+from ml_lib.diffusion.domain.value_objects_models.value_objects import PromptAnalysisResult
 
 
 @dataclass
@@ -215,7 +215,7 @@ class ImageGenerator:
 
         # Use OllamaModelSelector directly for analysis
         from ml_lib.diffusion.domain.services.ollama_selector import OllamaModelSelector
-        from ml_lib.diffusion.models.value_objects import (
+        from ml_lib.diffusion.domain.value_objects_models.value_objects import (
             ConceptMap,
             EmphasisMap,
             ReasoningMap,

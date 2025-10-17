@@ -20,7 +20,7 @@ def test_1_detect_comfyui():
     print("Test 1: Detect ComfyUI Installation")
     print("=" * 60)
 
-    from ml_lib.diffusion.config import detect_comfyui_installation
+    from ml_lib.diffusion.infrastructure.config import detect_comfyui_installation
 
     comfyui_path = detect_comfyui_installation()
 

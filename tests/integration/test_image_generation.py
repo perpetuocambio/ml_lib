@@ -10,7 +10,7 @@ from PIL import Image
 
 from ml_lib.diffusion.facade import ImageGenerator, GenerationOptions
 from ml_lib.diffusion.domain.services import IntelligentPipelineBuilder
-from ml_lib.diffusion.models.pipeline import PipelineConfig
+from ml_lib.diffusion.domain.value_objects_models.pipeline import PipelineConfig
 
 
 @pytest.fixture
@@ -123,7 +123,7 @@ class TestIntelligentPipeline:
     @pytest.fixture
     def intelligent_pipeline(self):
         """Create intelligent pipeline with Ollama using dolphin3 (NSFW-capable)."""
-        from ml_lib.diffusion.models.pipeline import OllamaConfig
+        from ml_lib.diffusion.domain.value_objects_models.pipeline import OllamaConfig
 
         config = PipelineConfig(
             base_model="stabilityai/stable-diffusion-2-1-base",

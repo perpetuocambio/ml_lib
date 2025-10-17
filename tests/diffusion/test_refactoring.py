@@ -13,7 +13,7 @@ def test_character_generator():
     """Test that the CharacterGenerator can be imported and configured."""
     try:
         # Import the entities we created
-        from ml_lib.diffusion.models import (
+        from ml_lib.diffusion.domain.value_objects_models import (
             CharacterAttributeSet,
             AttributeConfig,
             GeneratedCharacter,

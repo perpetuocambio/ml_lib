@@ -12,7 +12,7 @@ from ml_lib.diffusion.intelligent.pipeline.services import (
     DecisionExplainer,
     FeedbackCollector,
 )
-from ml_lib.diffusion.models import (
+from ml_lib.diffusion.domain.value_objects_models import (
     PipelineConfig,
     OperationMode,
     GenerationConstraints,
@@ -357,7 +357,7 @@ class TestIntelligentPipelineIntegration:
 
     def test_generation_result_saving(self, tmp_path):
         """Test saving generation results with metadata."""
-        from ml_lib.diffusion.models import (
+        from ml_lib.diffusion.domain.value_objects_models import (
             GenerationResult,
             GenerationMetadata,
             GenerationExplanation,

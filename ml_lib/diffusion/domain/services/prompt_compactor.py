@@ -3,7 +3,7 @@
 import logging
 from typing import Optional, TYPE_CHECKING
 
-from ml_lib.diffusion.models.content_tags import (
+from ml_lib.diffusion.domain.value_objects_models.content_tags import (
     TokenClassification,
     PromptCompactionResult,
     PromptTokenPriority,

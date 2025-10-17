@@ -13,7 +13,7 @@ from ml_lib.diffusion.domain.services import (
     CivitAIService,
     ModelRegistry,
 )
-from ml_lib.diffusion.models import (
+from ml_lib.diffusion.domain.value_objects_models import (
     ModelFilter,
     ModelType,
     BaseModel,

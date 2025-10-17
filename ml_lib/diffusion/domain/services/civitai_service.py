@@ -8,7 +8,7 @@ from typing import Optional
 import requests
 from tqdm import tqdm
 
-from ml_lib.diffusion.models import (
+from ml_lib.diffusion.domain.value_objects_models import (
     ModelMetadata,
     ModelFilter,
     DownloadResult,

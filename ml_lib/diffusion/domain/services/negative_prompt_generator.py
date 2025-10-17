@@ -3,7 +3,7 @@
 from typing import Optional
 import re
 
-from ml_lib.diffusion.models.value_objects import (
+from ml_lib.diffusion.domain.value_objects_models.value_objects import (
     PromptBlockResult,
     PromptSafetyResult,
 )

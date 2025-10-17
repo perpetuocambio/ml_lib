@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Optional
 
 from ml_lib.diffusion.model_enums import ModelType
-from ml_lib.diffusion.config.path_config import ModelPathConfig
+from ml_lib.diffusion.infrastructure.config.path_config import ModelPathConfig
 
 
 logger = logging.getLogger(__name__)

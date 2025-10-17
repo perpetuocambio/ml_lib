@@ -41,8 +41,8 @@ from diffusers import (
 )
 from PIL import Image
 
-from ml_lib.diffusion.config import detect_comfyui_installation, ModelPathConfig
-from ml_lib.diffusion.models import BaseModel, ModelType
+from ml_lib.diffusion.infrastructure.config import detect_comfyui_installation, ModelPathConfig
+from ml_lib.diffusion.domain.value_objects_models import BaseModel, ModelType
 from .memory_optimizer import (
     MemoryOptimizer,
     MemoryOptimizationConfig,
@@ -60,8 +60,8 @@ from ml_lib.diffusion.domain.services.ollama_selector import (
 )
 from ml_lib.diffusion.domain.services.prompt_analyzer import PromptAnalyzer
 from ml_lib.diffusion.domain.services.prompt_compactor import PromptCompactor
-from ml_lib.diffusion.models.value_objects import ProcessedPrompt
-from ml_lib.diffusion.models.content_tags import PromptCompactionResult
+from ml_lib.diffusion.domain.value_objects_models.value_objects import ProcessedPrompt
+from ml_lib.diffusion.domain.value_objects_models.content_tags import PromptCompactionResult
 from ml_lib.diffusion.infrastructure.storage.user_preferences_db import UserPreferencesDB, UserPreferences
 from ml_lib.system.resource_monitor import ResourceMonitor
 

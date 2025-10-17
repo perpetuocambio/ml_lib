@@ -274,7 +274,7 @@ class TestNSFWMetadata:
         print("\n📝 Testing adult content metadata...")
 
         from ml_lib.diffusion.domain.services import IntelligentPipelineBuilder
-        from ml_lib.diffusion.models.pipeline import PipelineConfig
+        from ml_lib.diffusion.domain.value_objects_models.pipeline import PipelineConfig
 
         config = PipelineConfig(
             base_model="stabilityai/stable-diffusion-xl-base-1.0"

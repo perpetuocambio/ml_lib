@@ -7,15 +7,15 @@ This module provides:
 """
 
 # Legacy path configuration
-from ml_lib.diffusion.config.path_config import ModelPathConfig
-from ml_lib.diffusion.config.comfyui_paths import (
+from ml_lib.diffusion.infrastructure.config.path_config import ModelPathConfig
+from ml_lib.diffusion.infrastructure.config.comfyui_paths import (
     ComfyUIPathResolver,
     detect_comfyui_installation,
     create_comfyui_registry,
 )
 
 # New centralized configuration system
-from ml_lib.diffusion.config.base import (
+from ml_lib.diffusion.infrastructure.config.base import (
     DiffusionConfig,
     NegativePromptsConfig,
     LoRAConfig,
@@ -30,7 +30,7 @@ from ml_lib.diffusion.config.base import (
     GroupProfiles,
     ConceptCategories,
 )
-from ml_lib.diffusion.config.types import (
+from ml_lib.diffusion.infrastructure.config.types import (
     OptimizationLevel,
     SafetyLevel,
     SamplerName,
@@ -38,12 +38,12 @@ from ml_lib.diffusion.config.types import (
     TagList,
     WeightDict,
 )
-from ml_lib.diffusion.config.defaults import (
+from ml_lib.diffusion.infrastructure.config.defaults import (
     get_default_config,
     set_default_config,
     reset_default_config,
 )
-from ml_lib.diffusion.config.loader import ConfigLoader
+from ml_lib.diffusion.infrastructure.config.loader import ConfigLoader
 
 __all__ = [
     # Legacy path config

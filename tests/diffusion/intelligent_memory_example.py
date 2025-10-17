@@ -15,7 +15,7 @@ from ml_lib.diffusion.domain.services import (
     ModelPool,
     ModelOffloader,
 )
-from ml_lib.diffusion.models import (
+from ml_lib.diffusion.domain.value_objects_models import (
     OffloadStrategy,
     EvictionPolicy,
 )

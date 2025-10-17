@@ -6,9 +6,9 @@ This module provides type-safe result classes WITHOUT using dicts, tuples, or an
 from dataclasses import dataclass, field
 from enum import Enum
 
-from ml_lib.diffusion.models.value_objects.concepts import ConceptMap, EmphasisMap
-from ml_lib.diffusion.models.value_objects.reasoning import ReasoningMap
-from ml_lib.diffusion.models.value_objects.weights import LoRAWeights
+from ml_lib.diffusion.domain.value_objects_models.value_objects.concepts import ConceptMap, EmphasisMap
+from ml_lib.diffusion.domain.value_objects_models.value_objects.reasoning import ReasoningMap
+from ml_lib.diffusion.domain.value_objects_models.value_objects.weights import LoRAWeights
 
 
 class SafetyStatus(Enum):

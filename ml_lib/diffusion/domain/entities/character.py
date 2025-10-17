@@ -3,8 +3,8 @@
 from dataclasses import dataclass, asdict, field
 from typing import Dict, List, Optional
 
-from ml_lib.diffusion.models.core import AttributeDefinition, AttributeType
-from ml_lib.diffusion.models.enums import (
+from ml_lib.diffusion.domain.value_objects_models.core import AttributeDefinition, AttributeType
+from ml_lib.diffusion.domain.value_objects_models.enums import (
     SafetyLevel,
     CharacterFocus,
     QualityTarget,

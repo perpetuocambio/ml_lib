@@ -11,8 +11,8 @@ print("=" * 80)
 # Test 1: Import
 try:
     # Import directly from modules to avoid circular imports
-    from ml_lib.diffusion.models.value_objects.processed_prompt import ProcessedPrompt
-    from ml_lib.diffusion.models.content_tags import (
+    from ml_lib.diffusion.domain.value_objects_models.value_objects.processed_prompt import ProcessedPrompt
+    from ml_lib.diffusion.domain.value_objects_models.content_tags import (
         TokenClassification,
         PromptTokenPriority,
         NSFWCategory,

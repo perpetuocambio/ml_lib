@@ -15,11 +15,11 @@ from ml_lib.llm.providers.ollama_provider import OllamaProvider
 from ml_lib.llm.entities.llm_provider_type import LLMProviderType
 from ml_lib.llm.config.llm_provider_config import LLMProviderConfig
 
-from ml_lib.diffusion.models import (
+from ml_lib.diffusion.domain.value_objects_models import (
     PromptAnalysis,
     Intent,
 )
-from ml_lib.diffusion.models.value_objects import (
+from ml_lib.diffusion.domain.value_objects_models.value_objects import (
     ConceptMap,
     Concept,
     EmphasisMap,

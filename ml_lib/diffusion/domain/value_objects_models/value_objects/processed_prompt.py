@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 
-from ml_lib.diffusion.models.content_tags import (
+from ml_lib.diffusion.domain.value_objects_models.content_tags import (
     TokenClassification,
     PromptTokenPriority,
 )

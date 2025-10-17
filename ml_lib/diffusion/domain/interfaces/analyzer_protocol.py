@@ -2,7 +2,7 @@
 
 from typing import Protocol, runtime_checkable
 
-from ml_lib.diffusion.models.prompt import PromptAnalysis
+from ml_lib.diffusion.domain.value_objects_models.prompt import PromptAnalysis
 
 
 @runtime_checkable

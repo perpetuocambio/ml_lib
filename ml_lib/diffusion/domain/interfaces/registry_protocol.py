@@ -2,7 +2,7 @@
 
 from typing import Protocol, Optional, runtime_checkable
 
-from ml_lib.diffusion.models.registry import ModelMetadata
+from ml_lib.diffusion.domain.value_objects_models.registry import ModelMetadata
 
 
 @runtime_checkable

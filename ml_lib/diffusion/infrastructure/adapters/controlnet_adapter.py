@@ -5,7 +5,7 @@ from typing import Optional, Protocol
 from pathlib import Path
 from dataclasses import dataclass
 
-from ml_lib.diffusion.models import (
+from ml_lib.diffusion.domain.value_objects_models import (
     ControlNetConfig,
     ControlImage,
     ControlType,

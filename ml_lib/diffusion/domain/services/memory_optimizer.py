@@ -24,7 +24,7 @@ from typing import Optional
 
 import torch
 
-from ml_lib.diffusion.models.value_objects.memory_stats import (
+from ml_lib.diffusion.domain.value_objects_models.value_objects.memory_stats import (
     MemoryStatistics,
     PipelineProtocol,
     VAEProtocol,

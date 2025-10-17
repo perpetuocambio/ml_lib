@@ -12,7 +12,7 @@ print("=" * 80)
 try:
     from ml_lib.diffusion.domain.services.prompt_analyzer import PromptAnalyzer
     from ml_lib.diffusion.domain.services.prompt_compactor import PromptCompactor
-    from ml_lib.diffusion.models.content_tags import analyze_nsfw_content
+    from ml_lib.diffusion.domain.value_objects_models.content_tags import analyze_nsfw_content
     print("✅ Modules imported successfully")
 except Exception as e:
     print(f"❌ Import failed: {e}")

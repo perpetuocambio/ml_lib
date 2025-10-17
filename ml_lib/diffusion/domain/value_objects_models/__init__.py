@@ -1,7 +1,7 @@
 """Models for the diffusion module."""
 
 # Value objects
-from ml_lib.diffusion.models.value_objects import (
+from ml_lib.diffusion.domain.value_objects_models.value_objects import (
     Resolution,
     LoRAWeight,
     LoRAWeights,
@@ -26,18 +26,18 @@ from ml_lib.diffusion.models.value_objects import (
 )
 
 # Core types
-from ml_lib.diffusion.models.core import (
+from ml_lib.diffusion.domain.value_objects_models.core import (
     AttributeType,
     AttributeDefinition,
 )
 
 # Enums
-from ml_lib.diffusion.models.enums import (
+from ml_lib.diffusion.domain.value_objects_models.enums import (
     BasePromptEnum,
 )
 
 # Pipeline models
-from ml_lib.diffusion.models.pipeline import (
+from ml_lib.diffusion.domain.value_objects_models.pipeline import (
     PipelineConfig,
     GenerationResult,
     GenerationMetadata,
@@ -55,7 +55,7 @@ from ml_lib.diffusion.models.pipeline import (
 )
 
 # Memory models
-from ml_lib.diffusion.models.memory import (
+from ml_lib.diffusion.domain.value_objects_models.memory import (
     SystemResources,
     OffloadConfig,
     OffloadStrategy,
@@ -64,7 +64,7 @@ from ml_lib.diffusion.models.memory import (
 )
 
 # Prompt models
-from ml_lib.diffusion.models.prompt import (
+from ml_lib.diffusion.domain.value_objects_models.prompt import (
     PromptAnalysis,
     ComplexityCategory,
     Intent,
@@ -83,7 +83,7 @@ from ml_lib.diffusion.models.prompt import (
 # LoRA models (LoRAInfo moved to pipeline.py, already imported above)
 
 # Registry models
-from ml_lib.diffusion.models.registry import (
+from ml_lib.diffusion.domain.value_objects_models.registry import (
     ModelMetadata,
     ModelFilter,
     DownloadResult,
@@ -96,7 +96,7 @@ from ml_lib.diffusion.models.registry import (
 )
 
 # IP-Adapter models
-from ml_lib.diffusion.models.ip_adapter import (
+from ml_lib.diffusion.domain.value_objects_models.ip_adapter import (
     IPAdapterVariant,
     IPAdapterConfig,
     ImageFeatures,
@@ -104,7 +104,7 @@ from ml_lib.diffusion.models.ip_adapter import (
 )
 
 # ControlNet models
-from ml_lib.diffusion.models.controlnet import (
+from ml_lib.diffusion.domain.value_objects_models.controlnet import (
     ControlType,
     ControlNetConfig,
     ControlImage,
@@ -112,7 +112,7 @@ from ml_lib.diffusion.models.controlnet import (
 )
 
 # Content tags and NSFW classification
-from ml_lib.diffusion.models.content_tags import (
+from ml_lib.diffusion.domain.value_objects_models.content_tags import (
     NSFWCategory,
     PromptTokenPriority,
     QualityTag,
