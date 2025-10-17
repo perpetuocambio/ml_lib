@@ -36,6 +36,12 @@ from ml_lib.diffusion.application.commands.image_generation_commands import (
     GenerateImageHandler,
     QuickGenerateHandler,
 )
+from ml_lib.diffusion.application.commands.quality_commands import (
+    ValidateImageQualityCommand,
+    ValidateBatchQualityCommand,
+    ValidateImageQualityHandler,
+    ValidateBatchQualityHandler,
+)
 
 __all__ = [
     # Base interfaces
@@ -60,4 +66,10 @@ __all__ = [
     # Image generation handlers
     "GenerateImageHandler",
     "QuickGenerateHandler",
+    # Quality validation commands
+    "ValidateImageQualityCommand",
+    "ValidateBatchQualityCommand",
+    # Quality validation handlers
+    "ValidateImageQualityHandler",
+    "ValidateBatchQualityHandler",
 ]
