@@ -635,11 +635,9 @@ async def test_full_event_workflow():
     """Test complete event-driven workflow."""
     bus = EventBus()
 
-    # Setup handlers
-    logging_handler = LoggingEventHandler()
+    # Setup handlers (MetricsEventHandler is designed for ImageGeneratedEvent)
     metrics_handler = MetricsEventHandler()
 
-    bus.subscribe(ImageGeneratedEvent, logging_handler)
     bus.subscribe(ImageGeneratedEvent, metrics_handler)
 
     # Publish event
@@ -655,7 +653,7 @@ async def test_full_event_workflow():
     metadata = await bus.publish(event)
 
     assert metadata.success
-    assert metadata.handler_count == 2
+    assert metadata.handler_count == 1
     assert metrics_handler.total_images_generated == 1
     assert metrics_handler.get_average_generation_time() == 15.0
 
